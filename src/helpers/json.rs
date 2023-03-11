@@ -1,8 +1,9 @@
+use super::types::ResponseBuilder;
 use async_trait::async_trait;
 use axum::{
     body::HttpBody,
     extract::{rejection::JsonRejection, FromRequest, Json},
-    http::{Request, StatusCode},
+    http::Request,
     response::{IntoResponse, Response},
     BoxError,
 };
@@ -17,18 +18,37 @@ pub enum JsonValidationError {
 
 impl IntoResponse for JsonValidationError {
     fn into_response(self) -> Response {
-        // TODO: improve the error
-        let body = match self {
-            Self::JsonError(e) => e.to_string(),
-            Self::JsonValidation(e) => {
-                e.errors()
-                    .iter()
-                    .map(|(k, v)| format!("{}: {:?}", k, v))
-                    .collect::<Vec<String>>()
-                    .join(", ")
+        match self {
+            Self::JsonError(e) => match e {
+                JsonRejection::BytesRejection(e) => ResponseBuilder::validation_error(
+                    Some(e.to_string()),
+                    Some(String::from("bytes error")),
+                )
+                .into_response(),
+                JsonRejection::JsonSyntaxError(e) => ResponseBuilder::validation_error(
+                    Some(e.to_string()),
+                    Some(String::from("deserialize error")),
+                )
+                .into_response(),
+                JsonRejection::MissingJsonContentType(e) => ResponseBuilder::validation_error(
+                    Some(e.to_string()),
+                    Some(String::from("content type error")),
+                )
+                .into_response(),
+                JsonRejection::JsonDataError(e) => ResponseBuilder::validation_error(
+                    Some(e.to_string()),
+                    Some(String::from("missing header error")),
+                )
+                .into_response(),
+                _ => ResponseBuilder::error(
+                    Some(e.to_string()),
+                    Some(String::from("unknown error")),
+                    Some(500),
+                )
+                .into_response(),
             },
-        };
-        (StatusCode::UNPROCESSABLE_ENTITY, Json(body)).into_response()
+            Self::JsonValidation(e) => ResponseBuilder::validation_error(Some(e), None).into_response(),
+        }
     }
 }
 

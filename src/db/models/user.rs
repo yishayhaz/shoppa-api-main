@@ -2,12 +2,14 @@ use super::common::DBModel;
 use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use crate::helpers::types::ResponseBuilder;
+use axum::response::{Response, IntoResponse};
 
 #[serde_with::serde_as]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct User {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
-    pub id: Option<ObjectId>,
+    id: Option<ObjectId>,
     #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
     created_at: DateTime<Utc>,
     #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
@@ -22,9 +24,8 @@ pub struct User {
     #[serde(skip_serializing_if = "Option::is_none", default)]
     #[serde_as(as = "Option<bson::DateTime>")]
     pub date_of_birth: Option<DateTime<Utc>>,
-    pub address: Option<String>,
-    pub credit_cards: Option<Vec<ObjectId>>,
-    // maybe move the cart to be a struct
+    pub address: Option<Vec<String>>,
+    pub credit_cards: Option<Vec<String>>,
     pub cart: Cart,
 }
 
@@ -37,6 +38,7 @@ pub struct Cart {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CartItem {
+    // TODO enum that can be product or ObjectId
     pub product_id: ObjectId,
     pub quantity: i32,
 }
@@ -58,6 +60,21 @@ impl DBModel for User {
     }
     fn updated_at(&self) -> DateTime<Utc> {
         self.updated_at
+    }
+    fn id(&self) -> Result<&ObjectId, Response> {
+        match &self.id {
+            Some(id) => Ok(id),
+            None => Err(ResponseBuilder::<u16>::error(None, Some(String::from("User id is None")), Some(500)).into_response()),
+        }
+    }
+    fn update_id(&mut self, id: ObjectId) -> () {
+
+        match self.id {
+            Some(_) => return (),
+            None => (),
+        }
+
+        self.id = Some(id);
     }
 }
 
