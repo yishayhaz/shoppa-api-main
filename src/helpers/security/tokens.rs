@@ -48,3 +48,32 @@ pub fn generate_login_token(user: &User) -> Result<String, Response> {
         .into_response()),
     }
 }
+
+pub fn verify_login_token(token: &str) -> Result<LoginTokenData, Response> {
+    // TODO remove cookie when token is invalid
+    let invalid_token_response = Err(ResponseBuilder::<u16>::error(
+        None,
+        Some(String::from("Invalid login token")),
+        Some(401),
+    )
+    .into_response());
+
+    let token_data = match PasetoParser::<V4, Local>::default().parse(token, &JWT_LOGIN_KEY) {
+        Ok(token) => token,
+        Err(_) => return invalid_token_response,
+    };
+
+    let data = token_data.get("payload");
+
+    let data = match data {
+        Some(v) => v,
+        None => return invalid_token_response,
+    };
+
+    let data = serde_json::from_value::<LoginTokenData>(data.clone());
+
+    match data {
+        Ok(v) => Ok(v),
+        Err(_) => invalid_token_response,
+    }
+}
