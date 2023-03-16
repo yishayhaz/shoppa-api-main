@@ -1,4 +1,4 @@
-use super::common::DBModel;
+use super::common::{DBModel, db_model};
 use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -55,27 +55,7 @@ impl DBModel for User {
     fn get_collection_name() -> &'static str {
         "users"
     }
-    fn created_at(&self) -> DateTime<Utc> {
-        self.created_at
-    }
-    fn updated_at(&self) -> DateTime<Utc> {
-        self.updated_at
-    }
-    fn id(&self) -> Result<&ObjectId, Response> {
-        match &self.id {
-            Some(id) => Ok(id),
-            None => Err(ResponseBuilder::<u16>::error(None, Some(String::from("User id is None")), Some(500)).into_response()),
-        }
-    }
-    fn update_id(&mut self, id: ObjectId) -> () {
-
-        match self.id {
-            Some(_) => return (),
-            None => (),
-        }
-
-        self.id = Some(id);
-    }
+    db_model!(User);
 }
 
 impl User {

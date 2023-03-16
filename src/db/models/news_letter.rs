@@ -1,35 +1,36 @@
 use super::common::{DBModel, db_model};
-use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
-use bson::oid::ObjectId;
 use crate::helpers::types::ResponseBuilder;
-use axum::response::{Response, IntoResponse};
+use axum::response::{IntoResponse, Response};
+use bson::oid::ObjectId;
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Store {
+pub struct NewsLetterSubscriber {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     id: Option<ObjectId>,
     #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
     created_at: DateTime<Utc>,
     #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
     updated_at: DateTime<Utc>,
-    
-    pub name: String,
+
+    pub email: String,
 }
 
-impl DBModel for Store {
+impl DBModel for NewsLetterSubscriber {
     fn get_collection_name() -> &'static str {
-        "stores"
+        "news_letter_subscribers"
     }
-    db_model!(Store);
+    db_model!(NewsLetterSubscriber);
 }
 
-impl Store {
-    pub fn new(name: String) -> Self {
+impl NewsLetterSubscriber {
+    pub fn new(email: String) -> Self {
         Self {
             id: None,
             created_at: Utc::now(),
             updated_at: Utc::now(),
-            name,
+            email
         }
     }
 }
