@@ -1,10 +1,11 @@
 use chrono::{DateTime, Utc};
 use bson::oid::ObjectId;
 use axum::response::Response;
-
+use mongodb::IndexModel;
 
 pub trait DBModel {
     fn get_collection_name() -> &'static str;
+    fn get_indexes() -> Vec<IndexModel>;
     fn created_at(&self) -> DateTime<Utc>;
     fn updated_at(&self) -> DateTime<Utc>;
     fn id(&self) -> Result<&ObjectId, Response>;

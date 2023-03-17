@@ -4,6 +4,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use crate::helpers::types::ResponseBuilder;
 use axum::response::{Response, IntoResponse};
+use mongodb::IndexModel;
 
 #[serde_with::serde_as]
 #[derive(Serialize, Deserialize, Debug)]
@@ -55,6 +56,11 @@ impl DBModel for User {
     fn get_collection_name() -> &'static str {
         "users"
     }
+
+    fn get_indexes() -> Vec<IndexModel> {
+        vec![]
+    }
+
     db_model!(User);
 }
 

@@ -4,6 +4,7 @@ use chrono::{DateTime, Utc};
 use bson::oid::ObjectId;
 use crate::helpers::types::ResponseBuilder;
 use axum::response::{Response, IntoResponse};
+use mongodb::IndexModel;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Store {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
@@ -20,6 +21,11 @@ impl DBModel for Store {
     fn get_collection_name() -> &'static str {
         "stores"
     }
+
+    fn get_indexes() -> Vec<IndexModel> {
+        vec![]
+    }
+
     db_model!(Store);
 }
 

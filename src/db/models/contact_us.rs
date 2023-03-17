@@ -1,3 +1,5 @@
+use std::vec;
+
 use super::common::{DBModel, db_model};
 use crate::helpers::types::ResponseBuilder;
 use axum::response::{IntoResponse, Response};
@@ -5,6 +7,7 @@ use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_repr::{Serialize_repr, Deserialize_repr};
+use mongodb::IndexModel;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ContactUsForm {
@@ -31,6 +34,10 @@ pub enum ContactUsReason {
 impl DBModel for ContactUsForm {
     fn get_collection_name() -> &'static str {
         "contact_us_forms"
+    }
+
+    fn get_indexes() -> Vec<IndexModel> {
+        vec![]
     }
 
     db_model!(ContactUsForm);

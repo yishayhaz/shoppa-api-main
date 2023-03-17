@@ -4,6 +4,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use crate::helpers::types::ResponseBuilder;
 use axum::response::{Response, IntoResponse};
+use mongodb::IndexModel;
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Product {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
@@ -30,6 +32,11 @@ impl DBModel for Product {
     fn get_collection_name() -> &'static str {
         "products"
     }
+
+    fn get_indexes() -> Vec<IndexModel> {
+        vec![]
+    }
+
     db_model!(Product);
 }
 
