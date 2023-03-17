@@ -17,5 +17,7 @@ pub fn create_cookie<'a>(
 
     cookie.set_domain(EnvVars::COOKIE_DOMAIN.get());
 
+    cookie.set_path("/");
+
     cookie
 }
