@@ -10,6 +10,7 @@ pub enum EnvVars {
     MONGODB_URI,
     PORT,
     HOST,
+    COOKIE_DOMAIN
 }
 
 impl EnvVars {
@@ -26,10 +27,12 @@ impl EnvVars {
             Self::MONGODB_URI => env::var("MONGODB_URI").expect("MONGODB_URI must be set"),
             Self::PORT => env::var("PORT").unwrap_or_else(|_| String::from("3000")),
             Self::HOST => env::var("HOST").unwrap_or_else(|_| String::from("127.0.0.1")),
+            Self::COOKIE_DOMAIN => env::var("COOKIE_DOMAIN").expect("COOKIE_DOMAIN must be set")
         }
     }
 
     pub fn validate() {
+        // checking if all the strings have a value
         if Self::ENVIRONMENT.get().is_empty() {
             panic!("ENVIRONMENT must not be empty");
         }
@@ -44,7 +47,10 @@ impl EnvVars {
         }
         else if Self::MONGODB_URI.get().is_empty() {
             panic!("MONGODB_URI must not be empty");
-        };
+        }
+        else if Self::COOKIE_DOMAIN.get().is_empty(){
+            panic!("COOKIE_DOMAIN must not be empty")
+        }
         let port = Self::PORT.get();
         let host = Self::HOST.get();
 
@@ -56,4 +62,9 @@ impl EnvVars {
             panic!("HOST must be a valid IP address");
         };
     }
+
+    pub fn is_production() -> bool {
+        Self::ENVIRONMENT.get().contains("prod")
+    }
+
 }

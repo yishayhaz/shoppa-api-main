@@ -2,7 +2,7 @@ use axum::{Extension, Router};
 use dotenv::dotenv;
 use shopa_api::{api, db, helpers::env::EnvVars};
 use std::sync::Arc;
-
+use tower_cookies::CookieManagerLayer;
 
 #[tokio::main]
 async fn main() {
@@ -18,7 +18,8 @@ async fn main() {
 
     let app = Router::new()
         .nest("/api/v1", api::v1::router())
-        .layer(Extension(db_collections));
+        .layer(Extension(db_collections))
+        .layer(CookieManagerLayer::new());
 
     let address = format!("{}:{}", EnvVars::HOST.get(), EnvVars::PORT.get());
 
