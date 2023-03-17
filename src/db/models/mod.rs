@@ -10,3 +10,4 @@ pub use store::Store;
 pub use product::Product;
 pub use common::DBModel;
 pub use contact_us::{ContactUsForm, ContactUsReason};
+pub use news_letter::NewsLetterSubscriber;

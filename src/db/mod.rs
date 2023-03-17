@@ -1,6 +1,7 @@
 pub mod models;
 pub mod queries;
 pub mod updates;
+pub mod inserts;
 use crate::helpers::env::EnvVars;
 use models::DBModel;
 use mongodb::{
@@ -26,6 +27,7 @@ pub struct DBCollections {
     pub stores: Collection<models::Store>,
     pub products: Collection<models::Product>,
     pub contact_us_form: Collection<models::ContactUsForm>,
+    pub news_letter_subscribers: Collection<models::NewsLetterSubscriber>
 }
 
 impl DBCollections {
@@ -36,12 +38,14 @@ impl DBCollections {
         let stores = db.collection(models::Store::get_collection_name());
         let products = db.collection(models::Product::get_collection_name());
         let contact_us_form = db.collection(models::ContactUsForm::get_collection_name());
+        let news_letter_subscribers = db.collection(models::NewsLetterSubscriber::get_collection_name());
 
         Self {
             users,
             stores,
             products,
-            contact_us_form
+            contact_us_form,
+            news_letter_subscribers
         }
     }
 }
