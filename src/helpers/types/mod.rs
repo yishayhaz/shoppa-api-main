@@ -17,6 +17,8 @@ pub enum HeadKeys {
     CsrfToken,
 }
 
+pub const MAX_COOKIE_EXP: f64 = (u64::pow(2, 31) - 1) as f64;
+
 impl Cookeys {
     pub fn get(&self) -> &str {
         match self {

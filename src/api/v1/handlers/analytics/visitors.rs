@@ -21,7 +21,7 @@ pub async fn add_new_visitor_to_counter(
         None => {
             let cookie = create_cookie(
                 &Cookeys::VisitIndicator,
-                "visited=true",
+                String::from("visited=true"),
                 // one day
                 86400.0,
                 true,

@@ -35,8 +35,8 @@ impl EnvVars {
         // checking if all the strings have a value
         if Self::ENVIRONMENT.get().is_empty() {
             panic!("ENVIRONMENT must not be empty");
-        } else if Self::LOGIN_TOKEN_SECRET.get().is_empty() {
-            panic!("LOGIN_TOKEN_SECRET must not be empty");
+        } else if Self::LOGIN_TOKEN_SECRET.get().len() != 32 {
+            panic!("LOGIN_TOKEN_SECRET must be of length 32");
         } else if Self::CSRF_SECRET.get().is_empty() {
             panic!("CSRF_SECRET must not be empty");
         } else if Self::DB_NAME.get().is_empty() {
