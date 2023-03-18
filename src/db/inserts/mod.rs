@@ -1,7 +1,10 @@
 mod contact_us;
 mod news_letter;
+mod sites_visite;
+
 pub use contact_us::*;
 pub use news_letter::*;
+pub use sites_visite::*;
 
 use crate::helpers::types::ResponseBuilder;
 use axum::response::{IntoResponse, Response};

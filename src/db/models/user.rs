@@ -25,8 +25,8 @@ pub struct User {
     #[serde(skip_serializing_if = "Option::is_none", default)]
     #[serde_as(as = "Option<bson::DateTime>")]
     pub date_of_birth: Option<DateTime<Utc>>,
-    pub address: Option<Vec<String>>,
-    pub credit_cards: Option<Vec<String>>,
+    pub address: Vec<Address>,
+    pub credit_cards: Vec<CreditCard>,
     pub cart: Cart,
 }
 
@@ -45,11 +45,29 @@ pub struct CartItem {
 }
 
 
-
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Genders {
     Male,
     Female,
+}
+
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Address {
+
+    pub id: String,
+    pub name: String,
+    pub default: bool,
+    pub deleted: bool
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CreditCard {
+
+    pub id: String,
+    pub name: String,
+    pub default: bool,
+    pub deleted: bool
 }
 
 impl DBModel for User {
@@ -77,8 +95,8 @@ impl User {
             password: None,
             gender: None,
             date_of_birth: None,
-            address: None,
-            credit_cards: None,
+            address: vec![],
+            credit_cards: vec![],
             cart: Cart::new(),
         }
     }

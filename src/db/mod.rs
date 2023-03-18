@@ -28,6 +28,7 @@ pub struct DBCollections {
     pub products: Collection<models::Product>,
     pub contact_us_form: Collection<models::ContactUsForm>,
     pub news_letter_subscribers: Collection<models::NewsLetterSubscriber>,
+    pub site_visits: Collection<models::SiteVisit>,
 }
 
 impl DBCollections {
@@ -40,6 +41,7 @@ impl DBCollections {
         let contact_us_form = db.collection(models::ContactUsForm::get_collection_name());
         let news_letter_subscribers =
             db.collection(models::NewsLetterSubscriber::get_collection_name());
+        let site_visits = db.collection(models::SiteVisit::get_collection_name());
 
         Self {
             users,
@@ -47,6 +49,7 @@ impl DBCollections {
             products,
             contact_us_form,
             news_letter_subscribers,
+            site_visits
         }
     }
 
@@ -110,5 +113,18 @@ impl DBCollections {
                 .await
                 .expect("Faild to create news letter subscribers indexes");
         }
+
+        let site_visit_indexes = models::SiteVisit::get_indexes();
+
+        if site_visit_indexes.len() > 0 {
+            let _ = self.site_visits.drop_indexes(None).await;
+
+            let _ = self
+                .site_visits
+                .create_indexes(site_visit_indexes, None)
+                .await
+                .expect("Faild to create site visits indexes");
+        }
+
     }
 }
