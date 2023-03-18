@@ -4,7 +4,7 @@ use axum::response::{IntoResponse, Response};
 use bson::{doc, oid::ObjectId};
 use chrono::{DateTime, Utc};
 use mongodb::{options::IndexOptions, IndexModel};
-use serde::{Deserialize, Serialize, __private::doc};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct NewsLetterSubscriber {

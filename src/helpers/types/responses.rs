@@ -36,7 +36,6 @@ impl<T: Serialize> ResponseBuilder<T> {
     }
 
     pub fn error(content: Option<T>, message: Option<String>, code: Option<u16>) -> Self {
-        
         let code = match code {
             Some(code) => {
                 if code < 400 || code > 599 {
@@ -57,7 +56,6 @@ impl<T: Serialize> ResponseBuilder<T> {
     }
 
     pub fn validation_error(content: Option<T>, message: Option<String>) -> Self {
-
         let message = match message {
             Some(message) => message,
             None => String::from("Validation error"),

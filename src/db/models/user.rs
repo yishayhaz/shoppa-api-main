@@ -1,10 +1,10 @@
-use super::common::{DBModel, db_model};
+use super::common::{db_model, DBModel};
+use crate::helpers::types::ResponseBuilder;
+use axum::response::{IntoResponse, Response};
 use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use crate::helpers::types::ResponseBuilder;
-use axum::response::{Response, IntoResponse};
 use mongodb::IndexModel;
+use serde::{Deserialize, Serialize};
 
 #[serde_with::serde_as]
 #[derive(Serialize, Deserialize, Debug)]
@@ -44,30 +44,26 @@ pub struct CartItem {
     pub quantity: i32,
 }
 
-
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Genders {
     Male,
     Female,
 }
 
-
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Address {
-
     pub id: String,
     pub name: String,
     pub default: bool,
-    pub deleted: bool
+    pub deleted: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CreditCard {
-
     pub id: String,
     pub name: String,
     pub default: bool,
-    pub deleted: bool
+    pub deleted: bool,
 }
 
 impl DBModel for User {

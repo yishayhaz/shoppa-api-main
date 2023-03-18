@@ -1,10 +1,10 @@
-use super::common::{DBModel, db_model};
-use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
-use bson::oid::ObjectId;
+use super::common::{db_model, DBModel};
 use crate::helpers::types::ResponseBuilder;
-use axum::response::{Response, IntoResponse};
+use axum::response::{IntoResponse, Response};
+use bson::oid::ObjectId;
+use chrono::{DateTime, Utc};
 use mongodb::IndexModel;
+use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug)]
 
 pub struct SiteVisit {
@@ -15,7 +15,7 @@ pub struct SiteVisit {
     #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
     updated_at: DateTime<Utc>,
 
-    pub ip_address: String
+    pub ip_address: String,
 }
 
 impl DBModel for SiteVisit {
@@ -36,7 +36,7 @@ impl SiteVisit {
             id: None,
             created_at: Utc::now(),
             updated_at: Utc::now(),
-            ip_address
+            ip_address,
         }
     }
 }

@@ -47,7 +47,9 @@ impl IntoResponse for JsonValidationError {
                 )
                 .into_response(),
             },
-            Self::JsonValidation(e) => ResponseBuilder::validation_error(Some(e), None).into_response(),
+            Self::JsonValidation(e) => {
+                ResponseBuilder::validation_error(Some(e), None).into_response()
+            }
         }
     }
 }

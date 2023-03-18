@@ -1,10 +1,11 @@
-use crate::db::models;
-use crate::helpers::types::ResponseBuilder;
-use crate::helpers::types::DBExtension;
+use crate::{
+    db::models,
+    helpers::types::{DBExtension, ResponseBuilder},
+};
 use axum::response::IntoResponse;
+use axum::response::Response;
 use bson::{doc, oid::ObjectId, Document};
 use mongodb::options::FindOneOptions;
-use axum::response::Response;
 
 type GetUserResult = Result<Option<models::User>, Response>;
 
@@ -20,7 +21,8 @@ async fn get_user(
                 None,
                 Some(String::from("Internal Server Error while fetching user")),
                 Some(500),
-            ).into_response())
+            )
+            .into_response())
         }
     };
 

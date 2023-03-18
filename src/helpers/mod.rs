@@ -4,4 +4,3 @@ pub mod types;
 pub mod json;
 pub mod security;
 pub mod cookies;
-pub mod ip_address;

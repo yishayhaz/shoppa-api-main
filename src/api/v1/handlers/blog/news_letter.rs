@@ -1,8 +1,10 @@
 use super::types;
-use crate::db::inserts;
-use crate::helpers::{
-    json::JsonWithValidation,
-    types::{DBExtension, HandlerResponse, ResponseBuilder},
+use crate::{
+    db::inserts,
+    helpers::{
+        json::JsonWithValidation,
+        types::{DBExtension, HandlerResponse, ResponseBuilder},
+    },
 };
 use axum::response::IntoResponse;
 

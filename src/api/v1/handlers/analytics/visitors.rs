@@ -1,8 +1,10 @@
-use crate::db::inserts;
-use crate::helpers::{
-    cookies::create_cookie,
-    ip_address::ClientIpAddress,
-    types::{Cookeys, DBExtension, HandlerResponse, ResponseBuilder},
+use crate::{
+    api::v1::middlewares::ClientIpAddress,
+    db::inserts,
+    helpers::{
+        cookies::create_cookie,
+        types::{Cookeys, DBExtension, HandlerResponse, ResponseBuilder},
+    },
 };
 use axum::response::IntoResponse;
 use tower_cookies::Cookies;

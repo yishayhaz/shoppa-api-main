@@ -1,6 +1,7 @@
-use crate::db::models::{DBModel, User};
-use crate::helpers::env::EnvVars;
-use crate::helpers::types::ResponseBuilder;
+use crate::{
+    db::models::{DBModel, User},
+    helpers::{env::EnvVars, types::ResponseBuilder},
+};
 use axum::response::{IntoResponse, Response};
 use chrono::Utc;
 use rusty_paseto::prelude::*;
@@ -8,8 +9,8 @@ use serde::{Deserialize, Serialize};
 use std::error::Error;
 
 lazy_static! {
-    static ref JWT_LOGIN_KEY: PasetoSymmetricKey<V4, Local> =
-        PasetoSymmetricKey::from(Key::from(EnvVars::JWT_LOGIN_SECRET.get().as_bytes()));
+    static ref LOGIN_TOKEN_KEY: PasetoSymmetricKey<V4, Local> =
+        PasetoSymmetricKey::from(Key::from(EnvVars::LOGIN_TOKEN_SECRET.get().as_bytes()));
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -31,7 +32,7 @@ pub fn generate_login_token(user: &User) -> Result<String, Response> {
             .set_claim(ExpirationClaim::try_from(in_90_days)?)
             .set_claim(IssuerClaim::try_from("main-api")?)
             .set_claim(CustomClaim::try_from(("payload", token_data))?)
-            .build(&JWT_LOGIN_KEY)?;
+            .build(&LOGIN_TOKEN_KEY)?;
 
         Ok(token)
     };
@@ -58,7 +59,7 @@ pub fn verify_login_token(token: &str) -> Result<LoginTokenData, Response> {
     )
     .into_response());
 
-    let token_data = match PasetoParser::<V4, Local>::default().parse(token, &JWT_LOGIN_KEY) {
+    let token_data = match PasetoParser::<V4, Local>::default().parse(token, &LOGIN_TOKEN_KEY) {
         Ok(token) => token,
         Err(_) => return invalid_token_response,
     };

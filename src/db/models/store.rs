@@ -1,10 +1,10 @@
-use super::common::{DBModel, db_model};
-use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
-use bson::oid::ObjectId;
+use super::common::{db_model, DBModel};
 use crate::helpers::types::ResponseBuilder;
-use axum::response::{Response, IntoResponse};
+use axum::response::{IntoResponse, Response};
+use bson::oid::ObjectId;
+use chrono::{DateTime, Utc};
 use mongodb::IndexModel;
+use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Store {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
@@ -13,7 +13,7 @@ pub struct Store {
     created_at: DateTime<Utc>,
     #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
     updated_at: DateTime<Utc>,
-    
+
     pub name: String,
 }
 

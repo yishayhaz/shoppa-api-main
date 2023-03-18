@@ -1,10 +1,13 @@
-use super::{common::{DBModel, db_model}, store::Store};
+use super::{
+    common::{db_model, DBModel},
+    store::Store,
+};
+use crate::helpers::types::ResponseBuilder;
+use axum::response::{IntoResponse, Response};
 use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use crate::helpers::types::ResponseBuilder;
-use axum::response::{Response, IntoResponse};
 use mongodb::IndexModel;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Product {

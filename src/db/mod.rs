@@ -49,7 +49,7 @@ impl DBCollections {
             products,
             contact_us_form,
             news_letter_subscribers,
-            site_visits
+            site_visits,
         }
     }
 
@@ -125,6 +125,5 @@ impl DBCollections {
                 .await
                 .expect("Faild to create site visits indexes");
         }
-
     }
 }

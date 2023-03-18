@@ -1,4 +1,4 @@
-use crate::helpers::{types::Cookeys, env::EnvVars};
+use crate::helpers::{env::EnvVars, types::Cookeys};
 use tower_cookies::{cookie::time::Duration, Cookie};
 
 pub fn create_cookie<'a>(

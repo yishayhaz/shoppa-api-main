@@ -1,6 +1,7 @@
 use axum::Router;
 
 mod handlers;
+mod middlewares;
 
 pub fn router() -> Router {
     Router::new()
