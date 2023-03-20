@@ -22,29 +22,29 @@ impl IntoResponse for JsonValidationError {
             Self::JsonError(e) => match e {
                 JsonRejection::BytesRejection(e) => ResponseBuilder::validation_error(
                     Some(e.to_string()),
-                    Some(String::from("bytes error")),
+                    Some("bytes error"),
                 )
                 .into_response(),
                 JsonRejection::JsonSyntaxError(e) => ResponseBuilder::validation_error(
                     Some(e.to_string()),
-                    Some(String::from("deserialize error")),
+                    Some("deserialize error"),
                 )
                 .into_response(),
                 JsonRejection::MissingJsonContentType(e) => ResponseBuilder::validation_error(
                     Some(e.to_string()),
-                    Some(String::from("content type error")),
+                    Some("content type error"),
                 )
                 .into_response(),
                 JsonRejection::JsonDataError(e) => ResponseBuilder::validation_error(
                     Some(e.to_string()),
-                    Some(String::from("missing header error")),
+                    Some("missing header error"),
                 )
                 .into_response(),
                 _ => ResponseBuilder::error(
                     // TODO add error code here
                     "",
                     Some(e.to_string()),
-                    Some(String::from("unknown error")),
+                    Some("unknown error"),
                     Some(500),
                 )
                 .into_response(),

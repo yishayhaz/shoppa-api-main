@@ -43,9 +43,7 @@ pub fn generate_login_token(user: &User) -> Result<String, Response> {
             // TODO add error code here
             "",
             None,
-            Some(String::from(
-                "Internal Server Error while generating login token",
-            )),
+            Some("Internal Server Error while generating login token"),
             Some(500),
         )
         .into_response()),
@@ -58,7 +56,7 @@ pub fn verify_login_token(token: &str) -> Result<LoginTokenData, Response> {
         // TODO add error code here
         "",
         None,
-        Some(String::from("Invalid login token")),
+        Some("Invalid login token"),
         Some(401),
     )
     .into_response());

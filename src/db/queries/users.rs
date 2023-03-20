@@ -21,7 +21,7 @@ async fn get_user(
                 // TODO add error code here
                 "",
                 None,
-                Some(String::from("Internal Server Error while fetching user")),
+                Some("Internal Server Error while fetching user"),
                 Some(500),
             )
             .into_response())

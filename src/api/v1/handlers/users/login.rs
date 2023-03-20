@@ -20,7 +20,7 @@ pub async fn login(
 
     let user_not_found =
     //TODO add error code here
-        ResponseBuilder::<u16>::error("", None, Some(String::from("User not found")), Some(404))
+        ResponseBuilder::<u16>::error("", None, Some("User not found"), Some(404))
             .into_response();
 
     let user = match user {

@@ -17,7 +17,7 @@ pub fn hash_password(password: &str) -> Result<String, Response> {
                 // TODO add error code here
                 "",
                 None,
-                Some(String::from("Internal Server Error while hashing password")),
+                Some("Internal Server Error while hashing password"),
                 Some(500),
             )
             .into_response())
@@ -36,9 +36,7 @@ pub fn verify_password(password: &str, hash_password: &str) -> Result<bool, Resp
                 // TODO add error code here
                 "",
                 None,
-                Some(String::from(
-                    "Internal Server Error while parsing password hash",
-                )),
+                Some("Internal Server Error while parsing password hash"),
                 Some(500),
             )
             .into_response())

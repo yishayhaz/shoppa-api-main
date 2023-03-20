@@ -8,6 +8,8 @@ pub use sites_visite::*;
 
 use crate::helpers::types::ResponseBuilder;
 use axum::response::{IntoResponse, Response};
+use mongodb::error::{ErrorKind, WriteFailure};
+
 pub enum InsertDocumentErrors {
     UnknownError,
     AlredyExists,
@@ -20,7 +22,7 @@ impl IntoResponse for InsertDocumentErrors {
                 // TODO add error code here
                 "",
                 None,
-                Some(String::from("Unknown error while saving document")),
+                Some("Unknown error while saving document"),
                 None,
             )
             .into_response(),
@@ -28,10 +30,27 @@ impl IntoResponse for InsertDocumentErrors {
                 // TODO add error code here
                 "",
                 None,
-                Some(String::from("Document alredy exists")),
+                Some("Document alredy exists"),
                 Some(409),
             )
             .into_response(),
         }
     }
+}
+
+pub fn extract_insert_document_error(error: ErrorKind) -> InsertDocumentErrors {
+    match error {
+        ErrorKind::Write(e) => match e {
+            WriteFailure::WriteConcernError(_) => {}
+            WriteFailure::WriteError(we) => {
+                if we.code == 11000 {
+                    return InsertDocumentErrors::AlredyExists;
+                }
+            }
+            _ => {}
+        },
+        _ => {}
+    };
+
+    InsertDocumentErrors::UnknownError
 }

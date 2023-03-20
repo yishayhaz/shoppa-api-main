@@ -8,14 +8,14 @@ use serde_json::json;
 #[derive(Serialize, Deserialize)]
 pub struct ResponseBuilder<T: Serialize> {
     code: u16,
-    message: Option<String>,
+    message: Option<&'static str>,
     success: bool,
     content: Option<T>,
     error_code: Option<&'static str>,
 }
 
 impl<T: Serialize> ResponseBuilder<T> {
-    pub fn success(content: Option<T>, message: Option<String>, code: Option<u16>) -> Self {
+    pub fn success(content: Option<T>, message: Option<&'static str>, code: Option<u16>) -> Self {
         let code = match code {
             Some(code) => {
                 if code < 200 || code > 299 {
@@ -39,7 +39,7 @@ impl<T: Serialize> ResponseBuilder<T> {
     pub fn error(
         error_code: &'static str,
         content: Option<T>,
-        message: Option<String>,
+        message: Option<&'static str>,
         code: Option<u16>,
     ) -> Self {
         let code = match code {
@@ -62,10 +62,10 @@ impl<T: Serialize> ResponseBuilder<T> {
         }
     }
 
-    pub fn validation_error(content: Option<T>, message: Option<String>) -> Self {
+    pub fn validation_error(content: Option<T>, message: Option<&'static str>) -> Self {
         let message = match message {
             Some(message) => message,
-            None => String::from("Validation error"),
+            None => "Validation error",
         };
 
         Self {

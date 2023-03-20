@@ -33,7 +33,7 @@ where
                     // TODO add eror code here
                     "",
                     None,
-                    Some(String::from("faild to get client IpAddress")),
+                    Some("faild to get client IpAddress"),
                     Some(500),
                 )
                 .into_response(),
