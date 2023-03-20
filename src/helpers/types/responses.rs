@@ -7,12 +7,10 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 #[derive(Serialize, Deserialize)]
 pub struct ResponseBuilder<T: Serialize> {
-    #[serde(skip)]
     code: u16,
     message: Option<String>,
     success: bool,
     content: Option<T>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     error_code: Option<&'static str>,
 }
 
@@ -39,7 +37,7 @@ impl<T: Serialize> ResponseBuilder<T> {
     }
 
     pub fn error(
-        error_code: &str,
+        error_code: &'static str,
         content: Option<T>,
         message: Option<String>,
         code: Option<u16>,
@@ -82,15 +80,23 @@ impl<T: Serialize> ResponseBuilder<T> {
 
 impl<T: Serialize> IntoResponse for ResponseBuilder<T> {
     fn into_response(self) -> Response {
-        let content = serde_json::to_value(self).unwrap_or_else(|_| {
-            self.code = 500;
-
-            return json!({
-                "success": false,
-                "message": "faild serializing body",
-                "content": null
-            });
-        });
+        let content = match self.error_code {
+            Some(_) => json!(
+                {
+                    "message": self.message,
+                    "success": self.success,
+                    "content": self.content,
+                    "error_code": self.error_code
+                }
+            ),
+            None => json!(
+                {
+                    "message": self.message,
+                    "success": self.success,
+                    "content": self.content
+                }
+            ),
+        };
 
         let code = StatusCode::from_u16(self.code).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
 

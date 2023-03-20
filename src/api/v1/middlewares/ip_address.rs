@@ -30,6 +30,8 @@ where
             .map(Self)
             .ok_or(
                 ResponseBuilder::<u16>::error(
+                    // TODO add eror code here
+                    "",
                     None,
                     Some(String::from("faild to get client IpAddress")),
                     Some(500),

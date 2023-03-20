@@ -19,7 +19,8 @@ pub async fn login(
     let user = queries::get_user_by_email(&db, payload.email).await?;
 
     let user_not_found =
-        ResponseBuilder::<u16>::error(None, Some(String::from("User not found")), Some(404))
+    //TODO add error code here
+        ResponseBuilder::<u16>::error("", None, Some(String::from("User not found")), Some(404))
             .into_response();
 
     let user = match user {
