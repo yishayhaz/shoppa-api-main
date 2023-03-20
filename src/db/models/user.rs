@@ -1,3 +1,5 @@
+use std::io::Seek;
+
 use super::common::{db_model, DBModel};
 use crate::helpers::types::ResponseBuilder;
 use axum::response::{IntoResponse, Response};
@@ -79,16 +81,35 @@ impl DBModel for User {
 }
 
 impl User {
-    pub fn new() -> Self {
+    pub fn new(
+        email: Option<String>,
+        password: Option<String>,
+        name: Option<String>,
+        level: i32,
+    ) -> Self {
+        if level > 3 {
+            panic!("Level must be lower then 3")
+        };
+
+        if level > 1 {
+            if password.is_none() {
+                panic!("If level is greater then 1 you must provide a passowrd")
+            } else if email.is_none() {
+                panic!("If level is greater then 1 you must provide a email")
+            } else if name.is_none() {
+                panic!("If level is greater then 1 you must provide a username")
+            }
+        };
+
         Self {
             id: None,
             created_at: Utc::now(),
             updated_at: Utc::now(),
             level: 1,
-            name: None,
-            email: None,
+            name: name,
+            email: email,
             phone_number: None,
-            password: None,
+            password: password,
             gender: None,
             date_of_birth: None,
             address: vec![],

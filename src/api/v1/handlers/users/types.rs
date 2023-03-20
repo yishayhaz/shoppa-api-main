@@ -16,7 +16,7 @@ pub struct UserRegisterPayload {
     pub email: String,
     #[validate(custom = "password_validator")]
     pub password: String,
-    #[validate(custom = "phone_number_validator")]
+    #[validate(custom = "username_validator")]
     pub name: String,
 }
 
@@ -24,7 +24,7 @@ pub struct UserRegisterPayload {
 pub struct UserUpdatePayload {
     pub email: String,
     pub phone_number: String,
-    pub name: String,
+    pub username: String,
 }
 
 #[derive(Deserialize, Serialize, Validate)]
@@ -39,7 +39,7 @@ impl Validate for UserUpdatePayload {
     fn validate(&self) -> Result<(), ValidationErrors> {
         let mut errors = ValidationErrors::new();
 
-        if self.email.is_empty() && self.phone_number.is_empty() && self.name.is_empty() {
+        if self.email.is_empty() && self.phone_number.is_empty() && self.username.is_empty() {
             errors.add(
                 "email",
                 ValidationError::new("At least one of the fields is required"),
@@ -68,9 +68,9 @@ impl Validate for UserUpdatePayload {
             }
         }
 
-        if !self.name.is_empty() {
+        if !self.username.is_empty() {
             // I want to get the predefined error message from the username_validator function
-            let valid = username_validator(&self.name);
+            let valid = username_validator(&self.username);
             if valid.is_err() {
                 errors.add("name", valid.err().unwrap());
             }
