@@ -18,6 +18,8 @@ async fn get_user(
         Ok(user) => user,
         Err(_) => {
             return Err(ResponseBuilder::<u16>::error(
+                // TODO add error code here
+                "",
                 None,
                 Some(String::from("Internal Server Error while fetching user")),
                 Some(500),

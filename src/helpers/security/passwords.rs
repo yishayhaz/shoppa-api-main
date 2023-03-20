@@ -14,6 +14,8 @@ pub fn hash_password(password: &str) -> Result<String, Response> {
         Ok(v) => v,
         Err(_) => {
             return Err(ResponseBuilder::<u16>::error(
+                // TODO add error code here
+                "",
                 None,
                 Some(String::from("Internal Server Error while hashing password")),
                 Some(500),
@@ -31,6 +33,8 @@ pub fn verify_password(password: &str, hash_password: &str) -> Result<bool, Resp
         Ok(v) => v,
         Err(_) => {
             return Err(ResponseBuilder::<u16>::error(
+                // TODO add error code here
+                "",
                 None,
                 Some(String::from(
                     "Internal Server Error while parsing password hash",

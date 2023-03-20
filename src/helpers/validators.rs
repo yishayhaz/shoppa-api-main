@@ -1,5 +1,5 @@
 use std::borrow::Cow;
-
+use super::types::error_code;
 use validator::ValidationError;
 
 const MAX_USERNAME_LENGTH: usize = 64;
@@ -10,7 +10,7 @@ pub fn valid_phone_number(phone_number: &str) -> bool {
     if phone_number.len() != 12 {
         return false;
     }
-    // TODO: in v2 add support for other countries
+    // TODO in v2 add support for other countries
     if !phone_number.starts_with("+9725") {
         return false;
     }
@@ -69,7 +69,7 @@ pub fn valid_username(username: &str) -> bool {
 
 pub fn phone_number_validator(phone_number: &str) -> Result<(), ValidationError> {
     if !valid_phone_number(phone_number) {
-        let mut error = ValidationError::new("1");
+        let mut error = ValidationError::new(error_code::INVALID_PHONE_NUMBER);
 
         error.message = Some(Cow::from("Invalid phone number"));
 
@@ -80,7 +80,7 @@ pub fn phone_number_validator(phone_number: &str) -> Result<(), ValidationError>
 
 pub fn password_validator(password: &str) -> Result<(), ValidationError> {
     if !valid_password(password) {
-        let mut error = ValidationError::new("2");
+        let mut error = ValidationError::new(error_code::INVALID_PASSWORD);
 
         error.message = Some(Cow::from("Invalid password, must be between 8 and 64 characters long, contain at least one letter and one number"));
 
@@ -91,7 +91,7 @@ pub fn password_validator(password: &str) -> Result<(), ValidationError> {
 
 pub fn username_validator(username: &str) -> Result<(), ValidationError> {
     if !valid_username(username) {
-        let mut error = ValidationError::new("3");
+        let mut error = ValidationError::new(error_code::INVALID_USERNAME);
 
         error.message = Some(Cow::from("Invalid username, must be between 5 and 64 characters long, contain at least two words, each word must be at least 2 characters long and contain only letters"));
 

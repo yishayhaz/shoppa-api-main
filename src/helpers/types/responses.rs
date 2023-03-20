@@ -5,13 +5,15 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-
 #[derive(Serialize, Deserialize)]
 pub struct ResponseBuilder<T: Serialize> {
+    #[serde(skip)]
     code: u16,
     message: Option<String>,
     success: bool,
     content: Option<T>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    error_code: Option<&'static str>,
 }
 
 impl<T: Serialize> ResponseBuilder<T> {
@@ -32,10 +34,16 @@ impl<T: Serialize> ResponseBuilder<T> {
             message,
             success: true,
             content,
+            error_code: None,
         }
     }
 
-    pub fn error(content: Option<T>, message: Option<String>, code: Option<u16>) -> Self {
+    pub fn error(
+        error_code: &str,
+        content: Option<T>,
+        message: Option<String>,
+        code: Option<u16>,
+    ) -> Self {
         let code = match code {
             Some(code) => {
                 if code < 400 || code > 599 {
@@ -52,6 +60,7 @@ impl<T: Serialize> ResponseBuilder<T> {
             message,
             success: false,
             content,
+            error_code: Some(error_code),
         }
     }
 
@@ -66,16 +75,21 @@ impl<T: Serialize> ResponseBuilder<T> {
             message: Some(message),
             success: false,
             content,
+            error_code: None,
         }
     }
 }
 
 impl<T: Serialize> IntoResponse for ResponseBuilder<T> {
     fn into_response(self) -> Response {
-        let content = json!({
-            "message": self.message,
-            "success": self.success,
-            "content": self.content
+        let content = serde_json::to_value(self).unwrap_or_else(|_| {
+            self.code = 500;
+
+            return json!({
+                "success": false,
+                "message": "faild serializing body",
+                "content": null
+            });
         });
 
         let code = StatusCode::from_u16(self.code).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);

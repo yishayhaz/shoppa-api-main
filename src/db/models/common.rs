@@ -25,7 +25,8 @@ macro_rules! db_model {
         fn id(&self) -> Result<&ObjectId, Response> {
             match &self.id {
                 Some(id) => Ok(id),
-                None => Err(ResponseBuilder::<u16>::error(None, Some(String::from(concat!(stringify!($Self), " id is None"))), Some(500)).into_response()),
+                // TODO add error code here
+                None => Err(ResponseBuilder::<u16>::error("", None, Some(String::from(concat!(stringify!($Self), " id is None"))), Some(500)).into_response()),
             }
         }
 

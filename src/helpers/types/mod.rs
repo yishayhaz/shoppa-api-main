@@ -1,3 +1,4 @@
+pub mod error_code;
 mod responses;
 pub use responses::*;
 

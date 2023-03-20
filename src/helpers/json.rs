@@ -41,6 +41,8 @@ impl IntoResponse for JsonValidationError {
                 )
                 .into_response(),
                 _ => ResponseBuilder::error(
+                    // TODO add error code here
+                    "",
                     Some(e.to_string()),
                     Some(String::from("unknown error")),
                     Some(500),

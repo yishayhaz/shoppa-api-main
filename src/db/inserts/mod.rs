@@ -17,12 +17,16 @@ impl IntoResponse for InsertDocumentErrors {
     fn into_response(self) -> Response {
         match self {
             Self::UnknownError => ResponseBuilder::<u16>::error(
+                // TODO add error code here
+                "",
                 None,
                 Some(String::from("Unknown error while saving document")),
                 None,
             )
             .into_response(),
             Self::AlredyExists => ResponseBuilder::<u16>::error(
+                // TODO add error code here
+                "",
                 None,
                 Some(String::from("Document alredy exists")),
                 Some(409),

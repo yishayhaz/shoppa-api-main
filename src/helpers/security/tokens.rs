@@ -40,6 +40,8 @@ pub fn generate_login_token(user: &User) -> Result<String, Response> {
     match token_builder() {
         Ok(token) => Ok(token),
         Err(_) => Err(ResponseBuilder::<u16>::error(
+            // TODO add error code here
+            "",
             None,
             Some(String::from(
                 "Internal Server Error while generating login token",
@@ -53,6 +55,8 @@ pub fn generate_login_token(user: &User) -> Result<String, Response> {
 pub fn verify_login_token(token: &str) -> Result<LoginTokenData, Response> {
     // TODO remove cookie when token is invalid
     let invalid_token_response = Err(ResponseBuilder::<u16>::error(
+        // TODO add error code here
+        "",
         None,
         Some(String::from("Invalid login token")),
         Some(401),
