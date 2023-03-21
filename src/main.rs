@@ -1,6 +1,9 @@
 use axum::{Extension, Router};
 use dotenv::dotenv;
-use shopa_api::{api, db, helpers::env::EnvVars};
+use shoppa_api::{
+    api, db,
+    helpers::{env::EnvVars, security::get_cors_layer},
+};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tower_cookies::CookieManagerLayer;
@@ -20,7 +23,8 @@ async fn main() {
     let app = Router::new()
         .nest("/api/v1", api::v1::router())
         .layer(Extension(db_collections))
-        .layer(CookieManagerLayer::new());
+        .layer(CookieManagerLayer::new())
+        .layer(get_cors_layer());
 
     let address = format!("{}:{}", EnvVars::HOST.get(), EnvVars::PORT.get());
 
