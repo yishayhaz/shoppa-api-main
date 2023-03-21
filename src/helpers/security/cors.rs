@@ -1,27 +1,25 @@
 use crate::helpers::env::EnvVars;
-use tower_http::cors::CorsLayer;
+use http::{request::Parts as RequestParts, HeaderValue};
+use tower_http::cors::{CorsLayer, AllowOrigin};
 
 pub fn get_cors_layer() -> CorsLayer {
-    let mut schema = "http://";
-
-    if EnvVars::is_production() {
-        schema = "https://";
-    };
-
-    let origins = [format!("{}{}", schema, EnvVars::COOKIE_DOMAIN.get())
-        .parse()
-        .unwrap()];
-
     let methods = [
         "POST".parse().unwrap(),
         "GET".parse().unwrap(),
         "PUT".parse().unwrap(),
         "PATCH".parse().unwrap(),
         "DELETE".parse().unwrap(),
+        "OPTIONS".parse().unwrap(),
     ];
 
-    CorsLayer::new()
+    let cors = CorsLayer::new()
         .allow_methods(methods)
         .allow_credentials(true)
-        .allow_origin(origins)
+        .allow_origin(AllowOrigin::predicate(
+        |origin: &HeaderValue, _request_parts: &RequestParts| {
+            origin.as_bytes().ends_with(EnvVars::COOKIE_DOMAIN.get().as_bytes())
+        },
+    ));
+
+    cors
 }

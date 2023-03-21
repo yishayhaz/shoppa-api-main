@@ -12,6 +12,7 @@ pub enum Cookeys {
     AccessToken,
     CsrfToken,
     VisitIndicator,
+    DebugingCookie
 }
 
 pub enum HeadKeys {
@@ -26,6 +27,7 @@ impl Cookeys {
             Self::AccessToken => "bribed_pigeon_here",
             Self::CsrfToken => "a_delicious_pigeon",
             Self::VisitIndicator => "familiar_pigeon",
+            Self::DebugingCookie => "lab_pigeon"
         }
     }
 }

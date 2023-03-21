@@ -1760,6 +1760,7 @@ dependencies = [
  "bson",
  "chrono",
  "dotenv",
+ "http",
  "lazy_static",
  "mongodb",
  "rusty_paseto",
