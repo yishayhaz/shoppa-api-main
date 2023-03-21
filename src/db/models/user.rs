@@ -1,5 +1,3 @@
-use std::io::Seek;
-
 use super::common::{db_model, DBModel};
 use crate::helpers::types::ResponseBuilder;
 use axum::response::{IntoResponse, Response};
@@ -7,6 +5,7 @@ use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use mongodb::IndexModel;
 use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 
 #[serde_with::serde_as]
 #[derive(Serialize, Deserialize, Debug)]
@@ -106,16 +105,38 @@ impl User {
             created_at: Utc::now(),
             updated_at: Utc::now(),
             level: 1,
-            name: name,
-            email: email,
+            name,
+            email,
             phone_number: None,
-            password: password,
+            password,
             gender: None,
             date_of_birth: None,
             address: vec![],
             credit_cards: vec![],
             cart: Cart::new(),
         }
+    }
+
+    fn date_of_birth_as_string(&self) -> Option<String> {
+
+        match self.date_of_birth {
+            Some(date) => Some(date.to_string()),
+            None => None
+        }
+    }
+
+    pub fn to_get_me(&self) -> Result<Value, Response> {
+        Ok(json!({
+            "_id": self.id()?.to_string(),
+            "cart": self.cart,
+            "gender": self.gender,
+            "phone_number": self.phone_number,
+            "level": self.level,
+            "address": self.address,
+            "email": self.email,
+            "created_at": self.created_at().to_string(),
+            "date_of_birth": self.date_of_birth_as_string()
+        }))
     }
 }
 

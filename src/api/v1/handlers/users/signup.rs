@@ -34,7 +34,7 @@ pub async fn signup(
         },
     };
 
-    Ok(ResponseBuilder::success(Some(""), None, None).into_response())
+    Ok(ResponseBuilder::success(Some(user.to_get_me()?), None, None).into_response())
 }
 
 pub async fn signup_level_1() {}
