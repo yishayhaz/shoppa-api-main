@@ -106,7 +106,7 @@ pub fn get_cors_layer() -> CorsLayer {
             |origin: &HeaderValue, _request_parts: &RequestParts| {
                 origin
                     .as_bytes()
-                    .ends_with(EnvVars::COOKIE_DOMAIN.get().as_bytes())
+                    .ends_with(EnvVars::CORS_DOMAIN.get().as_bytes())
             },
         ))
         .allow_headers(AllowHeaders::list(headers))

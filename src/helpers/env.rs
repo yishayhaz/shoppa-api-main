@@ -11,6 +11,7 @@ pub enum EnvVars {
     PORT,
     HOST,
     COOKIE_DOMAIN,
+    CORS_DOMAIN
 }
 
 impl EnvVars {
@@ -28,6 +29,7 @@ impl EnvVars {
             Self::PORT => env::var("PORT").unwrap_or_else(|_| String::from("3000")),
             Self::HOST => env::var("HOST").unwrap_or_else(|_| String::from("127.0.0.1")),
             Self::COOKIE_DOMAIN => env::var("COOKIE_DOMAIN").expect("COOKIE_DOMAIN must be set"),
+            Self::CORS_DOMAIN => env::var("CORS_DOMAIN").expect("CORS_DOMAIN must be set")
         }
     }
 
@@ -45,6 +47,8 @@ impl EnvVars {
             panic!("MONGODB_URI must not be empty");
         } else if Self::COOKIE_DOMAIN.get().is_empty() {
             panic!("COOKIE_DOMAIN must not be empty")
+        } else if Self::CORS_DOMAIN.get().is_empty() {
+            panic!("CORS_DOMAIN must not be empty")
         }
         let port = Self::PORT.get();
         let host = Self::HOST.get();
