@@ -2,10 +2,10 @@ use super::types::UserLoginPayload;
 use crate::{
     db::queries,
     helpers::{
-        cookies::{create_cookie, delete_cookie},
+        cookies::{delete_cookie, set_access_cookie},
         json::JsonWithValidation,
         security,
-        types::{Cookeys, DBExtension, HandlerResponse, ResponseBuilder, MAX_COOKIE_EXP},
+        types::{Cookeys, DBExtension, HandlerResponse, ResponseBuilder},
     },
 };
 use axum::response::IntoResponse;
@@ -37,12 +37,7 @@ pub async fn login(
         return Err(user_not_found);
     }
 
-    let login_token = security::generate_login_token(&user)?;
-
-    let login_token_cookie =
-        create_cookie(&Cookeys::AccessToken, login_token, MAX_COOKIE_EXP, true);
-
-    cookies.add(login_token_cookie);
+    set_access_cookie(&cookies, &user)?;
 
     Ok(ResponseBuilder::success(Some(user), None, None).into_response())
 }

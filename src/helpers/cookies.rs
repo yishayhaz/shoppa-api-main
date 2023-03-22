@@ -1,5 +1,7 @@
-use crate::helpers::{env::EnvVars, types::Cookeys};
-use tower_cookies::{cookie::time::Duration, Cookie};
+use crate::{helpers::{env::EnvVars, types::{Cookeys, MAX_COOKIE_EXP}, security}, db::models::User};
+use tower_cookies::{cookie::time::Duration, Cookie, Cookies};
+use axum::response::Response;
+
 
 pub fn create_cookie<'a>(
     key: &'a Cookeys,
@@ -35,3 +37,24 @@ pub fn delete_cookie<'a>(
 
     cookie
 }
+
+
+pub fn set_access_cookie(
+    cookies: &Cookies,
+    user: &User
+) -> Result<(), Response>{
+
+    let login_token = security::generate_login_token(&user)?;
+
+    let access_cookie = create_cookie(
+        &Cookeys::AccessToken,
+        login_token,
+        MAX_COOKIE_EXP,
+        true
+    );
+
+    cookies.add(access_cookie);
+
+    Ok(())
+}
+

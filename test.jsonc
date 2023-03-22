@@ -1,0 +1,66 @@
+{
+    "collection_categories": [
+        {
+            "_id": 1,
+            "name": "Category 1",
+            "categories": [
+                {
+                    "_id": 3213123,
+                    "name": "Category 2",
+                    "categories": [
+                        {
+                            "_id": 3213123,
+                            "name": "Category 3"
+                        }
+                    ]
+                }
+            ],
+            "vaients": [
+                "id", 
+                "id"
+            ]
+        }
+    ],
+    "collection_products": [
+        {
+            "_id": 1,
+            "name": "Product 1",
+            "keywords": "keyword1, keyword2, keyword3",
+            "text_index": "all text from product",
+            "categories": [
+                "first id is category",
+                "second id is innercategory",
+                "third id is innerinnercategory"
+            ],
+            "sizes": ["s", "m", "l", "etc"],
+            "colors": ["red", "blue", "green", "etc"]
+        }
+    ],
+    "varients": [
+        {
+            "id": "",
+            "name": "clothes sizes",
+            "values": [
+                {
+                    "id": "12",
+                    "value": "s"
+                },
+                {
+                    "id": "13",
+                    "value": "m"
+                },
+                {
+                    "id": "14",
+                    "value": "l"
+                }
+            ]
+
+        },
+        {
+            "id": "",
+            "name": "color",
+            "values": []
+        }
+    ]
+}
+
