@@ -4,9 +4,9 @@ use super::{
 };
 use crate::helpers::types::ResponseBuilder;
 use axum::response::{IntoResponse, Response};
-use bson::oid::ObjectId;
+use bson::{doc, oid::ObjectId};
 use chrono::{DateTime, Utc};
-use mongodb::IndexModel;
+use mongodb::{options::IndexOptions, IndexModel};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -20,15 +20,24 @@ pub struct Product {
 
     pub description: String,
     pub name: String,
+    pub keywords: Vec<String>,
     pub store: StoreField,
-    pub sizes: Vec<String>,
-    pub variants: Vec<String>,
+    pub brand: Option<String>,
+    pub categories: Vec<CategoriesField>
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub enum StoreField {
-    StoreId(ObjectId),
-    Store(Store),
+pub struct CategoriesField {
+    #[serde(rename = "_id")]
+    pub id: ObjectId,
+    pub name: String
+}
+
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct StoreField {
+    pub id: ObjectId,
+    pub name: String
 }
 
 impl DBModel for Product {
@@ -37,29 +46,37 @@ impl DBModel for Product {
     }
 
     fn get_indexes() -> Vec<IndexModel> {
-        vec![]
+        // we can add language key for the product to imrpove the text index,
+        // or to set the default to hebrew
+
+        let text_index_options = IndexOptions::builder()
+            .weights(doc! {
+                "name": 200,
+                "keywords": 100,
+                "description": 100,
+                "brand": 50,
+                "categories.name": 50,
+                "store.name": 20
+            })
+            .name(String::from("search text index"))
+            .default_language(String::from("none"))
+            .build();
+
+        let text_index = IndexModel::builder()
+            .keys(doc! {
+                "name": "text",
+                "description": "text",
+                "categories.name": "text",
+                "brand": "text",
+                "keywords": "text",
+                "store.name": "text"
+            })
+            .options(text_index_options)
+            .build();
+
+        vec![text_index]
     }
 
     db_model!(Product);
 }
 
-impl Product {
-    pub fn new(
-        name: String,
-        store_id: ObjectId,
-        description: String,
-        sizes: Option<Vec<String>>,
-        variants: Option<Vec<String>>,
-    ) -> Self {
-        Self {
-            id: None,
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
-            name,
-            store: StoreField::StoreId(store_id),
-            description,
-            sizes: sizes.unwrap_or(Vec::new()),
-            variants: variants.unwrap_or(Vec::new()),
-        }
-    }
-}

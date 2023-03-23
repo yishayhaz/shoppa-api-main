@@ -15,7 +15,7 @@
                     ]
                 }
             ],
-            "vaients": [
+            "allowed_variants": [
                 "id", 
                 "id"
             ]
@@ -28,17 +28,18 @@
             "keywords": "keyword1, keyword2, keyword3",
             "text_index": "all text from product",
             "categories": [
-                "first id is category",
-                "second id is innercategory",
-                "third id is innerinnercategory"
+                {"id": "first id is category", "name": ""},
+                {"id": "second id is innercategory", "name": ""},
+                {"id": "third id is innerinnercategory", "name": ""}
             ],
-            "sizes": ["s", "m", "l", "etc"],
-            "colors": ["red", "blue", "green", "etc"]
+            "variants": [
+                "1"
+            ]
         }
     ],
-    "varients": [
+    "variants": [
         {
-            "id": "",
+            "id": "1",
             "name": "clothes sizes",
             "values": [
                 {
@@ -60,6 +61,24 @@
             "id": "",
             "name": "color",
             "values": []
+        }
+    ],
+    "product_items": [
+        {
+            "_id": 1,
+            "product_id": "id of product",
+            // maybe
+            "store": "id of store for easier search",
+            "price": 100,
+            "in_storage": 10,
+            // uniqe with product_id and length of the parent array
+            "variants": [
+                {
+                    // this is uniqe id of varient
+                    "id": "1",
+                    "value": "14"
+                }
+            ]
         }
     ]
 }

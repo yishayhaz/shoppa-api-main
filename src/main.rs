@@ -18,7 +18,7 @@ async fn main() {
 
     let db_collections = Arc::new(db::DBCollections::new(mongo_client, EnvVars::DB_NAME.get()));
 
-    db_collections.create_indexs().await;
+    //db_collections.create_indexs().await;
 
     let app = Router::new()
         .nest("/api/v1", api::v1::router())
