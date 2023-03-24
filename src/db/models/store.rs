@@ -1,9 +1,9 @@
 use super::common::{db_model, DBModel};
 use crate::helpers::types::ResponseBuilder;
 use axum::response::{IntoResponse, Response};
-use bson::oid::ObjectId;
+use bson::{oid::ObjectId, doc};
 use chrono::{DateTime, Utc};
-use mongodb::IndexModel;
+use mongodb::{IndexModel, options::IndexOptions};
 use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Store {
@@ -23,7 +23,19 @@ impl DBModel for Store {
     }
 
     fn get_indexes() -> Vec<IndexModel> {
-        vec![]
+        let unique_index_options = IndexOptions::builder()
+            .unique(true)
+            .name(String::from("unique store name"))
+            .build();
+
+        let uniqe_index = IndexModel::builder()
+            .keys(doc! {
+                "name": 1
+            })
+            .options(unique_index_options)
+            .build();
+
+        vec![uniqe_index]
     }
 
     db_model!(Store);

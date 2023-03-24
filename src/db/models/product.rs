@@ -1,6 +1,8 @@
 use super::{
-    common::{db_model, DBModel},
-    store::Store,
+    common::{db_model, DBModel, RefrenceField},
+    Store,
+    Categories,
+    Variants
 };
 use crate::helpers::types::ResponseBuilder;
 use axum::response::{IntoResponse, Response};
@@ -18,12 +20,14 @@ pub struct Product {
     #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
     updated_at: DateTime<Utc>,
 
-    pub description: String,
-    pub name: String,
-    pub keywords: Vec<String>,
-    pub store: StoreField,
     pub brand: Option<String>,
-    pub categories: Vec<CategoriesField>
+    pub name: String,
+    pub description: String,
+    pub keywords: Vec<String>,
+    pub store: RefrenceField<Store, StoreField>,
+    // Not likely that it will be populated.
+    pub categories: RefrenceField<Categories, Vec<CategoriesField>>,
+    pub variants: RefrenceField<Vec<Variants>, Vec<ObjectId>>
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -33,9 +37,9 @@ pub struct CategoriesField {
     pub name: String
 }
 
-
 #[derive(Serialize, Deserialize, Debug)]
 pub struct StoreField {
+    #[serde(rename = "_id")]
     pub id: ObjectId,
     pub name: String
 }
@@ -73,8 +77,21 @@ impl DBModel for Product {
             })
             .options(text_index_options)
             .build();
+        
+        let unique_index_options = IndexOptions::builder()
+            .unique(true)
+            .name(String::from("unique product for store"))
+            .build();
 
-        vec![text_index]
+        let uniqe_index = IndexModel::builder()
+            .keys(doc! {
+                "name": 1,
+                "store._id": 1
+            })
+            .options(unique_index_options)
+            .build();
+
+        vec![text_index, uniqe_index]
     }
 
     db_model!(Product);

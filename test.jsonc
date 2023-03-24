@@ -26,7 +26,11 @@
             "_id": 1,
             "name": "Product 1",
             "keywords": "keyword1, keyword2, keyword3",
-            "text_index": "all text from product",
+            "images": [
+                "id",
+                "id",
+                "id"
+            ],
             "categories": [
                 {"id": "first id is category", "name": ""},
                 {"id": "second id is innercategory", "name": ""},

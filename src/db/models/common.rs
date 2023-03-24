@@ -1,7 +1,9 @@
+use std::fmt::Debug;
 use axum::response::Response;
 use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use mongodb::IndexModel;
+use serde::{Deserialize, Serialize};
 
 pub trait DBModel {
     fn get_collection_name() -> &'static str;
@@ -16,6 +18,18 @@ pub trait NestedDocument {
     fn created_at(&self) -> DateTime<Utc>;
     fn updated_at(&self) -> DateTime<Utc>;
     fn id(&self) -> ObjectId;
+}
+
+
+#[derive(Deserialize, Serialize, Debug)]
+#[serde(bound = "")]
+pub enum RefrenceField<P, N>
+where
+    P: Serialize + for<'a> Deserialize<'a> + Debug,
+    N: Serialize + for<'a> Deserialize<'a> + Debug
+{
+    Populated(P),
+    NotPopulated(N)
 }
 
 macro_rules! db_model {
