@@ -25,7 +25,7 @@ impl DBModel for Store {
     fn get_indexes() -> Vec<IndexModel> {
         let unique_index_options = IndexOptions::builder()
             .unique(true)
-            .name(String::from("unique store name"))
+            .name(String::from("unique_store_name"))
             .build();
 
         let uniqe_index = IndexModel::builder()

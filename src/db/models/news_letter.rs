@@ -26,7 +26,7 @@ impl DBModel for NewsLetterSubscriber {
     fn get_indexes() -> Vec<IndexModel> {
         let index1_option = IndexOptions::builder()
             .unique(true)
-            .name(String::from("uniqe email"))
+            .name(String::from("unique_emails"))
             .build();
         let index1 = IndexModel::builder()
             .keys(doc! {

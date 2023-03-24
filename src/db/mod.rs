@@ -29,6 +29,9 @@ pub struct DBCollections {
     pub contact_us_form: Collection<models::ContactUsForm>,
     pub news_letter_subscribers: Collection<models::NewsLetterSubscriber>,
     pub site_visits: Collection<models::SiteVisit>,
+    pub variants: Collection<models::Variants>,
+    pub product_items: Collection<models::ProductItems>,
+    pub categories: Collection<models::Categories>,
 }
 
 impl DBCollections {
@@ -42,6 +45,9 @@ impl DBCollections {
         let news_letter_subscribers =
             db.collection(models::NewsLetterSubscriber::get_collection_name());
         let site_visits = db.collection(models::SiteVisit::get_collection_name());
+        let variants = db.collection(models::Variants::get_collection_name());
+        let product_items = db.collection(models::ProductItems::get_collection_name());
+        let categories = db.collection(models::Categories::get_collection_name());
 
         Self {
             users,
@@ -50,80 +56,82 @@ impl DBCollections {
             contact_us_form,
             news_letter_subscribers,
             site_visits,
+            variants,
+            product_items,
+            categories,
         }
     }
 
-    pub async fn create_indexs(&self) {
-        let users_indexes = models::User::get_indexes();
+    pub async fn create_indexes(&self) {
+        Self::create_index(&self.users).await;
+        Self::create_index(&self.stores).await;
+        Self::create_index(&self.products).await;
+        Self::create_index(&self.contact_us_form).await;
+        Self::create_index(&self.news_letter_subscribers).await;
+        Self::create_index(&self.site_visits).await;
+        Self::create_index(&self.variants).await;
+        Self::create_index(&self.product_items).await;
+        Self::create_index(&self.categories).await;
+    }
 
-        if users_indexes.len() > 0 {
-            let _ = self.users.drop_indexes(None).await;
+    async fn create_index<Model>(collection: &Collection<Model>)
+    where
+        Model: DBModel,
+    {
+        let indexes = Model::get_indexes();
 
-            let _ = self
-                .users
-                .create_indexes(users_indexes, None)
-                .await
-                .expect("Faild to create user indexes");
+        let indexes_names = indexes
+            .iter()
+            .map(|index| {
+                let option = &index.options;
+
+                if let Some(option) = option {
+                    if let Some(name) = &option.name {
+                        name.clone()
+                    } else {
+                        "".to_string()
+                    }
+                } else {
+                    "".to_string()
+                }
+            })
+            .collect::<Vec<String>>();
+
+        let mut indexes_to_drop: Vec<String> = Vec::new();
+
+        let mut current_indexes = match collection.list_indexes(None).await {
+            Ok(v) => v,
+            Err(e) => {
+                println!("Failed to list indexes for {}", Model::get_collection_name());
+                println!("Error: {}", e);
+                return;
+            },
+        };
+
+        while current_indexes.advance().await.unwrap() {
+            let index = current_indexes.deserialize_current().unwrap();
+
+            if let Some(options) = index.options {
+                if let Some(name) = options.name {
+                    if !indexes_names.contains(&name.to_string()) && !(name == "_id_") {
+                        indexes_to_drop.push(name.to_string());
+                    }
+                }
+            }
         }
 
-        let stores_indexes = models::Store::get_indexes();
-
-        if stores_indexes.len() > 0 {
-            let _ = self.stores.drop_indexes(None).await;
-
-            let _ = self
-                .stores
-                .create_indexes(stores_indexes, None)
-                .await
-                .expect("Faild to create store indexes");
+        for index in indexes_to_drop {
+            let _ = collection.drop_index(&index, None).await;
+            println!("Dropped index {} for {}", index, Model::get_collection_name());
         }
 
-        let products_indexes = models::Product::get_indexes();
-
-        if products_indexes.len() > 0 {
-            let _ = self.products.drop_indexes(None).await;
-
-            let _ = self
-                .products
-                .create_indexes(products_indexes, None)
-                .await
-                .expect("Faild to create product indexes");
-        }
-
-        let contact_us_form_indexes = models::ContactUsForm::get_indexes();
-
-        if contact_us_form_indexes.len() > 0 {
-            let _ = self.contact_us_form.drop_indexes(None).await;
-
-            let _ = self
-                .contact_us_form
-                .create_indexes(contact_us_form_indexes, None)
-                .await
-                .expect("Faild to create contact us form indexes");
-        }
-
-        let news_letter_subscribers_indexes = models::NewsLetterSubscriber::get_indexes();
-
-        if news_letter_subscribers_indexes.len() > 0 {
-            let _ = self.news_letter_subscribers.drop_indexes(None).await;
-
-            let _ = self
-                .news_letter_subscribers
-                .create_indexes(news_letter_subscribers_indexes, None)
-                .await
-                .expect("Faild to create news letter subscribers indexes");
-        }
-
-        let site_visit_indexes = models::SiteVisit::get_indexes();
-
-        if site_visit_indexes.len() > 0 {
-            let _ = self.site_visits.drop_indexes(None).await;
-
-            let _ = self
-                .site_visits
-                .create_indexes(site_visit_indexes, None)
-                .await
-                .expect("Faild to create site visits indexes");
+        if indexes.len() > 0 {
+            // If the index alredy exists, it will be ignored
+            // https://www.mongodb.com/community/forums/t/behavior-of-createindex-for-an-existing-index/2248/2
+            let _ = collection.create_indexes(indexes, None).await.expect(
+                format!("Faild to create {} indexes", Model::get_collection_name()).as_str(),
+            );
+            println!("Created indexes for {}", Model::get_collection_name());
         }
     }
 }

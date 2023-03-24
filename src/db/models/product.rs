@@ -62,7 +62,7 @@ impl DBModel for Product {
                 "categories.name": 50,
                 "store.name": 20
             })
-            .name(String::from("search text index"))
+            .name(String::from("search_text_index"))
             .default_language(String::from("none"))
             .build();
 
@@ -80,7 +80,7 @@ impl DBModel for Product {
         
         let unique_index_options = IndexOptions::builder()
             .unique(true)
-            .name(String::from("unique product for store"))
+            .name(String::from("unique_product_for_store"))
             .build();
 
         let uniqe_index = IndexModel::builder()
