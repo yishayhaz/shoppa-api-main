@@ -5,7 +5,7 @@ use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use mongodb::IndexModel;
 use serde::{Deserialize, Serialize};
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 
 pub struct Variants {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
@@ -19,7 +19,7 @@ pub struct Variants {
     pub values: Vec<VariantValue>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct VariantValue {
     #[serde(rename = "_id")]
     id: ObjectId,

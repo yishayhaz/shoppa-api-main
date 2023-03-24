@@ -5,7 +5,7 @@ use bson::{oid::ObjectId, doc};
 use chrono::{DateTime, Utc};
 use mongodb::{IndexModel, options::IndexOptions};
 use serde::{Deserialize, Serialize};
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Store {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     id: Option<ObjectId>,

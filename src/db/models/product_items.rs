@@ -9,7 +9,7 @@ use chrono::{DateTime, Utc};
 use mongodb::{options::IndexOptions, IndexModel};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProductItems {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     id: Option<ObjectId>,
@@ -28,7 +28,7 @@ pub struct ProductItems {
     pub variants: Vec<ItemVariants>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ItemVariants {
     // the variant _id field.
     pub variant_id: ObjectId,

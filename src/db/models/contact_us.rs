@@ -1,15 +1,15 @@
 use std::vec;
 
-use super::common::{DBModel, db_model};
+use super::common::{db_model, DBModel};
 use crate::helpers::types::ResponseBuilder;
 use axum::response::{IntoResponse, Response};
 use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use serde_repr::{Serialize_repr, Deserialize_repr};
 use mongodb::IndexModel;
+use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ContactUsForm {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     id: Option<ObjectId>,
@@ -23,7 +23,7 @@ pub struct ContactUsForm {
     pub reason: ContactUsReason,
 }
 
-#[derive(Debug, Serialize_repr, Deserialize_repr)]
+#[derive(Debug, Serialize_repr, Deserialize_repr, Clone)]
 #[repr(u8)]
 pub enum ContactUsReason {
     General,

@@ -11,7 +11,7 @@ use chrono::{DateTime, Utc};
 use mongodb::{options::IndexOptions, IndexModel};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Product {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     id: Option<ObjectId>,
@@ -30,14 +30,14 @@ pub struct Product {
     pub variants: RefrenceField<Vec<Variants>, Vec<ObjectId>>
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CategoriesField {
     #[serde(rename = "_id")]
     pub id: ObjectId,
     pub name: String
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct StoreField {
     #[serde(rename = "_id")]
     pub id: ObjectId,

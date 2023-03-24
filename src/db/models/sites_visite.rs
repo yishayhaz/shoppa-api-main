@@ -5,8 +5,8 @@ use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use mongodb::IndexModel;
 use serde::{Deserialize, Serialize};
-#[derive(Serialize, Deserialize, Debug)]
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SiteVisit {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     id: Option<ObjectId>,

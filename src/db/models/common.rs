@@ -21,7 +21,7 @@ pub trait NestedDocument {
 }
 
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(bound = "")]
 pub enum RefrenceField<P, N>
 where

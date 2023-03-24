@@ -5,7 +5,7 @@ use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use mongodb::IndexModel;
 use serde::{Deserialize, Serialize};
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 
 pub struct Categories {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
@@ -20,7 +20,7 @@ pub struct Categories {
     categories: Vec<InnerCategories>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct InnerCategories {
     #[serde(rename = "_id")]
     id: ObjectId,
@@ -34,7 +34,7 @@ pub struct InnerCategories {
     categories: Vec<InnerInnerCategories>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct InnerInnerCategories {
     #[serde(rename = "_id")]
     id: ObjectId,
