@@ -4,3 +4,4 @@ pub mod categories;
 pub mod analytics;
 pub mod blog;
 pub mod contact_us;
+pub mod variants;

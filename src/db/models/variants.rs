@@ -5,8 +5,8 @@ use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use mongodb::IndexModel;
 use serde::{Deserialize, Serialize};
-#[derive(Serialize, Deserialize, Debug, Clone)]
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Variants {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     id: Option<ObjectId>,
@@ -45,4 +45,27 @@ impl DBModel for Variants {
 
 impl NestedDocument for VariantValue {
     nested_document!(VariantValue);
+}
+
+impl Variants {
+    pub fn new(name: String, values: Vec<VariantValue>) -> Self {
+        Self {
+            id: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+            name,
+            values,
+        }
+    }
+}
+
+impl VariantValue {
+    pub fn new(name: String) -> Self {
+        Self {
+            id: ObjectId::new(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+            name,
+        }
+    }
 }

@@ -16,8 +16,7 @@ pub struct Categories {
     updated_at: DateTime<Utc>,
 
     pub name: String,
-    // TODO method to get categries + method to add a new categorie
-    categories: Vec<InnerCategories>,
+    pub categories: Vec<InnerCategories>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -30,8 +29,7 @@ pub struct InnerCategories {
     updated_at: DateTime<Utc>,
 
     pub name: String,
-    // TODO method to get categries + method to add a new categorie
-    categories: Vec<InnerInnerCategories>,
+    pub categories: Vec<InnerInnerCategories>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -42,7 +40,7 @@ pub struct InnerInnerCategories {
     created_at: DateTime<Utc>,
     #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
     updated_at: DateTime<Utc>,
-    
+
     pub name: String,
 }
 
@@ -64,4 +62,47 @@ impl NestedDocument for InnerCategories {
 
 impl NestedDocument for InnerInnerCategories {
     nested_document!(InnerInnerCategories);
+}
+
+impl Categories {
+    pub fn new(
+        name: String,
+        // can be empty
+        categories: Vec<InnerCategories>,
+    ) -> Self {
+        Self {
+            id: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+            name,
+            categories,
+        }
+    }
+}
+
+impl InnerCategories {
+    pub fn new(
+        name: String,
+        // can be empty
+        categories: Vec<InnerInnerCategories>,
+    ) -> Self {
+        Self {
+            id: ObjectId::new(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+            name,
+            categories,
+        }
+    }
+}
+
+impl InnerInnerCategories {
+    pub fn new(name: String) -> Self {
+        Self {
+            id: ObjectId::new(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+            name,
+        }
+    }
 }

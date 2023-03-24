@@ -2,11 +2,13 @@ mod contact_us;
 mod news_letter;
 mod sites_visite;
 mod users;
+mod variants;
 
 pub use contact_us::*;
 pub use news_letter::*;
 pub use sites_visite::*;
 pub use users::*;
+pub use variants::*;
 
 use crate::helpers::types::ResponseBuilder;
 use axum::response::{IntoResponse, Response};

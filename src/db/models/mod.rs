@@ -18,4 +18,4 @@ pub use product_items::ProductItems;
 pub use sites_visite::SiteVisit;
 pub use store::Store;
 pub use user::{Cart, Genders, User};
-pub use variants::Variants;
+pub use variants::{Variants, VariantValue};
