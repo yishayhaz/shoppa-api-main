@@ -1,8 +1,5 @@
-use super::{extract_insert_document_error, InsertDocumentErrors};
-use crate::{
-    db::models::{ContactUsForm, ContactUsReason, DBModel},
-    helpers::types::DBExtension,
-};
+use super::prelude::*;
+use crate::db::models::{ContactUsForm, ContactUsReason};
 
 type InsertContactUsFormResult = Result<ContactUsForm, InsertDocumentErrors>;
 

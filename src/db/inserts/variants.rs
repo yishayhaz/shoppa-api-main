@@ -1,13 +1,13 @@
-use super::{extract_insert_document_error, InsertDocumentErrors};
-use crate::{
-    db::models::{DBModel, Variants, VariantValue},
-    helpers::types::DBExtension,
-};
+use super::prelude::*;
+use crate::db::models::{VariantValue, Variants};
 
 type InsertVariantResult = Result<Variants, InsertDocumentErrors>;
 
-pub async fn new_variant(db: &DBExtension, name: String, value_names: Vec<String>) -> InsertVariantResult {
-
+pub async fn new_variant(
+    db: &DBExtension,
+    name: String,
+    value_names: Vec<String>,
+) -> InsertVariantResult {
     let values = value_names
         .into_iter()
         .map(|name| VariantValue::new(name))

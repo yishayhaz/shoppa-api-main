@@ -1,15 +1,8 @@
 use super::{
     common::{db_model, DBModel, RefrenceField},
-    Store,
-    Categories,
-    Variants
+    prelude::*,
+    Categories, Store, Variants,
 };
-use crate::helpers::types::ResponseBuilder;
-use axum::response::{IntoResponse, Response};
-use bson::{doc, oid::ObjectId};
-use chrono::{DateTime, Utc};
-use mongodb::{options::IndexOptions, IndexModel};
-use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Product {
@@ -27,21 +20,21 @@ pub struct Product {
     pub store: RefrenceField<Store, StoreField>,
     // Not likely that it will be populated.
     pub categories: RefrenceField<Categories, Vec<CategoriesField>>,
-    pub variants: RefrenceField<Vec<Variants>, Vec<ObjectId>>
+    pub variants: RefrenceField<Vec<Variants>, Vec<ObjectId>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CategoriesField {
     #[serde(rename = "_id")]
     pub id: ObjectId,
-    pub name: String
+    pub name: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct StoreField {
     #[serde(rename = "_id")]
     pub id: ObjectId,
-    pub name: String
+    pub name: String,
 }
 
 impl DBModel for Product {
@@ -77,7 +70,7 @@ impl DBModel for Product {
             })
             .options(text_index_options)
             .build();
-        
+
         let unique_index_options = IndexOptions::builder()
             .unique(true)
             .name(String::from("unique_product_for_store"))
@@ -96,4 +89,3 @@ impl DBModel for Product {
 
     db_model!(Product);
 }
-

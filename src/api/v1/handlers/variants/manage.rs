@@ -1,6 +1,6 @@
 use super::types::CreateVariantPayload;
 use crate::{
-    db::{inserts, inserts::InsertDocumentErrors},
+    db::{inserts},
     helpers::{
         types::{DBExtension, HandlerResponse, ResponseBuilder},
         json::JsonWithValidation

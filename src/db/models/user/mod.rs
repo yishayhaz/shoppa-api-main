@@ -2,14 +2,9 @@ mod fields;
 
 use super::{
     common::{db_model, DBModel, RefrenceField},
+    prelude::*,
     ProductItems,
 };
-use crate::helpers::types::ResponseBuilder;
-use axum::response::{IntoResponse, Response};
-use bson::oid::ObjectId;
-use chrono::{DateTime, Utc};
-use mongodb::IndexModel;
-use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 #[serde_with::serde_as]

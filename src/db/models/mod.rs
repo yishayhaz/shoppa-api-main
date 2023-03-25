@@ -8,8 +8,9 @@ mod sites_visite;
 mod store;
 mod user;
 mod variants;
+mod prelude;
 
-pub use categories::Categories;
+pub use categories::{Categories, InnerCategories, InnerInnerCategories};
 pub use common::DBModel;
 pub use contact_us::{ContactUsForm, ContactUsReason};
 pub use news_letter::NewsLetterSubscriber;

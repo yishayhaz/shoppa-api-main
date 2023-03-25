@@ -1,10 +1,7 @@
-use super::common::{db_model, DBModel};
-use crate::helpers::types::ResponseBuilder;
-use axum::response::{IntoResponse, Response};
-use bson::{doc, oid::ObjectId};
-use chrono::{DateTime, Utc};
-use mongodb::{options::IndexOptions, IndexModel};
-use serde::{Deserialize, Serialize};
+use super::{
+    common::{db_model, DBModel},
+    prelude::*,
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct NewsLetterSubscriber {

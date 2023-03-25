@@ -3,7 +3,8 @@ pub struct CategoriesFields {
     pub created_at: &'static str,
     pub updated_at: &'static str,
     pub name: &'static str,
-    pub categories: &'static str
+    pub categories: &'static str,
+    pub allowed_variants: &'static str,
 }
 
 pub struct InnerCategoriesFields {
@@ -11,7 +12,8 @@ pub struct InnerCategoriesFields {
     pub created_at: &'static str,
     pub updated_at: &'static str,
     pub name: &'static str,
-    pub categories: &'static str
+    pub categories: &'static str,
+    pub allowed_variants: &'static str,
 }
 
 pub struct InnerInnerCategoriesFields {
@@ -19,6 +21,7 @@ pub struct InnerInnerCategoriesFields {
     pub created_at: &'static str,
     pub updated_at: &'static str,
     pub name: &'static str,
+    pub allowed_variants: &'static str,
 }
 
 pub const FIELDS: CategoriesFields = CategoriesFields{
@@ -26,7 +29,8 @@ pub const FIELDS: CategoriesFields = CategoriesFields{
     created_at: "created_at",
     updated_at: "updated_at",
     name: "name",
-    categories: "categories"
+    categories: "categories",
+    allowed_variants: "allowed_variants",
 };
 
 

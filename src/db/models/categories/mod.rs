@@ -1,14 +1,12 @@
 mod fields;
 
-use super::common::{db_model, nested_document, DBModel, NestedDocument};
-use crate::helpers::types::ResponseBuilder;
-use axum::response::{IntoResponse, Response};
-use bson::oid::ObjectId;
-use chrono::{DateTime, Utc};
-use mongodb::IndexModel;
-use serde::{Deserialize, Serialize};
-#[derive(Serialize, Deserialize, Debug, Clone)]
+use super::{
+    common::{db_model, nested_document, DBModel, NestedDocument, RefrenceField},
+    prelude::*,
+    Variants,
+};
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Categories {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     id: Option<ObjectId>,
@@ -19,6 +17,7 @@ pub struct Categories {
 
     pub name: String,
     pub categories: Vec<InnerCategories>,
+    pub allowed_variants: RefrenceField<Vec<Variants>, Vec<ObjectId>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -32,6 +31,7 @@ pub struct InnerCategories {
 
     pub name: String,
     pub categories: Vec<InnerInnerCategories>,
+    pub allowed_variants: RefrenceField<Vec<Variants>, Vec<ObjectId>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -44,6 +44,7 @@ pub struct InnerInnerCategories {
     updated_at: DateTime<Utc>,
 
     pub name: String,
+    pub allowed_variants: RefrenceField<Vec<Variants>, Vec<ObjectId>>,
 }
 
 impl DBModel for Categories {
@@ -52,6 +53,7 @@ impl DBModel for Categories {
     }
 
     fn get_indexes() -> Vec<IndexModel> {
+        // TODO make name unique
         vec![]
     }
 
@@ -62,8 +64,20 @@ impl NestedDocument for InnerCategories {
     nested_document!(InnerCategories);
 }
 
+impl Into<Bson> for InnerCategories {
+    fn into(self) -> bson::Bson {
+        bson::Bson::Document(doc! {})
+    }
+}
+
 impl NestedDocument for InnerInnerCategories {
     nested_document!(InnerInnerCategories);
+}
+
+impl Into<Bson> for InnerInnerCategories {
+    fn into(self) -> bson::Bson {
+        bson::Bson::Document(doc! {})
+    }
 }
 
 impl Categories {
@@ -78,21 +92,20 @@ impl Categories {
             updated_at: Utc::now(),
             name,
             categories,
+            allowed_variants: RefrenceField::NotPopulated(vec![]),
         }
     }
 }
 
 impl InnerCategories {
-    pub fn new(
-        name: String,
-        categories: Vec<InnerInnerCategories>,
-    ) -> Self {
+    pub fn new(name: String, categories: Vec<InnerInnerCategories>) -> Self {
         Self {
             id: ObjectId::new(),
             created_at: Utc::now(),
             updated_at: Utc::now(),
             name,
             categories,
+            allowed_variants: RefrenceField::NotPopulated(vec![]),
         }
     }
 }
@@ -104,6 +117,7 @@ impl InnerInnerCategories {
             created_at: Utc::now(),
             updated_at: Utc::now(),
             name,
+            allowed_variants: RefrenceField::NotPopulated(vec![]),
         }
     }
 }

@@ -1,8 +1,5 @@
-use super::{extract_insert_document_error, InsertDocumentErrors};
-use crate::{
-    db::models::{DBModel, User},
-    helpers::types::DBExtension,
-};
+use super::prelude::*;
+use crate::db::models::User;
 
 type InsertUserResult = Result<User, InsertDocumentErrors>;
 
@@ -10,15 +7,11 @@ pub async fn new_level_2_user(
     db: &DBExtension,
     email: String,
     password: String,
-    name: String
+    name: String,
 ) -> InsertUserResult {
     let mut user = User::new(Some(email), Some(password), Some(name), 2);
 
-    let res = match db
-        .users
-        .insert_one(&user, None)
-        .await
-    {
+    let res = match db.users.insert_one(&user, None).await {
         Ok(v) => v,
         Err(err) => return Err(extract_insert_document_error(*err.kind)),
     };

@@ -1,12 +1,10 @@
 mod fields;
 
-use super::common::{db_model, nested_document, DBModel, NestedDocument};
-use crate::helpers::types::ResponseBuilder;
-use axum::response::{IntoResponse, Response};
-use bson::{doc, oid::ObjectId};
-use chrono::{DateTime, Utc};
-use mongodb::{options::IndexOptions, IndexModel};
-use serde::{Deserialize, Serialize};
+use super::{
+    common::{db_model, nested_document, DBModel, NestedDocument},
+    prelude::*,
+};
+
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Variants {
@@ -57,6 +55,17 @@ impl DBModel for Variants {
 
 impl NestedDocument for VariantValue {
     nested_document!(VariantValue);
+}
+
+impl Into<Bson> for VariantValue {
+    fn into(self) -> bson::Bson {
+        bson::Bson::Document(doc! {
+            "_id": self.id,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "name": self.name
+        })
+    }
 }
 
 impl Variants {

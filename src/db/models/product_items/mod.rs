@@ -1,13 +1,8 @@
 use super::{
     common::{db_model, DBModel, RefrenceField},
+    prelude::*,
     Product, Store,
 };
-use crate::helpers::types::ResponseBuilder;
-use axum::response::{IntoResponse, Response};
-use bson::{doc, oid::ObjectId};
-use chrono::{DateTime, Utc};
-use mongodb::{options::IndexOptions, IndexModel};
-use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProductItems {

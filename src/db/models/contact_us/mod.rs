@@ -1,12 +1,7 @@
-use std::vec;
-
-use super::common::{db_model, DBModel};
-use crate::helpers::types::ResponseBuilder;
-use axum::response::{IntoResponse, Response};
-use bson::oid::ObjectId;
-use chrono::{DateTime, Utc};
-use mongodb::IndexModel;
-use serde::{Deserialize, Serialize};
+use super::{
+    common::{db_model, DBModel},
+    prelude::*,
+};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
