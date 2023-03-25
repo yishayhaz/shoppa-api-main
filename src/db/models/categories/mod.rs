@@ -1,3 +1,5 @@
+mod fields;
+
 use super::common::{db_model, nested_document, DBModel, NestedDocument};
 use crate::helpers::types::ResponseBuilder;
 use axum::response::{IntoResponse, Response};
@@ -83,7 +85,6 @@ impl Categories {
 impl InnerCategories {
     pub fn new(
         name: String,
-        // can be empty
         categories: Vec<InnerInnerCategories>,
     ) -> Self {
         Self {

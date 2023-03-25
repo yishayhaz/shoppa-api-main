@@ -1,4 +1,9 @@
-use super::common::{db_model, DBModel};
+mod fields;
+
+use super::{
+    common::{db_model, DBModel, RefrenceField},
+    ProductItems,
+};
 use crate::helpers::types::ResponseBuilder;
 use axum::response::{IntoResponse, Response};
 use bson::oid::ObjectId;
@@ -40,8 +45,9 @@ pub struct Cart {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CartItem {
-    // TODO enum that can be product or ObjectId
-    pub product_id: ObjectId,
+    #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
+    pub added_at: DateTime<Utc>,
+    pub product: RefrenceField<ProductItems, ObjectId>,
     pub quantity: i32,
 }
 
@@ -118,10 +124,9 @@ impl User {
     }
 
     fn date_of_birth_as_string(&self) -> Option<String> {
-
         match self.date_of_birth {
             Some(date) => Some(date.to_string()),
-            None => None
+            None => None,
         }
     }
 
@@ -137,6 +142,10 @@ impl User {
             "created_at": self.created_at().to_string(),
             "date_of_birth": self.date_of_birth_as_string()
         }))
+    }
+
+    pub fn fields() -> &'static fields::UsersFields {
+        &fields::FIELDS
     }
 }
 

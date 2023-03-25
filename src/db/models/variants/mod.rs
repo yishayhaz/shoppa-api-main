@@ -1,9 +1,11 @@
+mod fields;
+
 use super::common::{db_model, nested_document, DBModel, NestedDocument};
 use crate::helpers::types::ResponseBuilder;
 use axum::response::{IntoResponse, Response};
-use bson::oid::ObjectId;
+use bson::{doc, oid::ObjectId};
 use chrono::{DateTime, Utc};
-use mongodb::IndexModel;
+use mongodb::{options::IndexOptions, IndexModel};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -37,7 +39,17 @@ impl DBModel for Variants {
     }
 
     fn get_indexes() -> Vec<IndexModel> {
-        vec![]
+        let unique_options = IndexOptions::builder()
+            .name("unique_variant_name".to_string())
+            .unique(true)
+            .build();
+
+        let unique_variant_name = IndexModel::builder()
+            .keys(doc! {"name": 1})
+            .options(unique_options)
+            .build();
+
+        vec![unique_variant_name]
     }
 
     db_model!(Categories);
@@ -56,6 +68,10 @@ impl Variants {
             name,
             values,
         }
+    }
+
+    pub fn fields() -> &'static fields::VariantsFields {
+        &fields::FIELDS
     }
 }
 

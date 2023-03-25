@@ -20,6 +20,10 @@ pub trait NestedDocument {
     fn id(&self) -> ObjectId;
 }
 
+pub trait ModelFields {
+    fn db_name(&self) -> &'static str;
+}
+
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(bound = "")]
