@@ -1,15 +1,13 @@
+use super::super::prelude::routes::*;
 use super::types::UserLoginPayload;
 use crate::{
     db::queries,
     helpers::{
         cookies::{delete_cookie, set_access_cookie},
-        json::JsonWithValidation,
         security,
-        types::{Cookeys, DBExtension, HandlerResponse, ResponseBuilder},
+        types::Cookeys,
     },
 };
-use axum::response::IntoResponse;
-use tower_cookies::Cookies;
 
 pub async fn login(
     db: DBExtension,

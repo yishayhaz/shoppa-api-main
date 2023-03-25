@@ -1,15 +1,9 @@
+use super::super::prelude::routes::*;
 use super::types::UserRegisterPayload;
 use crate::{
     db::{inserts, inserts::InsertDocumentErrors},
-    helpers::{
-        cookies::set_access_cookie,
-        json::JsonWithValidation,
-        security,
-        types::{DBExtension, HandlerResponse, ResponseBuilder},
-    },
+    helpers::{cookies::set_access_cookie, security},
 };
-use axum::response::IntoResponse;
-use tower_cookies::Cookies;
 
 // TODO if the user has a token update him insted of creating a new user
 pub async fn signup(

@@ -1,12 +1,6 @@
+use super::super::prelude::routes::*;
 use super::types;
-use crate::{
-    db::{inserts, inserts::InsertDocumentErrors},
-    helpers::{
-        json::JsonWithValidation,
-        types::{DBExtension, HandlerResponse, ResponseBuilder},
-    },
-};
-use axum::response::IntoResponse;
+use crate::db::{inserts, inserts::InsertDocumentErrors};
 
 pub async fn signup_to_news_letter(
     db: DBExtension,

@@ -1,13 +1,6 @@
 mod types;
-
-use crate::{
-    db::inserts,
-    helpers::{
-        json::JsonWithValidation,
-        types::{DBExtension, HandlerResponse, ResponseBuilder},
-    },
-};
-use axum::response::IntoResponse;
+use super::prelude::routes::*;
+use crate::db::inserts;
 use axum::{routing, Router};
 
 async fn contact_us_request(

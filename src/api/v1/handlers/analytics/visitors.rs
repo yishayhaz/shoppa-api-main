@@ -1,13 +1,9 @@
+use super::super::prelude::routes::*;
 use crate::{
     api::v1::middlewares::ClientIpAddress,
     db::inserts,
-    helpers::{
-        cookies::create_cookie,
-        types::{Cookeys, DBExtension, HandlerResponse, ResponseBuilder},
-    },
+    helpers::{cookies::create_cookie, types::Cookeys},
 };
-use axum::response::IntoResponse;
-use tower_cookies::Cookies;
 
 pub async fn add_new_visitor_to_counter(
     db: DBExtension,
