@@ -11,7 +11,7 @@ mod variants;
 mod prelude;
 
 pub use categories::{Categories, InnerCategories, InnerInnerCategories};
-pub use common::DBModel;
+pub use common::{DBModel, NestedDocument};
 pub use contact_us::{ContactUsForm, ContactUsReason};
 pub use news_letter::NewsLetterSubscriber;
 pub use product::Product;

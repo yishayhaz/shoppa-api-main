@@ -1,6 +1,5 @@
-use crate::helpers::validators::{password_validator, phone_number_validator, username_validator};
-use serde::{Deserialize, Serialize};
-use validator::{Validate, ValidationError, ValidationErrors};
+use super::super::prelude::types::*;
+
 
 #[derive(Deserialize, Serialize, Validate)]
 pub struct UserLoginPayload {

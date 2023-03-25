@@ -1,5 +1,4 @@
-use serde::{Deserialize, Serialize};
-use validator::Validate;
+use super::super::prelude::types::*;
 
 #[derive(Deserialize, Serialize, Debug, Clone, Validate)]
 pub struct CreateVariantPayload {

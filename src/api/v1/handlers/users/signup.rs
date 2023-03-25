@@ -28,6 +28,7 @@ pub async fn signup(
                 )
                 .into_response());
             }
+            _ => return Err(e.into_response()),
         },
     };
 

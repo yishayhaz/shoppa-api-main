@@ -5,6 +5,7 @@ use super::{
     prelude::*,
     Variants,
 };
+use bson::document::Document;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Categories {
@@ -64,20 +65,8 @@ impl NestedDocument for InnerCategories {
     nested_document!(InnerCategories);
 }
 
-impl Into<Bson> for InnerCategories {
-    fn into(self) -> bson::Bson {
-        bson::Bson::Document(doc! {})
-    }
-}
-
 impl NestedDocument for InnerInnerCategories {
     nested_document!(InnerInnerCategories);
-}
-
-impl Into<Bson> for InnerInnerCategories {
-    fn into(self) -> bson::Bson {
-        bson::Bson::Document(doc! {})
-    }
 }
 
 impl Categories {
@@ -94,6 +83,10 @@ impl Categories {
             categories,
             allowed_variants: RefrenceField::NotPopulated(vec![]),
         }
+    }
+
+    pub fn fields() -> &'static fields::CategoriesFields{
+        &fields::FIELDS
     }
 }
 

@@ -1,5 +1,4 @@
-use serde::{Deserialize, Serialize};
-use validator::Validate;
+use super::super::prelude::types::*;
 
 #[derive(Debug, Validate, Deserialize, Serialize)]
 pub struct SignUpToNewsLetterPayload {

@@ -1,6 +1,7 @@
 use super::prelude::*;
 
-pub trait DBModel {
+// TODO add Des to the required trait for DBModel
+pub trait DBModel: Serialize + Clone {
     fn get_collection_name() -> &'static str;
     fn get_indexes() -> Vec<IndexModel>;
     fn created_at(&self) -> DateTime<Utc>;
@@ -9,17 +10,15 @@ pub trait DBModel {
     fn update_id(&mut self, id: ObjectId) -> ();
 }
 
-pub trait NestedDocument: Into<Bson> {
+pub trait NestedDocument: Serialize + Clone {
     fn created_at(&self) -> DateTime<Utc>;
     fn updated_at(&self) -> DateTime<Utc>;
     fn id(&self) -> ObjectId;
-}
-
-pub trait ModelFields {
-    fn db_name(&self) -> &'static str;
+    fn into_bson(&self) -> Result<Bson, Response>;
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
+#[serde(untagged)]
 #[serde(bound = "")]
 pub enum RefrenceField<P, N>
 where
@@ -77,6 +76,19 @@ macro_rules! nested_document {
 
         fn id(&self) -> ObjectId {
             self.id
+        }
+
+        fn into_bson(&self) -> Result<Bson, Response> {
+            match bson::to_bson(&self) {
+                Ok(b) => Ok(b),
+                Err(_) => Err(ResponseBuilder::<u16>::error(
+                    "",
+                    None,
+                    Some(concat!(stringify!($Self), " Faild at into bson!")),
+                    Some(500),
+                )
+                .into_response()),
+            }
         }
     };
 }

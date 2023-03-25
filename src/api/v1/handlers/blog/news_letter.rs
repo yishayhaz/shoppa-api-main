@@ -9,9 +9,6 @@ pub async fn signup_to_news_letter(
     let _ = match inserts::new_news_letter_subscriber(&db, payload.email).await {
         Ok(_) => {}
         Err(e) => match e {
-            InsertDocumentErrors::UnknownError => {
-                return Err(ResponseBuilder::<u16>::error("", None, None, None).into_response());
-            }
             InsertDocumentErrors::AlredyExists => {
                 return Err(ResponseBuilder::<u16>::error(
                     "",
@@ -20,6 +17,9 @@ pub async fn signup_to_news_letter(
                     Some(409),
                 )
                 .into_response());
+            },
+            _ => {
+                return Err(e.into_response())
             }
         },
     };

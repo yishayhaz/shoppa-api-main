@@ -20,6 +20,7 @@ use mongodb::error::{ErrorKind, WriteFailure};
 pub enum InsertDocumentErrors {
     UnknownError,
     AlredyExists,
+    BsonConversionError
 }
 
 impl IntoResponse for InsertDocumentErrors {
@@ -39,6 +40,14 @@ impl IntoResponse for InsertDocumentErrors {
                 None,
                 Some("Document alredy exists"),
                 Some(409),
+            )
+            .into_response(),
+            Self::BsonConversionError => ResponseBuilder::<u16>::error(
+                // TODO add error code here
+                "",
+                None,
+                Some("Faild parsing a document to bson"),
+                Some(500),
             )
             .into_response(),
         }
