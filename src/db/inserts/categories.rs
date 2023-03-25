@@ -1,9 +1,9 @@
 use super::prelude::*;
-use crate::db::models::{Categories, InnerCategories, };//InnerInnerCategories};
+use crate::db::models::{Categories, InnerCategories, InnerInnerCategories};
 
 type InsertCategoriesResult = Result<Categories, InsertDocumentErrors>;
 type InsertInnerCategoriesResult = Result<InnerCategories, InsertDocumentErrors>;
-// type InsertInnerInnerCategoriesResult = Result<InnerInnerCategories, InsertDocumentErrors>;
+type InsertInnerInnerCategoriesResult = Result<InnerInnerCategories, InsertDocumentErrors>;
 
 pub async fn new_root_catagorie(db: &DBExtension, name: String) -> InsertCategoriesResult {
     let mut catagorie = Categories::new(name, vec![]);
@@ -34,9 +34,9 @@ pub async fn new_inner_catagorie(
 
     let catgories_fields = Categories::fields();
 
-    let inner_bson = match inner_catagorie.into_bson(){
+    let inner_bson = match inner_catagorie.into_bson() {
         Ok(v) => v,
-        Err(_) => return Err(InsertDocumentErrors::BsonConversionError)
+        Err(_) => return Err(InsertDocumentErrors::BsonConversionError),
     };
 
     let _ = db
@@ -55,13 +55,36 @@ pub async fn new_inner_catagorie(
     Ok(inner_catagorie)
 }
 
-// pub async fn new_inner_inner_catagorie(
-//     db: &DBExtension,
-//     name: String,
-//     categorie_id: &ObjectId,
-//     inner_categorie_id: &ObjectId,
-// ) -> InsertInnerInnerCategoriesResult {
-//     let inner_inner_catagorie = InnerInnerCategories::new(name);
+pub async fn new_inner_inner_catagorie(
+    db: &DBExtension,
+    name: String,
+    categorie_id: &ObjectId,
+    inner_categorie_id: &ObjectId,
+) -> InsertInnerInnerCategoriesResult {
+    let inner_inner_catagorie = InnerInnerCategories::new(name);
 
-//     Ok(inner_inner_catagorie)
-// }
+    let catgories_fields = Categories::fields();
+
+    let inner_bson = match inner_inner_catagorie.into_bson() {
+        Ok(v) => v,
+        Err(_) => return Err(InsertDocumentErrors::BsonConversionError),
+    };
+
+    let _ = db
+        .categories
+        .update_one(
+            doc! {
+                "_id": categorie_id,
+                format!("{}.{}", catgories_fields.categories, catgories_fields.categories().id): inner_categorie_id
+            },
+            doc! {
+                "$push": {
+                    format!("{}.$.{}", catgories_fields.categories, catgories_fields.categories().categories): inner_bson
+                }
+            },
+            None,
+        )
+        .await;
+
+    Ok(inner_inner_catagorie)
+}

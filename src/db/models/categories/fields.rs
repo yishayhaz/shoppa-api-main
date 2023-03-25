@@ -25,13 +25,13 @@ pub struct InnerInnerCategoriesFields {
 }
 
 impl CategoriesFields {
-    pub fn categories() ->&'static InnerCategoriesFields {
+    pub fn categories(&self) ->&'static InnerCategoriesFields {
         &INNER_FIELDS
     }
 }
 
 impl InnerCategoriesFields {
-    pub fn categories() ->&'static InnerInnerCategoriesFields {
+    pub fn categories(&self) ->&'static InnerInnerCategoriesFields {
         &INNER_INNER_FIELDS
     }
 }

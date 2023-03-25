@@ -5,7 +5,6 @@ use super::{
     prelude::*,
     Variants,
 };
-use bson::document::Document;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Categories {

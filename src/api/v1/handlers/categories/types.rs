@@ -14,5 +14,7 @@ pub struct CreateInnerCatgoriePayload{
 
 #[derive(Serialize, Deserialize)]
 pub struct CreateInnerInnerCatgoriePayload{
-    pub name: String
+    pub name: String,
+    pub parent_id: ObjectId,
+    pub parent_parent_id: ObjectId
 }
