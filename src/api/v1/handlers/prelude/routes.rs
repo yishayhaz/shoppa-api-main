@@ -5,3 +5,4 @@ pub use crate::helpers::{
     json::JsonWithValidation,
     types::{DBExtension, HandlerResponse, ResponseBuilder},
 };
+pub use crate::api::v1::middlewares::*;

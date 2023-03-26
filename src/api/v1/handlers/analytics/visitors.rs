@@ -1,6 +1,5 @@
 use super::super::prelude::routes::*;
 use crate::{
-    api::v1::middlewares::ClientIpAddress,
     db::inserts,
     helpers::{cookies::create_cookie, types::Cookeys},
 };

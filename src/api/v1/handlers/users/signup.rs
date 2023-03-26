@@ -5,10 +5,11 @@ use crate::{
     helpers::{cookies::set_access_cookie, security},
 };
 
-// TODO if the user has a token update him insted of creating a new user
 pub async fn signup(
     db: DBExtension,
     cookies: Cookies,
+    // TODO if the user has a token update him insted of creating a new user
+    Level1AccessOrNone(_user): Level1AccessOrNone,
     JsonWithValidation(payload): JsonWithValidation<UserRegisterPayload>,
 ) -> HandlerResponse {
     let password = security::hash_password(&payload.password)?;

@@ -105,7 +105,7 @@ impl User {
             id: None,
             created_at: Utc::now(),
             updated_at: Utc::now(),
-            level: 1,
+            level,
             name,
             email,
             phone_number: None,

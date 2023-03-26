@@ -12,6 +12,7 @@ use crate::{
 pub async fn login(
     db: DBExtension,
     cookies: Cookies,
+    GuestOnly(_): GuestOnly,
     JsonWithValidation(payload): JsonWithValidation<UserLoginPayload>,
 ) -> HandlerResponse {
     let user = queries::get_user_by_email(&db, payload.email).await?;
@@ -40,7 +41,10 @@ pub async fn login(
     Ok(ResponseBuilder::success(Some(user), None, None).into_response())
 }
 
-pub async fn logout(cookies: Cookies) -> HandlerResponse {
+pub async fn logout(
+    cookies: Cookies,
+    Level2Access(_): Level2Access
+) -> HandlerResponse {
     cookies.add(delete_cookie(&Cookeys::AccessToken));
 
     Ok(ResponseBuilder::<u16>::success(None, None, None).into_response())
