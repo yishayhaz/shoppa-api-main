@@ -31,7 +31,7 @@ async fn get_user(
     Ok(user)
 }
 
-pub async fn get_user_by_email(db: &DBExtension, email: String) -> GetUserResult {
+pub async fn get_user_by_email(db: &DBExtension, email: &String) -> GetUserResult {
     let filter = doc! {
         "email": email,
     };

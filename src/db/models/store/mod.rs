@@ -10,6 +10,13 @@ pub struct Store {
     updated_at: DateTime<Utc>,
 
     pub name: String,
+    pub email: String,
+    pub location: String,
+    pub delivery_strategy: String
+    //pub logo(s): ?
+    //pub banner(s): ?
+
+
 }
 
 impl DBModel for Store {
@@ -36,13 +43,13 @@ impl DBModel for Store {
     db_model!(Store);
 }
 
-impl Store {
-    pub fn new(name: String) -> Self {
-        Self {
-            id: None,
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
-            name,
-        }
-    }
-}
+// impl Store {
+//     pub fn new(name: String) -> Self {
+//         Self {
+//             id: None,
+//             created_at: Utc::now(),
+//             updated_at: Utc::now(),
+//             name,
+//         }
+//     }
+// }

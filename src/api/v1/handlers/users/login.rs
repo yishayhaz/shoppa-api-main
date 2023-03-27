@@ -15,7 +15,7 @@ pub async fn login(
     GuestOnly(_): GuestOnly,
     JsonWithValidation(payload): JsonWithValidation<UserLoginPayload>,
 ) -> HandlerResponse {
-    let user = queries::get_user_by_email(&db, payload.email).await?;
+    let user = queries::get_user_by_email(&db, &payload.email).await?;
 
     let user_not_found =
     //TODO add error code here
