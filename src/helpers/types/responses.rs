@@ -6,7 +6,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 #[derive(Serialize, Deserialize)]
-pub struct ResponseBuilder<T: Serialize> {
+pub struct ResponseBuilder<T> {
     code: u16,
     message: Option<&'static str>,
     success: bool,
