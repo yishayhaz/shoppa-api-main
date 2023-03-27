@@ -56,7 +56,7 @@ where
 
                 Ok(Level1AccessOrNone(Some(data)))
             }
-            Err((e, _)) => Ok(Level1AccessOrNone(None)),
+            Err((_, _)) => Ok(Level1AccessOrNone(None)),
         }
     }
 }
