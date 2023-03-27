@@ -128,6 +128,7 @@ impl User {
     pub fn to_get_me(&self) -> Result<Value, Response> {
         Ok(json!({
             "_id": self.id()?.to_string(),
+            "name": self.name,
             "cart": self.cart,
             "gender": self.gender,
             "phone_number": self.phone_number,
