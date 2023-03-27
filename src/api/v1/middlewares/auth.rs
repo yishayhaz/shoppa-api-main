@@ -12,10 +12,14 @@ use axum::{
 use tower_cookies::Cookies;
 
 pub struct GuestOnly(pub ());
+// get me is a bit diffrent, we dont want to return an 400 when he is not logged in
+// to help the seo
+pub struct GetTokenForGetMe(pub LoginTokenData);
 pub struct Level1AccessOrNone(pub Option<LoginTokenData>);
 pub struct Level1Access(pub LoginTokenData);
 pub struct Level2Access(pub LoginTokenData);
 pub struct Level3Access(pub LoginTokenData);
+
 
 pub enum AuthErrors {
     InvalidToken,
@@ -23,6 +27,7 @@ pub enum AuthErrors {
     FaildExtractingCookies,
     InsufficientLevel,
     GuestRequired,
+    AuthErrorWith200
 }
 
 #[async_trait]
@@ -39,6 +44,24 @@ where
         }
     }
 }
+
+
+#[async_trait]
+impl<S> FromRequestParts<S> for GetTokenForGetMe
+where
+    S: Send + Sync,
+{
+    type Rejection = AuthErrors;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        match extract_access_token(parts, state).await {
+            // the min level is 1 so there is no need to check for the user level
+            Ok((data, _)) => Ok(GetTokenForGetMe(data)),
+            Err((e, _)) => Err(AuthErrors::AuthErrorWith200),
+        }
+    }
+}
+
 
 #[async_trait]
 impl<S> FromRequestParts<S> for Level1AccessOrNone
@@ -194,6 +217,14 @@ impl IntoResponse for AuthErrors {
                 None,
                 Some("Need to be guest to access this route"),
                 Some(403),
+            )
+            .into_response(),
+            Self::AuthErrorWith200 => ResponseBuilder::<u16>::error(
+                // TODO add error code here
+                "",
+                None,
+                Some("Need to be guest to access this route"),
+                Some(200),
             )
             .into_response(),
         }

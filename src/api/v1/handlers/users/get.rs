@@ -7,8 +7,9 @@ use crate::{
 pub async fn get_me(
     db: DBExtension,
     cookies: Cookies,
-    Level2Access(token_data): Level2Access,
+    GetTokenForGetMe(token_data): GetTokenForGetMe,
 ) -> HandlerResponse {
+
     let user = queries::get_user_by_id(&db, token_data.user_id).await?;
 
     match user {
