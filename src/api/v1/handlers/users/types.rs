@@ -34,6 +34,14 @@ pub struct UserUpdatePasswordPayload {
     pub new_password: String,
 }
 
+#[derive(Deserialize, Serialize, Validate)]
+pub struct ChangePasswordPayload {
+    #[validate(custom = "password_validator")]
+    pub old_password: String,
+    #[validate(custom = "password_validator")]
+    pub new_password: String,
+}
+
 impl Validate for UserUpdatePayload {
     fn validate(&self) -> Result<(), ValidationErrors> {
         let mut errors = ValidationErrors::new();

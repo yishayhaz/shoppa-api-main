@@ -2,6 +2,7 @@ use axum::{routing, Router};
 
 mod get;
 mod login;
+mod password;
 mod signup;
 mod types;
 
@@ -12,4 +13,8 @@ pub fn router() -> Router {
         .route("/sign-up", routing::post(signup::signup))
         .route("/sign-up/1", routing::post(signup::signup_level_1))
         .route("/me", routing::get(get::get_me))
+        .route(
+            "/update-password",
+            routing::patch(password::change_password),
+        )
 }

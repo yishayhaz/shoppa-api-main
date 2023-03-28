@@ -39,7 +39,7 @@ pub async fn get_user_by_email(db: &DBExtension, email: &String) -> GetUserResul
     get_user(db, filter, None).await
 }
 
-pub async fn get_user_by_id(db: &DBExtension, id: ObjectId) -> GetUserResult {
+pub async fn get_user_by_id(db: &DBExtension, id: &ObjectId) -> GetUserResult {
     let filter = doc! {
         "_id": id,
     };

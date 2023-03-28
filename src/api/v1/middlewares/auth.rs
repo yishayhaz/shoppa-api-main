@@ -20,14 +20,13 @@ pub struct Level1Access(pub LoginTokenData);
 pub struct Level2Access(pub LoginTokenData);
 pub struct Level3Access(pub LoginTokenData);
 
-
 pub enum AuthErrors {
     InvalidToken,
     MissingToken,
     FaildExtractingCookies,
     InsufficientLevel,
     GuestRequired,
-    AuthErrorWith200
+    AuthErrorWith200,
 }
 
 #[async_trait]
@@ -45,7 +44,6 @@ where
     }
 }
 
-
 #[async_trait]
 impl<S> FromRequestParts<S> for GetTokenForGetMe
 where
@@ -57,11 +55,10 @@ where
         match extract_access_token(parts, state).await {
             // the min level is 1 so there is no need to check for the user level
             Ok((data, _)) => Ok(GetTokenForGetMe(data)),
-            Err((e, _)) => Err(AuthErrors::AuthErrorWith200),
+            Err((_, _)) => Err(AuthErrors::AuthErrorWith200),
         }
     }
 }
-
 
 #[async_trait]
 impl<S> FromRequestParts<S> for Level1AccessOrNone

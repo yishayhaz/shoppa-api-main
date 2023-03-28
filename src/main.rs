@@ -2,7 +2,7 @@ use axum::{Extension, Router};
 use dotenv::dotenv;
 use shoppa_api::{
     api, db,
-    helpers::{env::EnvVars, security::get_cors_layer},
+    helpers::{env::EnvVars, security::get_cors_layer, setup},
 };
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -32,5 +32,6 @@ async fn main() {
 
     let _ = axum::Server::bind(&address.parse().unwrap())
         .serve(app.into_make_service_with_connect_info::<SocketAddr>())
+        .with_graceful_shutdown(setup::shutdown_signal())
         .await;
 }

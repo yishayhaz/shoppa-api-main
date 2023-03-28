@@ -8,7 +8,6 @@ use crate::{
 pub async fn signup(
     db: DBExtension,
     cookies: Cookies,
-    // TODO if the user has a token update him insted of creating a new user
     Level1AccessOrNone(token_data): Level1AccessOrNone,
     JsonWithValidation(payload): JsonWithValidation<UserRegisterPayload>,
 ) -> HandlerResponse {
