@@ -45,10 +45,12 @@ pub async fn update_user_to_level_2(
     };
 
     let update = doc! {
-        "email": email,
-        "password": password,
-        "name": name,
-        "level": 2
+        "$set": {
+            "email": email,
+            "password": password,
+            "name": name,
+            "level": 2
+        }
     };
 
     _update_user(db, filter, update, None).await
@@ -57,14 +59,16 @@ pub async fn update_user_to_level_2(
 pub async fn update_user_password(
     db: &DBExtension,
     user_id: &ObjectId,
-    new_password: &str
+    new_password: &str,
 ) -> UpdateUserResult {
     let filter = doc! {
         "_id": user_id
     };
 
     let update = doc! {
-        "password": new_password,
+        "$set": {
+            "password": new_password,
+        }
     };
 
     _update_user(db, filter, update, None).await
