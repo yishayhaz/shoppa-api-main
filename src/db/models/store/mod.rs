@@ -11,13 +11,20 @@ pub struct Store {
 
     pub name: String,
     pub email: String,
-    pub location: String,
+    pub location: StoreLocation,
     pub delivery_strategy: String
+    // pub bank_details: ?
     //pub logo(s): ?
     //pub banner(s): ?
 
 
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct StoreLocation{
+    pub free_text: String
+}
+
 
 impl DBModel for Store {
     fn get_collection_name() -> &'static str {

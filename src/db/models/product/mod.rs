@@ -1,7 +1,7 @@
 use super::{
-    common::{db_model, DBModel, RefrenceField},
+    common::{db_model, DBModel, NestedDocument, RefrenceField},
     prelude::*,
-    Categories, Store, Variants,
+    Categories, InnerCategories, InnerInnerCategories, Store, Variants,
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -16,11 +16,12 @@ pub struct Product {
     pub brand: Option<String>,
     // between 8 latters to 64
     pub name: String,
-    // 
     pub description: String,
     pub keywords: Vec<String>,
     pub store: RefrenceField<Store, StoreField>,
     // Not likely that it will be populated.
+    // But if it will be, I need to make it only contain the
+    // Caregories in the Vec<CategoriesField>>
     pub categories: RefrenceField<Categories, Vec<CategoriesField>>,
     pub variants: RefrenceField<Vec<Variants>, Vec<ObjectId>>,
     // pub product_info: Vec<String>
@@ -91,4 +92,113 @@ impl DBModel for Product {
     }
 
     db_model!(Product);
+}
+
+impl Product {
+    pub fn new(
+        store: &Store,
+        brand: Option<String>,
+        description: String,
+        keywords: Vec<String>,
+        name: String,
+        categorie: &Categories,
+        inner_categorie: &InnerCategories,
+        inner_inner_categorie: &InnerInnerCategories,
+        variants: Vec<ObjectId>,
+    ) -> Result<Self, ()> {
+        let store_id = match store.id() {
+            Ok(id) => id,
+            Err(_) => return Err(()),
+        };
+
+        let categories = {
+            let c_id = match categorie.id() {
+                Ok(id) => id,
+                Err(_) => return Err(()),
+            };
+
+            vec![
+                CategoriesField::new(c_id.clone(), categorie.name.clone()),
+                CategoriesField::new(inner_categorie.id().clone(), inner_categorie.name.clone()),
+                CategoriesField::new(
+                    inner_inner_categorie.id().clone(),
+                    inner_inner_categorie.name.clone(),
+                ),
+            ]
+        };
+
+        let mut allowed_variants = Vec::new();
+
+        match &categorie.allowed_variants {
+            RefrenceField::Populated(var) => {
+                for v in var {
+                    if let Ok(id) = v.id() {
+                        allowed_variants.push(id);
+                    }
+                }
+            }
+            RefrenceField::NotPopulated(var) => {
+                allowed_variants.extend(var);
+            }
+        };
+
+        match &inner_categorie.allowed_variants {
+            RefrenceField::Populated(var) => {
+                for v in var {
+                    if let Ok(id) = v.id() {
+                        allowed_variants.push(id);
+                    }
+                }
+            }
+            RefrenceField::NotPopulated(var) => {
+                allowed_variants.extend(var);
+            }
+        };
+
+        match &inner_inner_categorie.allowed_variants {
+            RefrenceField::Populated(var) => {
+                for v in var {
+                    if let Ok(id) = v.id() {
+                        allowed_variants.push(id);
+                    }
+                }
+            }
+            RefrenceField::NotPopulated(var) => {
+                allowed_variants.extend(var);
+            }
+        };
+
+        if !variants.iter().all(|v| allowed_variants.contains(&v)){
+            return Err(());
+        };
+
+
+        Ok(Self {
+            id: None,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+            brand,
+            name,
+            description,
+            keywords,
+            store: RefrenceField::NotPopulated(StoreField::new(
+                store_id.clone(),
+                store.name.clone(),
+            )),
+            categories: RefrenceField::NotPopulated(categories),
+            variants: RefrenceField::NotPopulated(variants),
+        })
+    }
+}
+
+impl StoreField {
+    fn new(id: ObjectId, name: String) -> Self {
+        Self { id, name }
+    }
+}
+
+impl CategoriesField {
+    fn new(id: ObjectId, name: String) -> Self {
+        Self { id, name }
+    }
 }

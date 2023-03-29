@@ -13,7 +13,7 @@ pub trait DBModel: Serialize + Clone {
 pub trait NestedDocument: Serialize + Clone {
     fn created_at(&self) -> DateTime<Utc>;
     fn updated_at(&self) -> DateTime<Utc>;
-    fn id(&self) -> ObjectId;
+    fn id(&self) -> &ObjectId;
     fn into_bson(&self) -> Result<Bson, Response>;
 }
 
@@ -74,8 +74,8 @@ macro_rules! nested_document {
             self.updated_at
         }
 
-        fn id(&self) -> ObjectId {
-            self.id
+        fn id(&self) -> &ObjectId {
+            &self.id
         }
 
         fn into_bson(&self) -> Result<Bson, Response> {

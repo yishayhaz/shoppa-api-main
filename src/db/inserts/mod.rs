@@ -20,7 +20,8 @@ use mongodb::error::{ErrorKind, WriteFailure};
 pub enum InsertDocumentErrors {
     UnknownError,
     AlredyExists,
-    BsonConversionError
+    BsonConversionError,
+    PopulatedRefField
 }
 
 impl IntoResponse for InsertDocumentErrors {
@@ -50,6 +51,14 @@ impl IntoResponse for InsertDocumentErrors {
                 Some(500),
             )
             .into_response(),
+            Self::PopulatedRefField => ResponseBuilder::<u16>::error(
+                // TODO add error code here
+                "",
+                None,
+                Some("Passed populated field where there should be none"),
+                Some(500),
+            )
+            .into_response() 
         }
     }
 }
