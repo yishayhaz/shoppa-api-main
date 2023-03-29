@@ -5,6 +5,7 @@ mod users;
 mod variants;
 mod categories;
 mod prelude;
+mod products;
 
 pub use contact_us::*;
 pub use news_letter::*;
