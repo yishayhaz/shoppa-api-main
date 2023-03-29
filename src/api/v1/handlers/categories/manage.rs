@@ -6,6 +6,7 @@ use crate::db::inserts;
 
 pub async fn create_new_root_catagorie(
     db: DBExtension,
+    _: OnlyInDev,
     Json(payload): Json<CreateRootCatgoriePayload>,
 ) -> HandlerResponse {
     let _ = inserts::new_root_catagorie(&db, payload.name).await;
@@ -15,6 +16,7 @@ pub async fn create_new_root_catagorie(
 
 pub async fn create_new_inner_catagorie(
     db: DBExtension,
+    _: OnlyInDev,
     Json(payload): Json<CreateInnerCatgoriePayload>,
 ) -> HandlerResponse {
     let _ = inserts::new_inner_catagorie(&db, payload.name, &payload.parent_id).await;
@@ -24,6 +26,7 @@ pub async fn create_new_inner_catagorie(
 
 pub async fn create_new_inner_inner_catagorie(
     db: DBExtension,
+    _: OnlyInDev,
     Json(payload): Json<CreateInnerInnerCatgoriePayload>,
 ) -> HandlerResponse {
     let _ = inserts::new_inner_inner_catagorie(
