@@ -5,7 +5,7 @@ use super::types::CreateProductPayload;
 pub async fn create_new_product(
     _db: DBExtension,
     _: OnlyInDev,
-    Json(_payload): Json<CreateProductPayload>,
+    JsonWithValidation(_payload): JsonWithValidation<CreateProductPayload>,
 ) -> HandlerResponse {
     Ok(().into_response())
 }

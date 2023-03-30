@@ -8,8 +8,10 @@ pub struct CreateProductPayload {
     #[validate(length(min = 3, max = 3))]
     pub catagories: Vec<ObjectId>,
 
-    pub variants: Vec<ObjectId>,
+    pub variants: Option<Vec<ObjectId>>,
     pub store: ObjectId,
-    pub keywords: Vec<String>,
+    pub keywords: Option<Vec<String>>,
     pub brand: Option<String>,
+    #[validate(length(min = 8))]
+    pub description: String,
 }
