@@ -1,4 +1,8 @@
-use super::{common::{db_model, DBModel}, prelude::*};
+use super::{
+    common::{db_model, DBModel},
+    prelude::*,
+};
+mod fields;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Store {
@@ -12,19 +16,16 @@ pub struct Store {
     pub name: String,
     pub email: String,
     pub location: StoreLocation,
-    pub delivery_strategy: String
+    // pub delivery_strategy: String
     // pub bank_details: ?
     //pub logo(s): ?
     //pub banner(s): ?
-
-
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct StoreLocation{
-    pub free_text: String
+pub struct StoreLocation {
+    pub free_text: String,
 }
-
 
 impl DBModel for Store {
     fn get_collection_name() -> &'static str {
@@ -50,13 +51,21 @@ impl DBModel for Store {
     db_model!(Store);
 }
 
-// impl Store {
-//     pub fn new(name: String) -> Self {
-//         Self {
-//             id: None,
-//             created_at: Utc::now(),
-//             updated_at: Utc::now(),
-//             name,
-//         }
-//     }
-// }
+impl Store {
+    pub fn new(name: String, email: String, location: String) -> Self {
+        Self {
+            id: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+            name,
+            email,
+            location: StoreLocation {
+                free_text: location,
+            },
+        }
+    }
+
+    pub fn fields() -> &'static fields::StoreFields {
+        &fields::FIELDS
+    }
+}

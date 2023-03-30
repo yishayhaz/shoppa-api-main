@@ -1,0 +1,17 @@
+pub struct StoreFields {
+    pub id: &'static str,
+    pub created_at: &'static str,
+    pub updated_at: &'static str,
+    pub name: &'static str,
+    pub email: &'static str,
+    pub location: &'static str,
+}
+
+pub const FIELDS: StoreFields = StoreFields {
+    id: "_id",
+    created_at: "created_at",
+    updated_at: "updated_at",
+    name: "name",
+    email: "email",
+    location: "location",
+};

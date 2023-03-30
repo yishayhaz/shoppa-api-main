@@ -3,6 +3,7 @@ use super::{
     prelude::*,
 };
 use serde_repr::{Deserialize_repr, Serialize_repr};
+mod fields;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ContactUsForm {
@@ -48,5 +49,9 @@ impl ContactUsForm {
             message,
             reason,
         }
+    }
+
+    pub fn fields() -> &'static fields::ContactUsFields {
+        &fields::FIELDS
     }
 }

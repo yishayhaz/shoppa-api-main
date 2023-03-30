@@ -6,6 +6,7 @@ mod variants;
 mod categories;
 mod prelude;
 mod products;
+mod stores;
 
 pub use contact_us::*;
 pub use news_letter::*;
@@ -13,6 +14,7 @@ pub use sites_visite::*;
 pub use users::*;
 pub use variants::*;
 pub use categories::*;
+pub use stores::*;
 
 use crate::helpers::types::ResponseBuilder;
 use axum::response::{IntoResponse, Response};
