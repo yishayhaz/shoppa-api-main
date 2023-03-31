@@ -196,7 +196,7 @@ impl IntoResponse for AuthErrors {
                 // TODO add error code here
                 "",
                 None,
-                Some("Faild parsing cookies"),
+                Some("Failed parsing cookies"),
                 Some(500),
             )
             .into_response(),
@@ -204,7 +204,7 @@ impl IntoResponse for AuthErrors {
                 // TODO add error code here
                 "",
                 None,
-                Some("You level is too low"),
+                Some("Your level is too low"),
                 Some(403),
             )
             .into_response(),
