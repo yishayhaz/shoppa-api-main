@@ -1,20 +1,21 @@
+mod categories;
 mod contact_us;
 mod news_letter;
-mod sites_visite;
-mod users;
-mod variants;
-mod categories;
 mod prelude;
 mod products;
+mod sites_visite;
 mod stores;
+mod users;
+mod variants;
 
+pub use categories::*;
 pub use contact_us::*;
 pub use news_letter::*;
+pub use products::*;
 pub use sites_visite::*;
+pub use stores::*;
 pub use users::*;
 pub use variants::*;
-pub use categories::*;
-pub use stores::*;
 
 use crate::helpers::types::ResponseBuilder;
 use axum::response::{IntoResponse, Response};
@@ -24,7 +25,8 @@ pub enum InsertDocumentErrors {
     UnknownError,
     AlredyExists,
     BsonConversionError,
-    PopulatedRefField
+    PopulatedRefField,
+    InvalidArgumentsForModel,
 }
 
 impl IntoResponse for InsertDocumentErrors {
@@ -61,7 +63,15 @@ impl IntoResponse for InsertDocumentErrors {
                 Some("Passed populated field where there should be none"),
                 Some(500),
             )
-            .into_response() 
+            .into_response(),
+            Self::InvalidArgumentsForModel => ResponseBuilder::<u16>::error(
+                // TODO add error code here
+                "",
+                None,
+                Some("Passed invalid arguments to model"),
+                Some(500),
+            )
+            .into_response(),
         }
     }
 }
