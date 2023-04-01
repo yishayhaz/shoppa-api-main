@@ -1,11 +1,8 @@
 use super::super::prelude::routes::*;
-use super::types::CreateProductPayload;
-use crate::db::{inserts, queries, inserts::InsertDocumentErrors};
+use crate::db::queries;
 
-pub async fn get_products(
-    db: DBExtension,
-) -> HandlerResponse {
+pub async fn get_products(db: DBExtension) -> HandlerResponse {
+    let products = queries::get_products_for_extarnel(&db).await?;
 
-    Ok(().into_response())
-
+    Ok(ResponseBuilder::success(Some(products), None, None).into_response())
 }

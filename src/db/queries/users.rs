@@ -1,11 +1,4 @@
-use crate::{
-    db::models,
-    helpers::types::{DBExtension, ResponseBuilder},
-};
-use axum::response::IntoResponse;
-use axum::response::Response;
-use bson::{doc, oid::ObjectId, Document};
-use mongodb::options::FindOneOptions;
+use super::prelude::*;
 
 type GetUserResult = Result<Option<models::User>, Response>;
 

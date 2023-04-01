@@ -8,7 +8,7 @@ pub enum ProjectIdOptions {
 }
 
 pub fn lookup<T: DBModel>(
-    from: T,
+    _collection: T,
     local_field: &'static str,
     foreign_field: &'static str,
     as_: &'static str,
@@ -150,7 +150,7 @@ pub fn safe_array_size(field: &'static str) -> Document {
     }
 }
 
-pub fn union_with<T: DBModel>(collection: T, pipeline: Document) -> Document {
+pub fn union_with<T: DBModel>(_collection: T, pipeline: Document) -> Document {
     doc! {
         "$unionWith": {
             "coll": T::get_collection_name(),

@@ -1,15 +1,6 @@
-use crate::{
-    db::models,
-    helpers::types::{DBExtension, ResponseBuilder},
-};
-use axum::response::IntoResponse;
-use axum::response::Response;
-use bson::{doc, oid::ObjectId, Document};
-use mongodb::options::FindOneOptions;
+use super::prelude::*;
 
-type GetStoreResult = Result<Option<models::Store>, Response>;
-
-type GetProductsExternalResult = Result<Document, Response>;
+type GetProductsExternalResult = Result<Vec<Document>, Response>;
 
 // async fn get_product(
 //     db: &DBExtension,
@@ -41,10 +32,35 @@ type GetProductsExternalResult = Result<Document, Response>;
 //     get_product(db, filter, None).await
 // }
 
+pub async fn get_products_for_extarnel(db: &DBExtension) -> GetProductsExternalResult {
+    let pipeline = [aggregations::match_query(doc! {})];
 
-// pub async fn get_products_for_extarnel(db: &DBExtension) -> GetProductsExternalResult {
+    let cursor = match db.products.aggregate(pipeline, None).await {
+        Ok(v) => v,
+        Err(_) => {
+            return Err(ResponseBuilder::<u16>::error(
+                // TODO add error code here
+                "",
+                None,
+                Some("Internal Server Error while fetching products"),
+                Some(500),
+            )
+            .into_response());
+        }
+    };
 
+    match consume_cursor(cursor).await{
+        Ok(products) => Ok(products),
+        Err(_) => {
+            return Err(ResponseBuilder::<u16>::error(
+                // TODO add error code here
+                "",
+                None,
+                Some("Internal Server Error while fetching products"),
+                Some(500),
+            )
+            .into_response());
+        }
+    }
 
-//     let product = db.products.aggregate(pipeline, options);
-
-// }
+}
