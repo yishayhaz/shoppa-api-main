@@ -1,3 +1,5 @@
+mod fields;
+
 use super::{
     common::{db_model, DBModel, NestedDocument, RefrenceField},
     prelude::*,
@@ -168,10 +170,9 @@ impl Product {
             }
         };
 
-        if !variants.iter().all(|v| allowed_variants.contains(&v)){
+        if !variants.iter().all(|v| allowed_variants.contains(&v)) {
             return Err(());
         };
-
 
         Ok(Self {
             id: None,
@@ -188,6 +189,10 @@ impl Product {
             categories: RefrenceField::NotPopulated(categories),
             variants: RefrenceField::NotPopulated(variants),
         })
+    }
+
+    pub fn fields() -> &'static fields::ProductFields {
+        &fields::FIELDS
     }
 }
 

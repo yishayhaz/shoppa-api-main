@@ -1,4 +1,5 @@
 use super::prelude::*;
+use models::Product;
 
 type GetProductsExternalResult = Result<Vec<Document>, Response>;
 
@@ -37,16 +38,24 @@ pub async fn get_products_for_extarnel(db: &DBExtension) -> GetProductsExternalR
         aggregations::match_query(doc! {}),
         aggregations::project(
             ProjectIdOptions::ToString,
-            vec!["brand", "name", "keywords", "store.name"],
+            vec![
+                Product::fields().brand,
+                Product::fields().name,
+                Product::fields().keywords,
+                "store.name",
+            ],
             Some(doc! {
-                "categories": {
+                Product::fields().categories: {
                 "$map": {
                     "input": "$categories",
-                    "in": {"_id":{"$toString":  "$$this._id"}, "name": "$$this.name"}
+                    "in": {
+                        "_id":{"$toString": "$$this._id"}, 
+                        "name": "$$this.name"
+                    }
                     }
                 },
                 "store._id": aggregations::convert_to_string_safe("$store._id"),
-                "created_at": aggregations::convert_to_string_safe("$created_at")
+                Product::fields().created_at: aggregations::convert_to_string_safe("$created_at")
             }),
         ),
     ];
