@@ -34,6 +34,8 @@ pub async fn create_new_product(
 
     let store = store.unwrap();
 
+    let inner_category = categories.categories.get(0).unwrap();
+
     let product = inserts::new_product(
         &db,
         &store,
@@ -42,8 +44,8 @@ pub async fn create_new_product(
         payload.keywords.unwrap_or(vec![]),
         payload.name,
         &categories,
-        categories.categories.get(0).unwrap(),
-        categories.categories.get(0).unwrap().categories.get(0).unwrap(),
+        inner_category,
+        inner_category.categories.get(0).unwrap(),
         payload.variants.unwrap_or(vec![]),
     ).await;
 

@@ -2,6 +2,8 @@ pub mod inserts;
 pub mod models;
 pub mod queries;
 pub mod updates;
+pub mod aggregations;
+
 use crate::helpers::env::EnvVars;
 use models::DBModel;
 use mongodb::{
