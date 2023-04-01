@@ -33,7 +33,23 @@ type GetProductsExternalResult = Result<Vec<Document>, Response>;
 // }
 
 pub async fn get_products_for_extarnel(db: &DBExtension) -> GetProductsExternalResult {
-    let pipeline = [aggregations::match_query(doc! {})];
+    let pipeline = [
+        aggregations::match_query(doc! {}),
+        aggregations::project(
+            ProjectIdOptions::ToString,
+            vec!["brand", "name", "keywords", "store.name"],
+            Some(doc! {
+                "categories": {
+                "$map": {
+                    "input": "$categories",
+                    "in": {"_id":{"$toString":  "$$this._id"}, "name": "$$this.name"}
+                    }
+                },
+                "store._id": aggregations::convert_to_string_safe("$store._id"),
+                "created_at": aggregations::convert_to_string_safe("$created_at")
+            }),
+        ),
+    ];
 
     let cursor = match db.products.aggregate(pipeline, None).await {
         Ok(v) => v,
@@ -49,7 +65,7 @@ pub async fn get_products_for_extarnel(db: &DBExtension) -> GetProductsExternalR
         }
     };
 
-    match consume_cursor(cursor).await{
+    match consume_cursor(cursor).await {
         Ok(products) => Ok(products),
         Err(_) => {
             return Err(ResponseBuilder::<u16>::error(
@@ -62,5 +78,4 @@ pub async fn get_products_for_extarnel(db: &DBExtension) -> GetProductsExternalR
             .into_response());
         }
     }
-
 }

@@ -65,7 +65,7 @@ pub fn project(
             project_stage.insert("_id", 0);
         }
         ProjectIdOptions::ToString => {
-            project_stage.insert("_id", doc! {"$toString": "_id"});
+            project_stage.insert("_id", doc! {"$toString": "$_id"});
         }
     }
 
@@ -134,7 +134,7 @@ pub fn convert_to_string_safe(field: &'static str) -> Document {
         "$convert": {
             "input": field,
             "to": "string",
-            // onError: <expression>
+            "onError": "error",
             "onNull": "null",
         }
     }
