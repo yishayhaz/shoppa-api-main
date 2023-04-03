@@ -33,9 +33,20 @@ type GetProductsExternalResult = Result<Vec<Document>, Response>;
 //     get_product(db, filter, None).await
 // }
 
-pub async fn get_products_for_extarnel(db: &DBExtension) -> GetProductsExternalResult {
+pub async fn get_products_for_extarnel(
+    db: &DBExtension,
+    free_text: Option<String>
+) -> GetProductsExternalResult {
+
+    let query = match free_text {
+        Some(text) => doc! {
+            "$text": {"$search": text}
+        },
+        None => doc! {}
+    };
+
     let pipeline = [
-        aggregations::match_query(doc! {}),
+        aggregations::match_query(query),
         aggregations::project(
             ProjectIdOptions::ToString,
             vec![

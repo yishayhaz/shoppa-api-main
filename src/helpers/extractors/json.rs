@@ -1,4 +1,4 @@
-use super::types::ResponseBuilder;
+use super::super::types::ResponseBuilder;
 use async_trait::async_trait;
 use axum::{
     body::HttpBody,

@@ -15,3 +15,8 @@ pub struct CreateProductPayload {
     #[validate(length(min = 8))]
     pub description: String,
 }
+
+#[derive(Deserialize, Serialize, Debug, Clone, Validate)]
+pub struct GetProductQueryParams {
+    pub free_text: Option<String>
+}

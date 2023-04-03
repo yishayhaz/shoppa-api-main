@@ -1,8 +1,8 @@
-pub use axum::{response::IntoResponse, Json};
+pub use axum::{response::IntoResponse, Json, extract::Query};
 pub use tower_cookies::Cookies;
 
 pub use crate::helpers::{
-    json::JsonWithValidation,
+    extractors::{JsonWithValidation, QueryWithValidation},
     types::{DBExtension, HandlerResponse, ResponseBuilder},
 };
 pub use crate::api::v1::middlewares::*;
