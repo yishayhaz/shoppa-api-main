@@ -18,5 +18,6 @@ pub struct CreateProductPayload {
 
 #[derive(Deserialize, Serialize, Debug, Clone, Validate)]
 pub struct GetProductQueryParams {
-    pub free_text: Option<String>
+    pub free_text: Option<String>,
+    pub store_id: Option<ObjectId>
 }
