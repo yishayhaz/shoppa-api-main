@@ -1,4 +1,4 @@
-use crate::helpers::extractors::QueryWithValidation;
+use crate::helpers::{extractors::QueryWithValidation, parser::empty_string_as_none};
 use axum::{
     async_trait,
     extract::FromRequestParts,
@@ -17,7 +17,9 @@ pub struct Pagination {
 
 #[derive(Debug, Validate, Deserialize)]
 struct PaginationPrivate {
+    #[serde(deserialize_with = "empty_string_as_none")]
     page: Option<u32>,
+    #[serde(deserialize_with = "empty_string_as_none")]
     #[validate(range(max=100))]
     amount: Option<u32>,
 }

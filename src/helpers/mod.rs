@@ -5,3 +5,4 @@ pub mod security;
 pub mod cookies;
 pub mod setup;
 pub mod extractors;
+pub mod parser;
