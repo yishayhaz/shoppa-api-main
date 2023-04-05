@@ -1,8 +1,8 @@
+pub mod aggregations;
 pub mod inserts;
 pub mod models;
 pub mod queries;
 pub mod updates;
-pub mod aggregations;
 
 use crate::helpers::env::EnvVars;
 use models::DBModel;
@@ -104,10 +104,13 @@ impl DBCollections {
         let mut current_indexes = match collection.list_indexes(None).await {
             Ok(v) => v,
             Err(e) => {
-                println!("Failed to list indexes for {}", Model::get_collection_name());
+                println!(
+                    "Failed to list indexes for {}",
+                    Model::get_collection_name()
+                );
                 println!("Error: {}", e);
                 return;
-            },
+            }
         };
 
         while current_indexes.advance().await.unwrap() {
@@ -124,7 +127,11 @@ impl DBCollections {
 
         for index in indexes_to_drop {
             let _ = collection.drop_index(&index, None).await;
-            println!("Dropped index {} for {}", index, Model::get_collection_name());
+            println!(
+                "Dropped index {} for {}",
+                index,
+                Model::get_collection_name()
+            );
         }
 
         if indexes.len() > 0 {
@@ -134,6 +141,22 @@ impl DBCollections {
                 format!("Faild to create {} indexes", Model::get_collection_name()).as_str(),
             );
             println!("Created indexes for {}", Model::get_collection_name());
+        }
+    }
+}
+
+pub struct Pagination {
+    pub page: i64,
+    pub amount: i64,
+    pub offset: i64,
+}
+
+impl Default for Pagination {
+    fn default() -> Self {
+        Pagination {
+            page: 0,
+            amount: 20,
+            offset: 0,
         }
     }
 }

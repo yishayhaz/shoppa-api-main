@@ -5,10 +5,10 @@ use crate::db::queries;
 
 pub async fn get_products(
     db: DBExtension,
-    _pagination: Pagination,
+    pagination: Pagination,
     Query(query): Query<types::GetProductQueryParams>
 ) -> HandlerResponse {
-    let products = queries::get_products_for_extarnel(&db, query.free_text).await?;
+    let products = queries::get_products_for_extarnel(&db, query.free_text, Some(pagination)).await?;
 
     Ok(ResponseBuilder::success(Some(products), None, None).into_response())
 }

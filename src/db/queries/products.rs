@@ -35,8 +35,11 @@ type GetProductsExternalResult = Result<Vec<Document>, Response>;
 
 pub async fn get_products_for_extarnel(
     db: &DBExtension,
-    free_text: Option<String>
+    free_text: Option<String>,
+    pagination: Option<Pagination>
 ) -> GetProductsExternalResult {
+
+    let pagination = pagination.unwrap_or_default();
 
     let query = match free_text {
         Some(text) => doc! {
@@ -47,6 +50,8 @@ pub async fn get_products_for_extarnel(
 
     let pipeline = [
         aggregations::match_query(query),
+        aggregations::skip(pagination.offset),
+        aggregations::limit(pagination.amount),
         aggregations::project(
             ProjectIdOptions::ToString,
             vec![

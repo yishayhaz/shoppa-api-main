@@ -1,4 +1,7 @@
-use crate::helpers::{extractors::QueryWithValidation, parser::empty_string_as_none};
+use crate::{
+    db::Pagination,
+    helpers::{extractors::QueryWithValidation, parser::empty_string_as_none},
+};
 use axum::{
     async_trait,
     extract::FromRequestParts,
@@ -8,23 +11,20 @@ use axum::{
 use serde::Deserialize;
 use validator::Validate;
 
-pub struct Pagination {
-    pub page: u32,
-    pub amount: u32,
-    pub offset: u32,
-}
-
+const MAX_AMOUNT: i64 = 100;
+// To make sure the offset isn't bigger then the i64 MAX value
+const MAX_PAGE: i64 = i64::MAX / MAX_AMOUNT;
 
 #[derive(Debug, Validate, Deserialize)]
 struct PaginationPrivate {
     #[serde(deserialize_with = "empty_string_as_none")]
-    page: Option<u32>,
+    #[validate(range(min = 0, max = "MAX_PAGE"))]
+    page: Option<i64>,
     #[serde(deserialize_with = "empty_string_as_none")]
-    #[validate(range(max=100))]
-    amount: Option<u32>,
+    #[validate(range(min = 1, max = "MAX_AMOUNT"))]
+    amount: Option<i64>,
 }
 
-// source https://github.com/imbolc/axum-client-ip/
 #[async_trait]
 impl<S> FromRequestParts<S> for Pagination
 where
@@ -38,9 +38,15 @@ where
                 .await
                 .map_err(|op| op.into_response())?;
 
-        let page = v.page.unwrap_or(0);
-        let amount = v.amount.unwrap_or(10);
+        let default = Pagination::default();
 
-        Ok(Pagination{page, amount, offset: page * amount})
+        let page = v.page.unwrap_or(default.page);
+        let amount = v.amount.unwrap_or(default.amount);
+
+        Ok(Pagination {
+            page,
+            amount,
+            offset: page * amount,
+        })
     }
 }
