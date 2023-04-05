@@ -17,10 +17,10 @@ const MAX_PAGE: i64 = i64::MAX / MAX_AMOUNT;
 
 #[derive(Debug, Validate, Deserialize)]
 struct PaginationPrivate {
-    #[serde(deserialize_with = "empty_string_as_none")]
+    #[serde(default, deserialize_with = "empty_string_as_none")]
     #[validate(range(min = 0, max = "MAX_PAGE"))]
     page: Option<i64>,
-    #[serde(deserialize_with = "empty_string_as_none")]
+    #[serde(default, deserialize_with = "empty_string_as_none")]
     #[validate(range(min = 1, max = "MAX_AMOUNT"))]
     amount: Option<i64>,
 }

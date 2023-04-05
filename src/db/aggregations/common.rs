@@ -36,7 +36,7 @@ pub fn unwind(path: &'static str, preserve: bool) -> Document {
     }
 }
 
-pub fn match_query(query: Document) -> Document {
+pub fn match_query(query: &Document) -> Document {
     doc! {
         "$match": query,
     }

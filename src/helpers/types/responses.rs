@@ -76,6 +76,7 @@ impl<T: Serialize> ResponseBuilder<T> {
             error_code: None,
         }
     }
+
 }
 
 impl<T: Serialize> IntoResponse for ResponseBuilder<T> {

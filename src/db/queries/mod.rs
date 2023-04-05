@@ -11,6 +11,7 @@ pub use users::*;
 
 use mongodb::{error::Error, Cursor};
 use serde::Deserialize;
+use axum::response::Response;
 
 pub async fn consume_cursor<T: for<'a> Deserialize<'a>>(
     mut cursor: Cursor<T>,
@@ -23,3 +24,6 @@ pub async fn consume_cursor<T: for<'a> Deserialize<'a>>(
 
     Ok(documents)
 }
+
+
+pub type PaginatedResult<T> = Result<(Vec<T>, u64), Response>;

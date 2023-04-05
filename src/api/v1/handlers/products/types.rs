@@ -18,8 +18,8 @@ pub struct CreateProductPayload {
 
 #[derive(Deserialize, Serialize, Debug, Clone, Validate)]
 pub struct GetProductQueryParams {
-    #[serde(deserialize_with = "empty_string_as_none")]
+    #[serde(default, deserialize_with = "empty_string_as_none")]
     pub free_text: Option<String>,
-    #[serde(deserialize_with = "empty_string_as_none")]
+    #[serde(default, deserialize_with = "empty_string_as_none")]
     pub store_id: Option<ObjectId>
 }

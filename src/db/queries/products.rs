@@ -1,8 +1,6 @@
 use super::prelude::*;
 use models::Product;
 
-type GetProductsExternalResult = Result<Vec<Document>, Response>;
-
 // async fn get_product(
 //     db: &DBExtension,
 //     filter: Document,
@@ -36,20 +34,19 @@ type GetProductsExternalResult = Result<Vec<Document>, Response>;
 pub async fn get_products_for_extarnel(
     db: &DBExtension,
     free_text: Option<String>,
-    pagination: Option<Pagination>
-) -> GetProductsExternalResult {
-
+    pagination: Option<Pagination>,
+) -> PaginatedResult<Document> {
     let pagination = pagination.unwrap_or_default();
 
     let query = match free_text {
         Some(text) => doc! {
             "$text": {"$search": text}
         },
-        None => doc! {}
+        None => doc! {},
     };
 
     let pipeline = [
-        aggregations::match_query(query),
+        aggregations::match_query(&query),
         aggregations::skip(pagination.offset),
         aggregations::limit(pagination.amount),
         aggregations::project(
@@ -65,7 +62,7 @@ pub async fn get_products_for_extarnel(
                 "$map": {
                     "input": "$categories",
                     "in": {
-                        "_id":{"$toString": "$$this._id"}, 
+                        "_id":{"$toString": "$$this._id"},
                         "name": "$$this.name"
                     }
                     }
@@ -90,8 +87,8 @@ pub async fn get_products_for_extarnel(
         }
     };
 
-    match consume_cursor(cursor).await {
-        Ok(products) => Ok(products),
+    let products = match consume_cursor(cursor).await {
+        Ok(v) => v,
         Err(_) => {
             return Err(ResponseBuilder::<u16>::error(
                 // TODO add error code here
@@ -102,5 +99,30 @@ pub async fn get_products_for_extarnel(
             )
             .into_response());
         }
+    };
+
+    let mut count = products.len() as i64;
+
+    if count < pagination.amount {
+        count += pagination.offset;
+
+        return Ok((products, count as u64));
     }
+
+    let count = db
+        .products
+        .count_documents(query, None)
+        .await
+        .map_err(|_| {
+            ResponseBuilder::<u16>::error(
+                // TODO add error code here
+                "",
+                None,
+                Some("Internal Server Error while fetching products count"),
+                Some(500),
+            )
+            .into_response()
+        })?;
+
+    Ok((products, count))
 }
