@@ -8,7 +8,7 @@ pub async fn get_products(
     pagination: Pagination,
     Query(query): Query<types::GetProductQueryParams>
 ) -> HandlerResponse {
-    let products = queries::get_products_for_extarnel(&db, query.free_text, Some(pagination)).await?;
+    let products = queries::get_products_for_extarnel(&db, Some(pagination), query.free_text, query.store_id).await?;
 
     Ok(ResponseBuilder::success(Some(products), None, None).into_response())
 }

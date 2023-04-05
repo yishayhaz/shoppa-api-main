@@ -33,17 +33,22 @@ use models::Product;
 
 pub async fn get_products_for_extarnel(
     db: &DBExtension,
-    free_text: Option<String>,
     pagination: Option<Pagination>,
+    free_text: Option<String>,
+    store_id: Option<ObjectId>,
 ) -> PaginatedResult<Document> {
     let pagination = pagination.unwrap_or_default();
 
-    let query = match free_text {
+    let mut query = match free_text {
         Some(text) => doc! {
             "$text": {"$search": text}
         },
         None => doc! {},
     };
+
+    if store_id.is_some() {
+        query.insert("store._id", store_id.unwrap());
+    }
 
     let pipeline = [
         aggregations::match_query(&query),
