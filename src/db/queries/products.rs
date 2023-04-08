@@ -34,6 +34,7 @@ use models::Product;
 pub async fn get_products_for_extarnel(
     db: &DBExtension,
     pagination: Option<Pagination>,
+    sorting: Option<Sorter>,
     free_text: Option<String>,
     store_id: Option<ObjectId>,
 ) -> PaginatedResult<Document> {
@@ -50,8 +51,16 @@ pub async fn get_products_for_extarnel(
         query.insert("store._id", store_id.unwrap());
     }
 
+    let sort_stage = match sorting {
+        None => aggregations::sort(doc! {
+            "score": { "$meta": "textScore" }
+        }),
+        Some(v) => aggregations::sort(v.into_document())
+    };
+
     let pipeline = [
         aggregations::match_query(&query),
+        sort_stage,
         aggregations::skip(pagination.offset),
         aggregations::limit(pagination.amount),
         aggregations::project(

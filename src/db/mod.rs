@@ -11,6 +11,9 @@ use mongodb::{
     options::{ClientOptions, ResolverConfig},
     Client, Collection,
 };
+use bson::{Bson, doc, Document};
+use serde_repr::{Deserialize_repr, Serialize_repr};
+use serde::Deserialize;
 
 pub async fn connect() -> Result<Client, Error> {
     let options = ClientOptions::parse_with_resolver_config(
@@ -151,12 +154,54 @@ pub struct Pagination {
     pub offset: i64,
 }
 
+#[derive(Deserialize)]
+pub struct Sorter {
+    #[serde(rename="sort_field")]
+    pub field: String,
+    #[serde(rename="sort_direction")]
+    pub direction: SortDireaction,
+}
+
+#[derive(Debug, Serialize_repr, Deserialize_repr, Clone)]
+#[repr(i8)]
+pub enum SortDireaction {
+    Ascending = 1,
+    Descending = -1,
+}
+
 impl Default for Pagination {
     fn default() -> Self {
         Pagination {
             page: 0,
             amount: 20,
             offset: 0,
+        }
+    }
+}
+
+impl Default for Sorter {
+    fn default() -> Self {
+        Sorter {
+            field: String::from("created_at"),
+            direction: SortDireaction::Descending,
+        }
+    }
+}
+
+
+impl SortDireaction {
+    pub fn into_bson(&self) -> bson::Bson {
+        match self {
+            Self::Ascending => Bson::Int32(1),
+            Self::Descending => Bson::Int32(-1)
+        }
+    }
+}
+
+impl Sorter {
+    pub fn into_document(&self) -> Document{
+        doc!{
+            &self.field: &self.direction.into_bson()
         }
     }
 }

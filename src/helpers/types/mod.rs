@@ -19,6 +19,11 @@ pub enum HeadKeys {
     CsrfToken,
 }
 
+pub enum MyOption<T> {
+    None,
+    Some(T),
+}
+
 pub const MAX_COOKIE_EXP: f64 = (u64::pow(2, 31) - 1) as f64;
 
 impl Cookeys {
@@ -36,6 +41,15 @@ impl HeadKeys {
     pub fn get(&self) -> &str {
         match self {
             Self::CsrfToken => "x-top_secret_pigeon",
+        }
+    }
+}
+
+impl<T> MyOption<T> {
+    pub fn into_option(self) -> Option<T> {
+        match self {
+            Self::None => Option::None,
+            Self::Some(v) => Option::Some(v)
         }
     }
 }
