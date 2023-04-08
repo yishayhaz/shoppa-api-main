@@ -55,7 +55,7 @@ pub async fn get_products_for_extarnel(
         None => aggregations::sort(doc! {
             "score": { "$meta": "textScore" }
         }),
-        Some(v) => aggregations::sort(v.into_document())
+        Some(v) => aggregations::sort(v.into())
     };
 
     let pipeline = [

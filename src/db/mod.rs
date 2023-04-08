@@ -198,10 +198,10 @@ impl SortDireaction {
     }
 }
 
-impl Sorter {
-    pub fn into_document(&self) -> Document{
+impl Into<Document> for Sorter {
+    fn into(self) -> Document {
         doc!{
-            &self.field: &self.direction.into_bson()
+            self.field: self.direction.into_bson()
         }
     }
 }
