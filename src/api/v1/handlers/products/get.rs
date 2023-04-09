@@ -17,5 +17,5 @@ pub async fn get_products(
     )
     .await?;
 
-    Ok(ResponseBuilder::success(Some(products), None, None).into_response())
+    Ok(ResponseBuilder::paginated_response(&products).into_response())
 }

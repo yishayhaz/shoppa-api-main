@@ -4,7 +4,7 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::json;
+use serde_json::{json, Value};
 #[derive(Serialize, Deserialize)]
 pub struct ResponseBuilder<T> {
     code: u16,
@@ -76,8 +76,30 @@ impl<T: Serialize> ResponseBuilder<T> {
             error_code: None,
         }
     }
-
 }
+
+
+impl ResponseBuilder<Value>{
+    pub fn paginated_response<T: Serialize>(content: &(Vec<T>, u64)) -> Self {
+
+        let content = json!(
+            {
+                "data": content.0,
+                "total": content.1
+            }
+        );
+
+
+        Self {
+            code: 200,
+            message: None,
+            success: true,
+            content: Some(content),
+            error_code: None,
+        }
+    }
+}
+
 
 impl<T: Serialize> IntoResponse for ResponseBuilder<T> {
     fn into_response(self) -> Response {
