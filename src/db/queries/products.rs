@@ -40,7 +40,7 @@ pub async fn get_products_for_extarnel(
 ) -> PaginatedResult<Document> {
     let pagination = pagination.unwrap_or_default();
 
-    let mut query = match free_text {
+    let mut query = match &free_text {
         Some(text) => doc! {
             "$text": {"$search": text}
         },
@@ -52,9 +52,16 @@ pub async fn get_products_for_extarnel(
     }
 
     let sort_stage = match sorting {
-        None => aggregations::sort(doc! {
-            "score": { "$meta": "textScore" }
-        }),
+        None => {
+            if free_text.is_some(){
+                aggregations::sort(doc! {
+                    "score": { "$meta": "textScore" }
+                })
+            }
+            else{
+                aggregations::sort(Sorter::default().into())
+            }
+        },
         Some(v) => aggregations::sort(v.into())
     };
 
