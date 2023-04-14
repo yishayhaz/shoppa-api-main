@@ -2,7 +2,7 @@ use axum::{Extension, Router};
 use dotenv::dotenv;
 use shoppa_api::{
     api, db,
-    helpers::{env::EnvVars, security::get_cors_layer, setup},
+    helpers::{env::ENV_VARS, security::get_cors_layer, setup},
 };
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -12,11 +12,11 @@ use tower_cookies::CookieManagerLayer;
 async fn main() {
     dotenv().ok();
 
-    EnvVars::validate();
+    ENV_VARS.validate();
 
     let mongo_client = db::connect().await.unwrap();
 
-    let db_collections = Arc::new(db::DBCollections::new(mongo_client, EnvVars::DB_NAME.get()));
+    let db_collections = Arc::new(db::DBCollections::new(mongo_client, &ENV_VARS.DB_NAME));
 
     // db_collections.create_indexes().await;
 
@@ -26,7 +26,7 @@ async fn main() {
         .layer(CookieManagerLayer::new())
         .layer(get_cors_layer());
 
-    let address = format!("{}:{}", EnvVars::HOST.get(), EnvVars::PORT.get());
+    let address = format!("{}:{}", &ENV_VARS.HOST, &ENV_VARS.PORT);
 
     println!("Listening on http://{}", address);
 

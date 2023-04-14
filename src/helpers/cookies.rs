@@ -1,4 +1,4 @@
-use crate::{helpers::{env::EnvVars, types::{Cookeys, MAX_COOKIE_EXP}, security}, db::models::User};
+use crate::{helpers::{env::ENV_VARS, types::{Cookeys, MAX_COOKIE_EXP}, security}, db::models::User};
 use tower_cookies::{cookie::time::Duration, Cookie, Cookies};
 use axum::response::Response;
 
@@ -13,11 +13,11 @@ pub fn create_cookie<'a>(
 
     cookie.set_http_only(http_only);
 
-    cookie.set_secure(EnvVars::is_production());
+    cookie.set_secure(ENV_VARS.is_production());
 
     cookie.set_max_age(Duration::seconds_f64(exp));
 
-    cookie.set_domain(EnvVars::COOKIE_DOMAIN.get());
+    cookie.set_domain(&ENV_VARS.COOKIE_DOMAIN);
 
     cookie.set_path("/");
 
@@ -31,7 +31,7 @@ pub fn delete_cookie<'a>(
 
     cookie.set_max_age(Duration::seconds_f64(0.0));
 
-    cookie.set_domain(EnvVars::COOKIE_DOMAIN.get());
+    cookie.set_domain(&ENV_VARS.COOKIE_DOMAIN);
 
     cookie.set_path("/");
 

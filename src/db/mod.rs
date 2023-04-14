@@ -4,7 +4,7 @@ pub mod models;
 pub mod queries;
 pub mod updates;
 
-use crate::helpers::env::EnvVars;
+use crate::helpers::env::ENV_VARS;
 use models::DBModel;
 use mongodb::{
     error::Error,
@@ -17,7 +17,7 @@ use serde::Deserialize;
 
 pub async fn connect() -> Result<Client, Error> {
     let options = ClientOptions::parse_with_resolver_config(
-        &EnvVars::MONGODB_URI.get(),
+        &ENV_VARS.MONGODB_URI,
         ResolverConfig::cloudflare(),
     )
     .await?;
@@ -40,8 +40,8 @@ pub struct DBCollections {
 }
 
 impl DBCollections {
-    pub fn new(client: Client, db_name: String) -> Self {
-        let db = client.database(&db_name);
+    pub fn new(client: Client, db_name: &str) -> Self {
+        let db = client.database(db_name);
 
         let users = db.collection(models::User::get_collection_name());
         let stores = db.collection(models::Store::get_collection_name());

@@ -1,4 +1,4 @@
-use crate::helpers::env::EnvVars;
+use crate::helpers::env::ENV_VARS;
 use http::{header, request::Parts as RequestParts, HeaderName, HeaderValue, Method};
 use tower_http::cors::{AllowHeaders, AllowOrigin, CorsLayer};
 
@@ -106,7 +106,7 @@ pub fn get_cors_layer() -> CorsLayer {
             |origin: &HeaderValue, _request_parts: &RequestParts| {
                 origin
                     .as_bytes()
-                    .ends_with(EnvVars::CORS_DOMAIN.get().as_bytes())
+                    .ends_with(ENV_VARS.CORS_DOMAIN.as_bytes())
             },
         ))
         .allow_headers(AllowHeaders::list(headers))

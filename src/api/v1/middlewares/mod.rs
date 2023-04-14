@@ -8,7 +8,7 @@ pub use ip_address::ClientIpAddress;
 pub use sorting::OptionalSorting;
 
 use crate::helpers::{
-    env::EnvVars
+    env::ENV_VARS
 };
 use axum::{
     async_trait,
@@ -26,7 +26,7 @@ where
     type Rejection = &'static str;
 
     async fn from_request_parts(_parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        if EnvVars::is_production() {
+        if ENV_VARS.is_production() {
             return Err("?")
         }
 

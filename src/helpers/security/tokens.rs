@@ -1,6 +1,6 @@
 use crate::{
     db::models::{DBModel, User},
-    helpers::{env::EnvVars, types::ResponseBuilder},
+    helpers::{env::ENV_VARS, types::ResponseBuilder},
 };
 use axum::response::{IntoResponse, Response};
 use chrono::Utc;
@@ -12,7 +12,7 @@ use bson::oid::ObjectId;
 
 lazy_static! {
     static ref LOGIN_TOKEN_KEY: PasetoSymmetricKey<V4, Local> =
-        PasetoSymmetricKey::from(Key::from(EnvVars::LOGIN_TOKEN_SECRET.get().as_bytes()));
+        PasetoSymmetricKey::from(Key::from(ENV_VARS.LOGIN_TOKEN_SECRET.as_bytes()));
 }
 
 #[derive(Debug, Serialize, Deserialize)]
