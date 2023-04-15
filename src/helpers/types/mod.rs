@@ -1,12 +1,14 @@
 pub mod error_code;
 mod responses;
 pub use responses::*;
+use crate::services::file_storage::StorageClient;
 
 use crate::db::DBCollections;
 use axum::Extension;
 use std::sync::Arc;
 
 pub type DBExtension = Extension<Arc<DBCollections>>;
+pub type StorgeClientExtension = Extension<Arc<StorageClient>>;
 
 pub enum Cookeys {
     AccessToken,

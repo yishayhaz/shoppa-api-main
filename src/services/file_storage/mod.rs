@@ -1,7 +1,12 @@
+mod upload;
+
 use crate::helpers::env::ENV_VARS;
 use aws_sdk_s3 as s3;
 
-pub async fn connect() -> s3::Client {
+pub type StorageClient = s3::Client;
+pub use upload::*;
+
+pub async fn connect() -> StorageClient {
     // for some reason you cant spacify the creadtinal directly
     // https://github.com/awsdocs/aws-rust-developer-guide-v1/blob/main/doc_source/credentials.md#specifying-your-credentials-and-default-region
     std::env::set_var("AWS_ACCESS_KEY_ID", &ENV_VARS.DIGITAL_OCEAN_SPACE_KEY);
@@ -21,7 +26,7 @@ pub async fn connect() -> s3::Client {
         .load()
         .await;
     
-    let client = s3::Client::new(&config);
+    let client = StorageClient::new(&config);
 
     client
 

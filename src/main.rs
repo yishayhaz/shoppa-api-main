@@ -1,9 +1,9 @@
-use axum::{http::Request, Extension, Router};
+use axum::{Extension, Router};
 use dotenv::dotenv;
 use shoppa_api::{
     api, db,
     helpers::{env::ENV_VARS, security::get_cors_layer, setup},
-    services::file_storge,
+    services::file_storage,
 };
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -30,7 +30,7 @@ async fn main() {
 
     let mongo_client = db::connect().await.unwrap();
 
-    let _file_storge_client = file_storge::connect().await;
+    let file_storge_client = Arc::new(file_storage::connect().await);
 
     let db_collections = Arc::new(db::DBCollections::new(mongo_client, &ENV_VARS.DB_NAME));
 
@@ -38,6 +38,7 @@ async fn main() {
 
     let app = Router::new()
         .nest("/api/v1", api::v1::router())
+        .layer(Extension(file_storge_client))
         .layer(Extension(db_collections))
         .layer(CookieManagerLayer::new())
         .layer(get_cors_layer())

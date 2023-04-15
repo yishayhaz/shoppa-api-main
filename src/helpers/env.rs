@@ -1,3 +1,4 @@
+use core::panic;
 use std::env;
 
 #[allow(non_snake_case)]
@@ -13,7 +14,8 @@ pub struct EnvVariables {
     pub CORS_DOMAIN: String,
     pub DIGITAL_OCEAN_SPACE_KEY: String,
     pub DIGITAL_OCEAN_SPACE_SECRET: String,
-    pub DIGITAL_OCEAN_SPACE_REGION: String
+    pub DIGITAL_OCEAN_SPACE_REGION: String,
+    pub BUCKET_NAME: String
 }
 
 impl EnvVariables {
@@ -35,6 +37,8 @@ impl EnvVariables {
                 .expect("DIGITAL_OCEAN_SPACE_SECRET must be set"),
             DIGITAL_OCEAN_SPACE_REGION: env::var("DIGITAL_OCEAN_SPACE_REGION")
                 .expect("DIGITAL_OCEAN_SPACE_REGION must be set"),
+            BUCKET_NAME: env::var("BUCKET_NAME")
+            .expect("BUCKET_NAME must be set"),
         }
     }
     pub fn validate(&self) {
@@ -59,6 +63,8 @@ impl EnvVariables {
             panic!("DIGITAL_OCEAN_SPACE_SECRET must not be empty")
         } else if self.DIGITAL_OCEAN_SPACE_REGION.is_empty() {
             panic!("DIGITAL_OCEAN_SPACE_REGION must not be empty")
+        } else if self.BUCKET_NAME.is_empty() {
+            panic!("BUCKET_NAME must not be empty")
         }
         let port = &self.PORT;
         let host = &self.HOST;

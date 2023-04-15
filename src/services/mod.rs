@@ -1,1 +1,1 @@
-pub mod file_storge;
+pub mod file_storage;
