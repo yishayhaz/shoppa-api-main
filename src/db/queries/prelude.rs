@@ -1,5 +1,5 @@
 pub use crate::{
-    db::{models, models::NestedDocument, aggregations, aggregations::ProjectIdOptions, Pagination, Sorter},
+    db::{models, models::EmbeddedDocument, aggregations, aggregations::ProjectIdOptions, Pagination, Sorter},
     helpers::types::{DBExtension, ResponseBuilder},
 };
 pub use axum::response::IntoResponse;

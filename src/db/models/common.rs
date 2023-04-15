@@ -10,7 +10,7 @@ pub trait DBModel: Serialize + Clone {
     fn update_id(&mut self, id: ObjectId) -> ();
 }
 
-pub trait NestedDocument: Serialize + Clone {
+pub trait EmbeddedDocument: Serialize + Clone {
     fn created_at(&self) -> DateTime<Utc>;
     fn updated_at(&self) -> DateTime<Utc>;
     fn id(&self) -> &ObjectId;

@@ -1,7 +1,7 @@
 mod fields;
 
 use super::{
-    common::{db_model, DBModel, NestedDocument, RefrenceField},
+    common::{db_model, DBModel, EmbeddedDocument, RefrenceField},
     prelude::*,
     Categories, InnerCategories, InnerInnerCategories, Store, Variants,
 };
@@ -26,6 +26,7 @@ pub struct Product {
     // Caregories in the Vec<CategoriesField>>
     pub categories: RefrenceField<Categories, Vec<CategoriesField>>,
     pub variants: RefrenceField<Vec<Variants>, Vec<ObjectId>>,
+    pub images: Vec<ProductImage>
     // pub product_info: Vec<String>
 }
 
@@ -41,6 +42,13 @@ pub struct StoreField {
     #[serde(rename = "_id")]
     pub id: ObjectId,
     pub name: String,
+}
+
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ProductImage {
+    #[serde(rename = "_id")]
+    pub id: ObjectId,
 }
 
 impl DBModel for Product {
@@ -188,6 +196,7 @@ impl Product {
             )),
             categories: RefrenceField::NotPopulated(categories),
             variants: RefrenceField::NotPopulated(variants),
+            images: vec![]
         })
     }
 

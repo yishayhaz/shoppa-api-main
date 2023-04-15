@@ -1,4 +1,4 @@
-use axum::{Extension, Router};
+use axum::{http::Request, Extension, Router};
 use dotenv::dotenv;
 use shoppa_api::{
     api, db,
@@ -8,9 +8,22 @@ use shoppa_api::{
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tower_cookies::CookieManagerLayer;
+use tower_http::trace::TraceLayer;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+                // axum logs rejections from built-in extractors with the `axum::rejection`
+                // target, at `TRACE` level. `axum::rejection=trace` enables showing those events
+                "example_tracing_aka_logging=debug,tower_http=debug,axum::rejection=trace".into()
+            }),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+
     dotenv().ok();
 
     ENV_VARS.validate();
@@ -27,7 +40,8 @@ async fn main() {
         .nest("/api/v1", api::v1::router())
         .layer(Extension(db_collections))
         .layer(CookieManagerLayer::new())
-        .layer(get_cors_layer());
+        .layer(get_cors_layer())
+        .layer(TraceLayer::new_for_http());
 
     let address = format!("{}:{}", &ENV_VARS.HOST, &ENV_VARS.PORT);
 
