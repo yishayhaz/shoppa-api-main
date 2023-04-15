@@ -37,7 +37,7 @@ impl IntoResponse for JsonValidationError {
                 .into_response(),
                 JsonRejection::JsonDataError(e) => ResponseBuilder::validation_error(
                     Some(e.to_string()),
-                    Some("missing header error"),
+                    Some("Invalid data"),
                 )
                 .into_response(),
                 _ => ResponseBuilder::error(

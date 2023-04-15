@@ -1,5 +1,4 @@
 use crate::helpers::env::ENV_VARS;
-use aws_config;
 use aws_sdk_s3 as s3;
 
 pub async fn connect() -> s3::Client {

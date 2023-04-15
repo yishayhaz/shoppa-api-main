@@ -9,10 +9,10 @@ pub async fn create_new_product(
 ) -> HandlerResponse {
     let categories = queries::get_category_hierarchy_for_subsubcategory(
         &db,
-        // we can safely unwrap since the CreateProductPayload validate the length of the catagories
-        payload.catagories.get(0).unwrap(),
-        payload.catagories.get(1).unwrap(),
-        payload.catagories.get(2).unwrap(),
+        // we can safely unwrap since the CreateProductPayload validate the length of the categories
+        payload.categories.get(0).unwrap(),
+        payload.categories.get(1).unwrap(),
+        payload.categories.get(2).unwrap(),
     )
     .await?;
 
