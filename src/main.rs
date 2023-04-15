@@ -3,6 +3,7 @@ use dotenv::dotenv;
 use shoppa_api::{
     api, db,
     helpers::{env::ENV_VARS, security::get_cors_layer, setup},
+    services::file_storge,
 };
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -15,6 +16,8 @@ async fn main() {
     ENV_VARS.validate();
 
     let mongo_client = db::connect().await.unwrap();
+
+    let _file_storge_client = file_storge::connect().await;
 
     let db_collections = Arc::new(db::DBCollections::new(mongo_client, &ENV_VARS.DB_NAME));
 
