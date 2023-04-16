@@ -7,11 +7,13 @@ use axum::{
     response::{IntoResponse, Response},
     BoxError,
 };
+use bytes::Bytes;
 use serde::de::DeserializeOwned;
 use validator::{Validate, ValidationErrors};
 
+pub struct MultipartFrom<T: TryFrom<Multipart>>(pub T);
 
-pub struct MultipartFrom<T>(pub T);
+pub struct MultipartFormWithValidation<T: Validate + TryFrom<Multipart>>(pub T);
 
 pub struct FormWithValidation<T: Validate>(pub T);
 pub enum FormValidationError {
@@ -83,5 +85,47 @@ where
                 return Err(FormValidationError::FormValidation(e));
             }
         }
+    }
+}
+
+#[async_trait]
+impl<S, B, T> FromRequest<S, B> for MultipartFrom<T>
+where
+    B::Data: Into<Bytes>,
+    B: HttpBody + Send + 'static,
+    B::Error: Into<BoxError>,
+
+    T: DeserializeOwned + TryFrom<Multipart>,
+    T::Error: IntoResponse,
+    S: Send + Sync,
+{
+    type Rejection = Response;
+
+    async fn from_request(req: Request<B>, state: &S) -> Result<Self, Self::Rejection> {
+        let multipart = Multipart::from_request(req, state);
+
+        Err(().into_response())
+    }
+}
+
+#[async_trait]
+impl<S, B, T> FromRequest<S, B> for MultipartFormWithValidation<T>
+where
+    B::Data: Into<Bytes>,
+    B: HttpBody + Send + 'static,
+    B::Error: Into<BoxError>,
+
+    T: DeserializeOwned + TryFrom<Multipart> + Validate,
+    T::Error: IntoResponse,
+    S: Send + Sync,
+{
+    type Rejection = Response;
+
+    async fn from_request(req: Request<B>, state: &S) -> Result<Self, Self::Rejection> {
+        let MultipartFrom(data) = MultipartFrom::<T>::from_request(req, state).await?;
+
+        let _ = data.validate();
+
+        Err(().into_response())
     }
 }
