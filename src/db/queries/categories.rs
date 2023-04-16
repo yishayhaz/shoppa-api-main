@@ -1,4 +1,5 @@
 use super::prelude::*;
+use crate::db::models::Categories;
 
 type GetCategorieResult = Result<Option<models::Categories>, Response>;
 
@@ -72,4 +73,62 @@ pub async fn get_category_hierarchy_for_subsubcategory(
         }
         None => Ok(None),
     }
+}
+
+pub async fn get_categories_for_extarnel(
+    db: &DBExtension,
+    id: Option<ObjectId>,
+    child_id: Option<ObjectId>,
+) -> Result<Vec<Document>, Response> {
+    let mut pipeline = vec![];
+
+    if let Some(id) = id {
+        // getting the parent sub categories
+        pipeline.push(aggregations::match_query(&doc! {
+            Categories::fields().id: id
+        }));
+        pipeline.push(aggregations::unwind(Categories::fields().categories, true));
+
+        pipeline.push(aggregations::replace_root(Categories::fields().categories));
+
+        // getting child sub categories
+        if let Some(child_id) = child_id {
+            pipeline.push(aggregations::match_query(&doc! {
+                Categories::fields().id: child_id
+            }));
+            pipeline.push(aggregations::unwind(
+                Categories::fields().categories().categories,
+                true,
+            ));
+
+            pipeline.push(aggregations::replace_root(Categories::fields().categories().categories));
+        }
+    };
+    pipeline.push(aggregations::project(
+        ProjectIdOptions::ToString,
+        [Categories::fields().name].to_vec(),
+        None,
+    ));
+
+    let cursor = db.categories.aggregate(pipeline, None).await.map_err(|_| {
+        ResponseBuilder::<u16>::error(
+            // TODO add error code here
+            "",
+            None,
+            Some("Internal Server Error while fetching products"),
+            Some(500),
+        )
+        .into_response()
+    })?;
+
+    Ok(consume_cursor(cursor).await.map_err(|_| {
+        ResponseBuilder::<u16>::error(
+            // TODO add error code here
+            "",
+            None,
+            Some("Internal Server Error while fetching products"),
+            Some(500),
+        )
+        .into_response()
+    })?)
 }
