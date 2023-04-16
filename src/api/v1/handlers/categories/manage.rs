@@ -17,9 +17,10 @@ pub async fn create_new_root_catagorie(
 pub async fn create_new_inner_catagorie(
     db: DBExtension,
     _: OnlyInDev,
+    Path(parent_id): Path<ObjectId>,
     Json(payload): Json<CreateInnerCatgoriePayload>,
 ) -> HandlerResponse {
-    let _ = inserts::new_inner_catagorie(&db, payload.name, &payload.parent_id).await;
+    let _ = inserts::new_inner_catagorie(&db, payload.name, &parent_id).await;
 
     Ok(().into_response())
 }
@@ -27,13 +28,14 @@ pub async fn create_new_inner_catagorie(
 pub async fn create_new_inner_inner_catagorie(
     db: DBExtension,
     _: OnlyInDev,
+    Path((parent_parent_id, parent_id)): Path<(ObjectId, ObjectId)>,
     Json(payload): Json<CreateInnerInnerCatgoriePayload>,
 ) -> HandlerResponse {
     let _ = inserts::new_inner_inner_catagorie(
         &db,
         payload.name,
-        &payload.parent_parent_id,
-        &payload.parent_id,
+        &parent_parent_id,
+        &parent_id,
     )
     .await;
 

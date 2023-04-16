@@ -47,8 +47,8 @@ impl HeadKeys {
     }
 }
 
-impl<T> MyOption<T> {
-    pub fn into_option(self) -> Option<T> {
+impl<T> Into<Option<T>> for MyOption<T> {
+    fn into(self) -> Option<T> {
         match self {
             Self::None => Option::None,
             Self::Some(v) => Option::Some(v)

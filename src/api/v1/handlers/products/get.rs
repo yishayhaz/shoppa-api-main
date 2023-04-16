@@ -11,7 +11,7 @@ pub async fn get_products(
     let products = queries::get_products_for_extarnel(
         &db,
         Some(pagination),
-        sorting.into_option(),
+        sorting.into(),
         query.free_text,
         query.store_id,
     )

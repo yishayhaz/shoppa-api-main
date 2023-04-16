@@ -19,6 +19,7 @@ pub struct FormWithValidation<T: Validate>(pub T);
 pub enum FormValidationError {
     FormError(FormRejection),
     FormValidation(ValidationErrors),
+    InvalidBoundry,
 }
 
 impl IntoResponse for FormValidationError {
@@ -53,6 +54,10 @@ impl IntoResponse for FormValidationError {
             },
             Self::FormValidation(e) => {
                 ResponseBuilder::validation_error(Some(e), None).into_response()
+            }
+            Self::InvalidBoundry => {
+                ResponseBuilder::<u16>::validation_error(None, Some("invalid boundry"))
+                    .into_response()
             }
         }
     }
@@ -102,9 +107,14 @@ where
     type Rejection = Response;
 
     async fn from_request(req: Request<B>, state: &S) -> Result<Self, Self::Rejection> {
-        let multipart = Multipart::from_request(req, state);
+        let multipart = Multipart::from_request(req, state)
+            .await
+            // the only possible e is Invalid boundry
+            .map_err(|_| FormValidationError::InvalidBoundry.into_response())?;
 
-        Err(().into_response())
+        Ok(MultipartFrom(
+            T::try_from(multipart).map_err(|e| e.into_response())?,
+        ))
     }
 }
 
@@ -124,8 +134,9 @@ where
     async fn from_request(req: Request<B>, state: &S) -> Result<Self, Self::Rejection> {
         let MultipartFrom(data) = MultipartFrom::<T>::from_request(req, state).await?;
 
-        let _ = data.validate();
-
-        Err(().into_response())
+        data.validate()
+            .map_err(|e| FormValidationError::FormValidation(e).into_response())?;
+        
+        Ok(MultipartFormWithValidation(data))
     }
 }
