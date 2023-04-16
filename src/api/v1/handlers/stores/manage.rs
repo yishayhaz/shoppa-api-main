@@ -1,5 +1,5 @@
 use super::{super::prelude::routes::*, types};
-use crate::db::inserts;
+use crate::db::{inserts, queries};
 
 pub async fn create_new_store(
     db: DBExtension,
@@ -10,4 +10,13 @@ pub async fn create_new_store(
     let _ = inserts::new_store(&db, payload.name, payload.email, payload.location).await;
 
     Ok(ResponseBuilder::success(Some("dad"), None, None).into_response())
+}
+
+pub async fn get_stores(
+    db: DBExtension,
+    _: OnlyInDev
+) -> HandlerResponse {
+    let stores = queries::get_stores(&db).await?;
+
+    Ok(ResponseBuilder::success(Some(stores), None, None).into_response())
 }
