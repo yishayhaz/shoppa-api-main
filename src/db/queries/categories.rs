@@ -87,7 +87,7 @@ pub async fn get_categories_for_extarnel(
         pipeline.push(aggregations::match_query(&doc! {
             Categories::fields().id: id
         }));
-        pipeline.push(aggregations::unwind(Categories::fields().categories, true));
+        pipeline.push(aggregations::unwind(Categories::fields().categories, false));
 
         pipeline.push(aggregations::replace_root(Categories::fields().categories));
 
@@ -98,7 +98,7 @@ pub async fn get_categories_for_extarnel(
             }));
             pipeline.push(aggregations::unwind(
                 Categories::fields().categories().categories,
-                true,
+                false,
             ));
 
             pipeline.push(aggregations::replace_root(Categories::fields().categories().categories));
@@ -109,13 +109,13 @@ pub async fn get_categories_for_extarnel(
         [Categories::fields().name].to_vec(),
         None,
     ));
-
+    
     let cursor = db.categories.aggregate(pipeline, None).await.map_err(|_| {
         ResponseBuilder::<u16>::error(
             // TODO add error code here
             "",
             None,
-            Some("Internal Server Error while fetching products"),
+            Some("Internal Server Error while fetching categories"),
             Some(500),
         )
         .into_response()
@@ -126,7 +126,7 @@ pub async fn get_categories_for_extarnel(
             // TODO add error code here
             "",
             None,
-            Some("Internal Server Error while fetching products"),
+            Some("Internal Server Error while consuming categories cursor"),
             Some(500),
         )
         .into_response()
