@@ -107,7 +107,10 @@ pub async fn get_categories_for_extarnel(
     pipeline.push(aggregations::project(
         ProjectIdOptions::ToString,
         [Categories::fields().name].to_vec(),
-        None,
+        Some(doc! {
+            Categories::fields().created_at: aggregations::convert_to_string_safe("$created_at"),
+            Categories::fields().updated_at: aggregations::convert_to_string_safe("$updated_at")
+        }),
     ));
     
     let cursor = db.categories.aggregate(pipeline, None).await.map_err(|_| {
