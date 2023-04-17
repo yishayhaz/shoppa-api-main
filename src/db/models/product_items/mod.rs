@@ -16,10 +16,10 @@ pub struct ProductItems {
     pub product: RefrenceField<Product, ObjectId>,
     pub store: RefrenceField<Store, ObjectId>,
     pub price: f64,
-    pub in_storge: u64,
+    pub in_storage: u64,
     // this field describe the variant of the givem item: e.g: size L and color red.
     // so it will be uniqe with the product id to make sure there is no double items with
-    // the same variants
+    // the same variants, the length of the variants field here need to be the same as the one in the parent product.
     pub variants: Vec<ItemVariants>,
 }
 

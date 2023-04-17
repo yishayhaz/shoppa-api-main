@@ -15,7 +15,7 @@ pub use common::{DBModel, EmbeddedDocument};
 pub use contact_us::{ContactUsForm, ContactUsReason};
 pub use news_letter::NewsLetterSubscriber;
 pub use product::Product;
-pub use product_items::ProductItems;
+pub use product_items::{ProductItems, ItemVariants};
 pub use sites_visite::SiteVisit;
 pub use store::Store;
 pub use user::{Cart, Genders, User};
