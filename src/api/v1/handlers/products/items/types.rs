@@ -2,7 +2,7 @@ use super::super::super::prelude::types::*;
 use crate::db::models::ItemVariants;
 
 #[derive(Deserialize, Validate)]
-pub struct CreateProductItemPayload {
+pub struct AddProductItemPayload {
     // the store will come from the product id in the url
     #[validate(range(min = 13.98))]
     pub price: f64,
