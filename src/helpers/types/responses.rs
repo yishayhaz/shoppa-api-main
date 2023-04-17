@@ -3,6 +3,7 @@ use axum::{
     response::{IntoResponse, Response},
     Json,
 };
+use mongodb::error::Error;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 #[derive(Serialize, Deserialize)]
@@ -78,17 +79,14 @@ impl<T: Serialize> ResponseBuilder<T> {
     }
 }
 
-
-impl ResponseBuilder<Value>{
+impl ResponseBuilder<Value> {
     pub fn paginated_response<T: Serialize>(content: &(Vec<T>, u64)) -> Self {
-
         let content = json!(
             {
                 "data": content.0,
                 "total": content.1
             }
         );
-
 
         Self {
             code: 200,
@@ -100,6 +98,30 @@ impl ResponseBuilder<Value>{
     }
 }
 
+impl ResponseBuilder<String> {
+    pub fn cursor_consumpetion_error(collection: &'static str, error: Error) -> Self {
+        let kind = *error.kind;
+
+        Self {
+            code: 500,
+            message: Some(collection),
+            success: false,
+            content: Some(kind.to_string()),
+            error_code: Some("consumpetion_error"),
+        }
+    }
+
+    pub fn query_error(collection: &'static str, error: Error) -> Self {
+        let kind = *error.kind;
+        Self {
+            code: 500,
+            message: Some(collection),
+            success: false,
+            content: Some(kind.to_string()),
+            error_code: Some("query_error"),
+        }
+    }
+}
 
 impl<T: Serialize> IntoResponse for ResponseBuilder<T> {
     fn into_response(self) -> Response {

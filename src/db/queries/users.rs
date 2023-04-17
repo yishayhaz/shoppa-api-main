@@ -1,25 +1,16 @@
 use super::prelude::*;
-
-type GetUserResult = Result<Option<models::User>, Response>;
+use models::User;
+type GetUserResult = Result<Option<User>, Response>;
 
 async fn get_user(
     db: &DBExtension,
     filter: Document,
     option: Option<FindOneOptions>,
 ) -> GetUserResult {
-    let user = match db.users.find_one(filter, option).await {
-        Ok(user) => user,
-        Err(_) => {
-            return Err(ResponseBuilder::<u16>::error(
-                // TODO add error code here
-                "",
-                None,
-                Some("Internal Server Error while fetching user"),
-                Some(500),
-            )
-            .into_response())
-        }
-    };
+    let user =
+        db.users.find_one(filter, option).await.map_err(|e| {
+            ResponseBuilder::query_error(User::get_collection_name(), e).into_response()
+        })?;
 
     Ok(user)
 }

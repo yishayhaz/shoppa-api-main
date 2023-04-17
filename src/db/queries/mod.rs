@@ -3,11 +3,13 @@ mod prelude;
 mod products;
 mod store;
 mod users;
+mod variants;
 
 pub use categories::*;
 pub use products::*;
 pub use store::*;
 pub use users::*;
+pub use variants::*;
 
 use mongodb::{error::Error, Cursor};
 use serde::Deserialize;

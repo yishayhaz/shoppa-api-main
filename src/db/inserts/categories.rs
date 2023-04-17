@@ -5,8 +5,12 @@ type InsertCategoriesResult = Result<Categories, InsertDocumentErrors>;
 type InsertInnerCategoriesResult = Result<InnerCategories, InsertDocumentErrors>;
 type InsertInnerInnerCategoriesResult = Result<InnerInnerCategories, InsertDocumentErrors>;
 
-pub async fn new_root_catagorie(db: &DBExtension, name: String) -> InsertCategoriesResult {
-    let mut catagorie = Categories::new(name, vec![]);
+pub async fn new_root_catagorie(
+    db: &DBExtension,
+    name: String,
+    variants_ids: Option<Vec<ObjectId>>,
+) -> InsertCategoriesResult {
+    let mut catagorie = Categories::new(name, vec![], variants_ids);
 
     let res = match db.categories.insert_one(&catagorie, None).await {
         Ok(v) => v,
@@ -29,8 +33,9 @@ pub async fn new_inner_catagorie(
     db: &DBExtension,
     name: String,
     categorie_id: &ObjectId,
+    variants_ids: Option<Vec<ObjectId>>,
 ) -> InsertInnerCategoriesResult {
-    let inner_catagorie = InnerCategories::new(name, vec![]);
+    let inner_catagorie = InnerCategories::new(name, vec![], variants_ids);
 
     let catgories_fields = Categories::fields();
 
@@ -60,8 +65,9 @@ pub async fn new_inner_inner_catagorie(
     name: String,
     categorie_id: &ObjectId,
     inner_categorie_id: &ObjectId,
+    variants_ids: Option<Vec<ObjectId>>,
 ) -> InsertInnerInnerCategoriesResult {
-    let inner_inner_catagorie = InnerInnerCategories::new(name);
+    let inner_inner_catagorie = InnerInnerCategories::new(name, variants_ids);
 
     let catgories_fields = Categories::fields();
 

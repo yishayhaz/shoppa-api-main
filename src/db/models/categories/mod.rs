@@ -73,6 +73,7 @@ impl Categories {
         name: String,
         // can be empty
         categories: Vec<InnerCategories>,
+        allowed_variants: Option<Vec<ObjectId>>,
     ) -> Self {
         Self {
             id: None,
@@ -80,36 +81,40 @@ impl Categories {
             updated_at: Utc::now(),
             name,
             categories,
-            allowed_variants: RefrenceField::NotPopulated(vec![]),
+            allowed_variants: RefrenceField::NotPopulated(allowed_variants.unwrap_or(vec![])),
         }
     }
 
-    pub fn fields() -> &'static fields::CategoriesFields{
+    pub fn fields() -> &'static fields::CategoriesFields {
         &fields::FIELDS
     }
 }
 
 impl InnerCategories {
-    pub fn new(name: String, categories: Vec<InnerInnerCategories>) -> Self {
+    pub fn new(
+        name: String,
+        categories: Vec<InnerInnerCategories>,
+        allowed_variants: Option<Vec<ObjectId>>,
+    ) -> Self {
         Self {
             id: ObjectId::new(),
             created_at: Utc::now(),
             updated_at: Utc::now(),
             name,
             categories,
-            allowed_variants: RefrenceField::NotPopulated(vec![]),
+            allowed_variants: RefrenceField::NotPopulated(allowed_variants.unwrap_or(vec![])),
         }
     }
 }
 
 impl InnerInnerCategories {
-    pub fn new(name: String) -> Self {
+    pub fn new(name: String, allowed_variants: Option<Vec<ObjectId>>) -> Self {
         Self {
             id: ObjectId::new(),
             created_at: Utc::now(),
             updated_at: Utc::now(),
             name,
-            allowed_variants: RefrenceField::NotPopulated(vec![]),
+            allowed_variants: RefrenceField::NotPopulated(allowed_variants.unwrap_or(vec![])),
         }
     }
 }
