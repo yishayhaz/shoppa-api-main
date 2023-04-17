@@ -27,9 +27,9 @@
             "name": "Product 1",
             "keywords": "keyword1, keyword2, keyword3",
             "images": [
-                "id",
-                "id",
-                "id"
+                {"id": "some_id", "url": "..."},
+                {"id": "some_id", "url": "..."},
+                {"id": "some_id", "url": "..."},
             ],
             "categories": [
                 {"id": "first id is category", "name": ""},
