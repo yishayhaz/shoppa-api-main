@@ -35,7 +35,6 @@ pub struct DBCollections {
     pub news_letter_subscribers: Collection<models::NewsLetterSubscriber>,
     pub site_visits: Collection<models::SiteVisit>,
     pub variants: Collection<models::Variants>,
-    pub product_items: Collection<models::ProductItems>,
     pub categories: Collection<models::Categories>,
 }
 
@@ -51,7 +50,6 @@ impl DBCollections {
             db.collection(models::NewsLetterSubscriber::get_collection_name());
         let site_visits = db.collection(models::SiteVisit::get_collection_name());
         let variants = db.collection(models::Variants::get_collection_name());
-        let product_items = db.collection(models::ProductItems::get_collection_name());
         let categories = db.collection(models::Categories::get_collection_name());
 
         Self {
@@ -62,7 +60,6 @@ impl DBCollections {
             news_letter_subscribers,
             site_visits,
             variants,
-            product_items,
             categories,
         }
     }
@@ -75,7 +72,6 @@ impl DBCollections {
         Self::create_index(&self.news_letter_subscribers).await;
         Self::create_index(&self.site_visits).await;
         Self::create_index(&self.variants).await;
-        Self::create_index(&self.product_items).await;
         Self::create_index(&self.categories).await;
     }
 

@@ -3,7 +3,7 @@ mod fields;
 use super::{
     common::{db_model, DBModel, RefrenceField},
     prelude::*,
-    ProductItems,
+    Product,
 };
 use serde_json::{json, Value};
 
@@ -42,7 +42,8 @@ pub struct Cart {
 pub struct CartItem {
     #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
     pub added_at: DateTime<Utc>,
-    pub product: RefrenceField<ProductItems, ObjectId>,
+    pub product: RefrenceField<Product, ObjectId>,
+    pub item_id: ObjectId,
     pub quantity: i32,
 }
 

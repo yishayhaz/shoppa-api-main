@@ -1,7 +1,7 @@
 mod fields;
 
 use super::{
-    common::{db_model, DBModel, EmbeddedDocument, RefrenceField},
+    common::{db_model, DBModel, EmbeddedDocument, RefrenceField, embedded_document},
     prelude::*,
     Categories, InnerCategories, InnerInnerCategories, Store, Variants,
 };
@@ -26,9 +26,36 @@ pub struct Product {
     // Caregories in the Vec<CategoriesField>>
     pub categories: RefrenceField<Categories, Vec<CategoriesField>>,
     pub variants: RefrenceField<Vec<Variants>, Vec<ObjectId>>,
-    pub images: Vec<ProductImage>
+    pub images: Vec<ProductImage>,
+    pub items: Vec<ProductItem>
     // pub product_info: Vec<String>
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ProductItem {
+    #[serde(rename = "_id")]
+    id: ObjectId,
+    #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
+    created_at: DateTime<Utc>,
+    #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
+    updated_at: DateTime<Utc>,
+    
+    pub price: f64,
+    pub in_storage: u64,
+    // this field describe the variant of the givem item: e.g: size L and color red.
+    // so it will be uniqe with the product id to make sure there is no double items with
+    // the same variants, the length of the variants field here need to be the same as the one in the parent product.
+    pub variants: Vec<ItemVariants>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ItemVariants {
+    // the variant _id field.
+    pub variant_id: ObjectId,
+    // the above variant value id in his values field.
+    pub value_id: ObjectId,
+}
+
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CategoriesField {
@@ -196,7 +223,8 @@ impl Product {
             )),
             categories: RefrenceField::NotPopulated(categories),
             variants: RefrenceField::NotPopulated(variants),
-            images: vec![]
+            images: vec![],
+            items: vec![]
         })
     }
 
@@ -215,4 +243,8 @@ impl CategoriesField {
     fn new(id: ObjectId, name: String) -> Self {
         Self { id, name }
     }
+}
+
+impl EmbeddedDocument for ProductItem {
+    embedded_document!(ProductItem);
 }

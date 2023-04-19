@@ -1,7 +1,7 @@
 mod fields;
 
 use super::{
-    common::{db_model, nested_document, DBModel, EmbeddedDocument},
+    common::{db_model, embedded_document, DBModel, EmbeddedDocument},
     prelude::*,
 };
 
@@ -54,7 +54,7 @@ impl DBModel for Variants {
 }
 
 impl EmbeddedDocument for VariantValue {
-    nested_document!(VariantValue);
+    embedded_document!(VariantValue);
 }
 
 impl Into<Bson> for VariantValue {

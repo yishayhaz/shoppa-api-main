@@ -64,7 +64,7 @@ macro_rules! db_model {
     };
 }
 
-macro_rules! nested_document {
+macro_rules! embedded_document {
     ($Struct:ty) => {
         fn created_at(&self) -> DateTime<Utc> {
             self.created_at
@@ -93,4 +93,4 @@ macro_rules! nested_document {
     };
 }
 
-pub(crate) use {db_model, nested_document};
+pub(crate) use {db_model, embedded_document};
