@@ -1,11 +1,19 @@
 use super::prelude::*;
 use models::Product;
 
+type GetProductResult = Result<Option<Product>, Response>;
+pub struct ProductPopulateOptions {
+    pub variants: bool,
+    pub store: bool
+}
+
+
 // async fn get_product(
 //     db: &DBExtension,
 //     filter: Document,
+//     populate: Option<ProductPopulateOptions>,
 //     option: Option<FindOneOptions>,
-// ) -> GetStoreResult {
+// ) -> GetProductResult {
 //     let store = match db.stores.find_one(filter, option).await {
 //         Ok(store) => store,
 //         Err(_) => {

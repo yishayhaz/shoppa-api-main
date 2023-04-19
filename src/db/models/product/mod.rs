@@ -6,6 +6,7 @@ use super::{
     Categories, InnerCategories, InnerInnerCategories, Store, Variants,
 };
 
+// product model
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Product {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
@@ -30,6 +31,7 @@ pub struct Product {
     pub items: Vec<ProductItem>, // pub product_info: Vec<String>
 }
 
+//product item, eg variants represantion of the product
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProductItem {
     #[serde(rename = "_id")]
