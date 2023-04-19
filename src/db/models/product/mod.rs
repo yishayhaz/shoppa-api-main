@@ -1,7 +1,7 @@
 mod fields;
 
 use super::{
-    common::{db_model, DBModel, EmbeddedDocument, RefrenceField, embedded_document},
+    common::{db_model, embedded_document, DBModel, EmbeddedDocument, RefrenceField},
     prelude::*,
     Categories, InnerCategories, InnerInnerCategories, Store, Variants,
 };
@@ -27,8 +27,7 @@ pub struct Product {
     pub categories: RefrenceField<Categories, Vec<CategoriesField>>,
     pub variants: RefrenceField<Vec<Variants>, Vec<ObjectId>>,
     pub images: Vec<ProductImage>,
-    pub items: Vec<ProductItem>
-    // pub product_info: Vec<String>
+    pub items: Vec<ProductItem>, // pub product_info: Vec<String>
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -39,7 +38,7 @@ pub struct ProductItem {
     created_at: DateTime<Utc>,
     #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
     updated_at: DateTime<Utc>,
-    
+
     pub price: f64,
     pub in_storage: u64,
     // this field describe the variant of the givem item: e.g: size L and color red.
@@ -56,7 +55,6 @@ pub struct ItemVariants {
     pub value_id: ObjectId,
 }
 
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CategoriesField {
     #[serde(rename = "_id")]
@@ -70,7 +68,6 @@ pub struct StoreField {
     pub id: ObjectId,
     pub name: String,
 }
-
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProductImage {
@@ -224,12 +221,24 @@ impl Product {
             categories: RefrenceField::NotPopulated(categories),
             variants: RefrenceField::NotPopulated(variants),
             images: vec![],
-            items: vec![]
+            items: vec![],
         })
     }
 
     pub fn fields() -> &'static fields::ProductFields {
         &fields::FIELDS
+    }
+
+    pub fn add_item(
+        &mut self,
+        price: f64,
+        in_storage: Option<u64>,
+    ) -> ProductItem {
+        let item = ProductItem::new(price, in_storage.unwrap_or(0), vec![]);
+        
+        self.items.push(item.clone());
+
+        item
     }
 }
 
@@ -247,4 +256,17 @@ impl CategoriesField {
 
 impl EmbeddedDocument for ProductItem {
     embedded_document!(ProductItem);
+}
+
+impl ProductItem {
+    fn new(price: f64, in_storage: u64, variants: Vec<ItemVariants>) -> Self {
+        Self {
+            id: ObjectId::new(),
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+            price,
+            in_storage,
+            variants,
+        }
+    }
 }
