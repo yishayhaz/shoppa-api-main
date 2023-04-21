@@ -8,36 +8,30 @@ pub struct ProductPopulateOptions {
 }
 
 
-// async fn get_product(
-//     db: &DBExtension,
-//     filter: Document,
-//     populate: Option<ProductPopulateOptions>,
-//     option: Option<FindOneOptions>,
-// ) -> GetProductResult {
-//     let store = match db.stores.find_one(filter, option).await {
-//         Ok(store) => store,
-//         Err(_) => {
-//             return Err(ResponseBuilder::<u16>::error(
-//                 // TODO add error code here
-//                 "",
-//                 None,
-//                 Some("Internal Server Error while fetching store"),
-//                 Some(500),
-//             )
-//             .into_response())
-//         }
-//     };
+async fn get_product(
+    db: &DBExtension,
+    filter: Document,
+    populate: Option<ProductPopulateOptions>,
+    option: Option<FindOneOptions>,
+) -> GetProductResult {
+    let product = db.products.find_one(filter, option).await.map_err(|e| {
+        ResponseBuilder::query_error(
+            "products",
+            e
+        )
+        .into_response()
+    })?;
 
-//     Ok(store)
-// }
+    Ok(product)
+}
 
-// pub async fn get_product_by_id(db: &DBExtension, id: &ObjectId) -> GetStoreResult {
-//     let filter = doc! {
-//         "_id": id,
-//     };
+pub async fn get_product_by_id(db: &DBExtension, id: &ObjectId) -> GetProductResult {
+    let filter = doc! {
+        "_id": id,
+    };
 
-//     get_product(db, filter, None).await
-// }
+    get_product(db, filter, None, None).await
+}
 
 pub async fn get_products_for_extarnel(
     db: &DBExtension,

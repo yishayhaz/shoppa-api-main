@@ -22,12 +22,24 @@ pub struct CategoriesFields {
     pub id: &'static str,
 }
 
+pub struct ItemsFields {
+    pub id: &'static str,
+    pub created_at: &'static str,
+    pub updated_at: &'static str,
+    pub price: &'static str,
+    pub in_storage: &'static str
+}
+
+
 impl ProductFields {
     pub fn categories(&self) -> &'static CategoriesFields{
         &CATEGORIES_FIELDS
     }
     pub fn store(&self) -> &'static StoreFields {
         &STORE_FIELDS
+    }
+    pub fn items(&self) -> &'static ItemsFields {
+        &ITEMS_FIELDS
     }
 }
 
@@ -53,4 +65,12 @@ const CATEGORIES_FIELDS: CategoriesFields = CategoriesFields {
 const STORE_FIELDS: StoreFields = StoreFields {
     id: "_id",
     name: "name",
+};
+
+const ITEMS_FIELDS: ItemsFields = ItemsFields{
+    id: "_id",
+    created_at: "created_at",
+    updated_at: "updated_at",
+    price: "price",
+    in_storage: "in_storage"
 };
