@@ -7,8 +7,8 @@ pub enum ProjectIdOptions {
     ToString,
 }
 
-pub fn lookup<T: DBModel>(
-    _collection: T,
+pub fn lookup(
+    collection: &'static str,
     local_field: &'static str,
     foreign_field: &'static str,
     as_: &'static str,
@@ -17,7 +17,7 @@ pub fn lookup<T: DBModel>(
 ) -> Document {
     doc! {
         "$lookup": {
-            "from":  T::get_collection_name(),
+            "from": collection,
             "localField": local_field,
             "foreignField": foreign_field,
             "as": as_,

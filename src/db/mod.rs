@@ -3,6 +3,7 @@ pub mod inserts;
 pub mod models;
 pub mod queries;
 pub mod updates;
+pub mod populate;
 
 use crate::helpers::env::ENV_VARS;
 use models::DBModel;

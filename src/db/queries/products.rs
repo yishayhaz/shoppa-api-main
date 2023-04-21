@@ -1,17 +1,14 @@
 use super::prelude::*;
 use models::Product;
+use crate::db::populate::ProductsPopulate;
 
 type GetProductResult = Result<Option<Product>, Response>;
-pub struct ProductPopulateOptions {
-    pub variants: bool,
-    pub store: bool
-}
 
 
 async fn get_product(
     db: &DBExtension,
     filter: Document,
-    populate: Option<ProductPopulateOptions>,
+    _populate: Option<ProductsPopulate>,
     option: Option<FindOneOptions>,
 ) -> GetProductResult {
     let product = db.products.find_one(filter, option).await.map_err(|e| {
