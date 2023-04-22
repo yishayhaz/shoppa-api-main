@@ -1,5 +1,6 @@
 use super::{super::prelude::routes::*, types};
 use crate::db::{inserts, queries};
+use axum::http::StatusCode;
 
 pub async fn create_new_store(
     db: DBExtension,
@@ -16,6 +17,18 @@ pub async fn get_stores(db: DBExtension, _: OnlyInDev) -> HandlerResponse {
 
     Ok(ResponseBuilder::success(Some(stores), None, None).into_response())
 }
+
+pub async fn get_store_by_id(
+    db: DBExtension,
+    _: OnlyInDev,
+    Path(store_oid): Path<ObjectId>,
+) -> HandlerResponse {
+    let store = queries::get_store_by_id(&db, &store_oid).await?;
+
+    
+    Ok(ResponseBuilder::success(Some(store), None, None).into_response())
+}
+
 
 pub async fn get_store_by_name(
     db: DBExtension,
