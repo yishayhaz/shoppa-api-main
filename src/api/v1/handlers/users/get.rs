@@ -10,6 +10,7 @@ pub async fn get_me(
     GetTokenForGetMe(token_data): GetTokenForGetMe,
 ) -> HandlerResponse {
 
+
     let user = queries::get_user_by_id(&db, &token_data.user_id).await?;
 
     match user {

@@ -67,3 +67,11 @@ pub async fn get_store_by_id(db: &DBExtension, id: &ObjectId) -> GetStoreResult 
 
     get_store(db, filter, None).await
 }
+
+pub async fn get_store_by_name(db: &DBExtension, name: String) -> GetStoreResult {
+    let filter = doc! {
+        "name": name,
+    };
+
+    get_store(db, filter, None).await
+}
