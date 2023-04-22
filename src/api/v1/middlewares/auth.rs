@@ -216,11 +216,10 @@ impl IntoResponse for AuthErrors {
                 Some(403),
             )
             .into_response(),
-            Self::AuthErrorWith200 => ResponseBuilder::<u16>::error(
+            Self::AuthErrorWith200 => ResponseBuilder::<u16>::success(
                 // TODO add error code here
-                "",
                 None,
-                Some("Need to be guest to access this route"),
+                Some("Need to be logged in to access this route"),
                 Some(200),
             )
             .into_response(),
