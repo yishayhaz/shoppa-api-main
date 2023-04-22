@@ -17,12 +17,12 @@ pub async fn get_stores(db: DBExtension, _: OnlyInDev) -> HandlerResponse {
     Ok(ResponseBuilder::success(Some(stores), None, None).into_response())
 }
 
-pub async fn get_store_by_id(
+pub async fn get_store_by_name(
     db: DBExtension,
     _: OnlyInDev,
-    Path(store_oid): Path<ObjectId>,
+    Path(store_name): Path<String>,
 ) -> HandlerResponse {
-    let store = queries::get_store_by_id(&db, &store_oid).await?;
+    let store = queries::get_store_by_name(&db, store_name).await?;
 
     Ok(ResponseBuilder::success(Some(store), None, None).into_response())
 }
