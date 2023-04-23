@@ -3,11 +3,14 @@ use super::{
     prelude::*,
 };
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use strum_macros::EnumString;
 mod fields;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, EnumString)]
 pub enum ContactFormStatus {
+    #[strum(serialize="Pending")]
     Pending,
+    #[strum(serialize="Done")]
     Done,
 }
 
@@ -61,5 +64,14 @@ impl ContactUsForm {
 
     pub fn fields() -> &'static fields::ContactUsFields {
         &fields::FIELDS
+    }
+}
+
+impl Into<Bson> for ContactFormStatus {
+    fn into(self) -> Bson {
+        match self {
+            Self::Done => Bson::String(String::from("Done")),
+            Self::Pending => Bson::String(String::from("Pending"))
+        }
     }
 }

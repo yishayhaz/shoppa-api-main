@@ -1,12 +1,20 @@
-use serde::{Deserialize, Serialize};
-use crate::db::models;
-use validator::{Validate};
+use super::super::prelude::types::*;
+use crate::db::models::{ContactFormStatus, ContactUsReason};
 
-
-#[derive(Debug, Validate, Deserialize, Serialize)]
-pub struct ContactUsPayload{
-    pub reason: models::ContactUsReason,
+#[derive(Debug, Validate, Deserialize)]
+pub struct ContactUsPayload {
+    pub reason: ContactUsReason,
     #[validate(email)]
     pub email: String,
-    pub message: String
+    pub message: String,
+}
+#[derive(Debug, Deserialize)]
+pub struct GetContactUsQueryParams {
+    #[serde(default, deserialize_with = "empty_string_as_none")]
+    pub status: Option<ContactFormStatus>,
+}
+
+#[derive(Debug, Validate, Deserialize)]
+pub struct UpdateContactUsPayload {
+    pub status: ContactFormStatus,
 }
