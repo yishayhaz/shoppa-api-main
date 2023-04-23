@@ -8,10 +8,10 @@ pub enum ProjectIdOptions {
 }
 
 pub fn lookup(
-    collection: &'static str,
-    local_field: &'static str,
-    foreign_field: &'static str,
-    as_: &'static str,
+    collection: &str,
+    local_field: &str,
+    foreign_field: &str,
+    as_: &str,
     pipeline: Option<Vec<Document>>,
     let_: Option<Document>,
 ) -> Document {
