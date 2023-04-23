@@ -28,14 +28,3 @@ pub async fn get_store_by_id(
     
     Ok(ResponseBuilder::success(Some(store), None, None).into_response())
 }
-
-
-pub async fn get_store_by_name(
-    db: DBExtension,
-    _: OnlyInDev,
-    Path(store_name): Path<String>,
-) -> HandlerResponse {
-    let store = queries::get_store_by_name(&db, store_name).await?;
-
-    Ok(ResponseBuilder::success(Some(store), None, None).into_response())
-}
