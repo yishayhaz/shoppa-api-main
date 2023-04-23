@@ -6,6 +6,12 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 mod fields;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum ContactFormStatus {
+    Pending,
+    Done,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ContactUsForm {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     id: Option<ObjectId>,
@@ -17,6 +23,7 @@ pub struct ContactUsForm {
     pub email: String,
     pub message: String,
     pub reason: ContactUsReason,
+    pub status: ContactFormStatus,
 }
 
 #[derive(Debug, Serialize_repr, Deserialize_repr, Clone)]
@@ -48,6 +55,7 @@ impl ContactUsForm {
             email,
             message,
             reason,
+            status: ContactFormStatus::Pending,
         }
     }
 

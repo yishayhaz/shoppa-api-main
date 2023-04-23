@@ -4,12 +4,14 @@ mod products;
 mod store;
 mod users;
 mod variants;
+mod contact_us;
 
 pub use categories::*;
 pub use products::*;
 pub use store::*;
 pub use users::*;
 pub use variants::*;
+pub use contact_us::*;
 
 use mongodb::{error::Error, Cursor};
 use serde::Deserialize;
