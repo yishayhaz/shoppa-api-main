@@ -235,12 +235,12 @@ impl Product {
         &mut self,
         price: f64,
         in_storage: Option<u64>,
-    ) -> ProductItem {
+    ) -> &ProductItem {
         let item = ProductItem::new(price, in_storage.unwrap_or(0), vec![]);
         
-        self.items.push(item.clone());
-
-        item
+        self.items.push(item);
+        
+        self.items.last().unwrap()
     }
 }
 

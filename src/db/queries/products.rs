@@ -1,9 +1,8 @@
 use super::prelude::*;
-use models::Product;
 use crate::db::populate::ProductsPopulate;
+use models::Product;
 
 type GetProductResult = Result<Option<Product>, Response>;
-
 
 async fn get_product(
     db: &DBExtension,
@@ -11,23 +10,26 @@ async fn get_product(
     _populate: Option<ProductsPopulate>,
     option: Option<FindOneOptions>,
 ) -> GetProductResult {
-    let product = db.products.find_one(filter, option).await.map_err(|e| {
-        ResponseBuilder::query_error(
-            "products",
-            e
-        )
-        .into_response()
-    })?;
+    let product = db
+        .products
+        .find_one(filter, option)
+        .await
+        .map_err(|e| ResponseBuilder::query_error("products", e).into_response())?;
 
     Ok(product)
 }
 
-pub async fn get_product_by_id(db: &DBExtension, id: &ObjectId) -> GetProductResult {
+pub async fn get_product_by_id(
+    db: &DBExtension,
+    id: &ObjectId,
+    populate: Option<ProductsPopulate>,
+    option: Option<FindOneOptions>,
+) -> GetProductResult {
     let filter = doc! {
         "_id": id,
     };
 
-    get_product(db, filter, None, None).await
+    get_product(db, filter, populate, option).await
 }
 
 pub async fn get_products_for_extarnel(
@@ -52,16 +54,15 @@ pub async fn get_products_for_extarnel(
 
     let sort_stage = match sorting {
         None => {
-            if free_text.is_some(){
+            if free_text.is_some() {
                 aggregations::sort(doc! {
                     "score": { "$meta": "textScore" }
                 })
-            }
-            else{
+            } else {
                 aggregations::sort(Sorter::default().into())
             }
-        },
-        Some(v) => aggregations::sort(v.into())
+        }
+        Some(v) => aggregations::sort(v.into()),
     };
 
     let pipeline = [
