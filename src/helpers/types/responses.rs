@@ -4,14 +4,18 @@ use axum::{
     Json,
 };
 use mongodb::error::Error;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::{json, Value};
-#[derive(Serialize, Deserialize)]
-pub struct ResponseBuilder<T> {
+
+#[derive(Serialize, Debug)]
+pub struct ResponseBuilder<T: Serialize> {
+    #[serde(skip)]
     code: u16,
     message: Option<&'static str>,
     success: bool,
+    // #[serde(serialize_with = "serialize_any_object_id_as_string")]
     content: Option<T>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     error_code: Option<&'static str>,
 }
 
@@ -125,27 +129,9 @@ impl ResponseBuilder<String> {
 
 impl<T: Serialize> IntoResponse for ResponseBuilder<T> {
     fn into_response(self) -> Response {
-        let content = match self.error_code {
-            Some(_) => json!(
-                {
-                    "message": self.message,
-                    "success": self.success,
-                    "content": self.content,
-                    "error_code": self.error_code
-                }
-            ),
-            None => json!(
-                {
-                    "message": self.message,
-                    "success": self.success,
-                    "content": self.content
-                }
-            ),
-        };
-
         let code = StatusCode::from_u16(self.code).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
 
-        (code, Json(content)).into_response()
+        (code, Json(self)).into_response()
     }
 }
 
