@@ -14,12 +14,13 @@ pub struct Store {
     updated_at: DateTime<Utc>,
 
     pub name: String,
+    pub description: String,
     pub email: String,
     pub location: StoreLocation,
     // pub delivery_strategy: String
     // pub bank_details: ?
-    //pub logo(s): ?
-    //pub banner(s): ?
+    // pub logo(s): ?
+    // pub banner(s): ?
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -52,12 +53,13 @@ impl DBModel for Store {
 }
 
 impl Store {
-    pub fn new(name: String, email: String, location: String) -> Self {
+    pub fn new(name: String, description: String, email: String, location: String) -> Self {
         Self {
             id: None,
             created_at: Utc::now(),
             updated_at: Utc::now(),
             name,
+            description,
             email,
             location: StoreLocation {
                 free_text: location,

@@ -6,5 +6,6 @@ pub struct CreateStorePayload {
     #[validate(email)]
     pub email: String,
     pub name: String,
+    pub description: String,
     pub location: String,
 }
