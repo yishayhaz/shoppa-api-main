@@ -18,3 +18,4 @@ pub use sites_visite::SiteVisit;
 pub use store::Store;
 pub use user::{Cart, Genders, User};
 pub use variants::{Variants, VariantValue};
+pub use common::RefrenceField;

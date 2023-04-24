@@ -3,6 +3,7 @@ use axum::{
     response::{IntoResponse, Response},
     Json,
 };
+use bson::oid::ObjectId;
 use mongodb::error::Error;
 use serde::Serialize;
 use serde_json::{json, Value};
@@ -123,6 +124,16 @@ impl ResponseBuilder<String> {
             success: false,
             content: Some(kind.to_string()),
             error_code: Some("query_error"),
+        }
+    }
+
+    pub fn not_found_error(collection: &'static str, id: &ObjectId) -> Self {
+        Self {
+            code: 404,
+            message: Some(collection),
+            success: false,
+            content: Some(id.to_hex()),
+            error_code: Some("not_found_error"),
         }
     }
 }

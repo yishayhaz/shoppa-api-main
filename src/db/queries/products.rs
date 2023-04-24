@@ -10,27 +10,24 @@ async fn get_product(
     populate: Option<ProductsPopulate>,
     option: Option<FindOneOptions>,
 ) -> GetProductResult {
-    match populate {
-        None => {}
-        Some(e) => {
-            let mut pipeline = vec![aggregations::match_query(&filter), aggregations::limit(1)];
+    if let Some(populate) = populate {
+        let mut pipeline = vec![aggregations::match_query(&filter), aggregations::limit(1)];
 
-            pipeline.extend(e.build_pipeline());
-            tracing::debug!("get_product pipeline: {:?}", pipeline);
-            let cursor = db
-                .products
-                .aggregate(pipeline, None)
-                .await
-                .map_err(|e| ResponseBuilder::query_error("products", e).into_response())?;
+        pipeline.extend(populate.build_pipeline());
 
-            let product = convert_one_doc_cursor::<Product>(cursor)
-                .await
-                .map_err(|e| {
-                    ResponseBuilder::cursor_consumpetion_error("products", e).into_response()
-                })?;
+        let cursor = db
+            .products
+            .aggregate(pipeline, None)
+            .await
+            .map_err(|e| ResponseBuilder::query_error("products", e).into_response())?;
 
-            return Ok(product);
-        }
+        let product = convert_one_doc_cursor::<Product>(cursor)
+            .await
+            .map_err(|e| {
+                ResponseBuilder::cursor_consumpetion_error("products", e).into_response()
+            })?;
+
+        return Ok(product);
     };
 
     let product = db

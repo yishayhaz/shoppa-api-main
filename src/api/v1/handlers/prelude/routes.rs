@@ -6,5 +6,5 @@ pub use crate::helpers::{
     types::{DBExtension, HandlerResponse, ResponseBuilder},
 };
 pub use crate::api::v1::middlewares::*;
-pub use crate::db::{Pagination, Sorter};
+pub use crate::db::{{Pagination, Sorter}, populate::FieldPopulate, models::RefrenceField};
 pub use bson::oid::ObjectId;

@@ -234,13 +234,70 @@ impl Product {
     pub fn add_item(
         &mut self,
         price: f64,
-        in_storage: Option<u64>,
-    ) -> &ProductItem {
-        let item = ProductItem::new(price, in_storage.unwrap_or(0), vec![]);
-        
+        in_storage: u64,
+        new_item_variants: Vec<ItemVariants>,
+    ) -> Result<&ProductItem, ()> {
+        let product_variants_length = match &self.variants {
+            RefrenceField::NotPopulated(variants) => variants.len(),
+            RefrenceField::Populated(variants) => variants.len(),
+        };
+
+        if new_item_variants.len() != product_variants_length {
+            // not all variants are provided
+            return Err(());
+        }
+
+        // if there are no variants, we can only have one item
+        if product_variants_length == 0 {
+            if self.items.len() != 0 {
+                // already has the only variant possible
+                return Err(());
+            }
+            let item = ProductItem::new(price, in_storage, vec![]);
+            self.items.push(item);
+            return Ok(self.items.last().unwrap());
+        }
+
+        for item in &self.items {
+            if item.variants == new_item_variants {
+                // variant already exists
+                return Err(());
+            }
+        }
+
+        let product_variants = match &self.variants {
+            RefrenceField::NotPopulated(_) => {
+                // to create a new item, we need to have the variants populated
+                return Err(());
+            }
+            RefrenceField::Populated(v) => v,
+        };
+
+        for product_variant in product_variants {
+            let mut found = false;
+            // if the variant is populated we can assume that the id is populated
+            let v_id = *product_variant.id().unwrap();
+            for item_variant in &new_item_variants {
+                // now we need to check if the provided variant value id exists in the variant
+                if v_id == item_variant.variant_id {
+                    found = product_variant
+                        .values
+                        .iter()
+                        .find(|v| *v.id() == item_variant.value_id)
+                        .is_some();
+                }
+            }
+            if !found {
+                // variant not found
+                return Err(());
+            }
+        }
+
+        let item = ProductItem::new(price, in_storage, new_item_variants);
+
         self.items.push(item);
-        
-        self.items.last().unwrap()
+
+        Ok(self.items.last().unwrap())
     }
 }
 
@@ -270,5 +327,11 @@ impl ProductItem {
             in_storage,
             variants,
         }
+    }
+}
+
+impl PartialEq for ItemVariants {
+    fn eq(&self, other: &Self) -> bool {
+        self.variant_id == other.variant_id && self.value_id == other.value_id
     }
 }
