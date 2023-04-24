@@ -1,5 +1,5 @@
 use super::prelude::*;
-use crate::db::populate::ProductsPopulate;
+use crate::db::populate::{PopulateOptions, ProductsPopulate};
 use models::Product;
 
 type GetProductResult = Result<Option<Product>, Response>;
@@ -7,9 +7,32 @@ type GetProductResult = Result<Option<Product>, Response>;
 async fn get_product(
     db: &DBExtension,
     filter: Document,
-    _populate: Option<ProductsPopulate>,
+    populate: Option<ProductsPopulate>,
     option: Option<FindOneOptions>,
 ) -> GetProductResult {
+    match populate {
+        None => {}
+        Some(e) => {
+            let mut pipeline = vec![aggregations::match_query(&filter), aggregations::limit(1)];
+
+            pipeline.extend(e.build_pipeline());
+            tracing::debug!("get_product pipeline: {:?}", pipeline);
+            let cursor = db
+                .products
+                .aggregate(pipeline, None)
+                .await
+                .map_err(|e| ResponseBuilder::query_error("products", e).into_response())?;
+
+            let product = convert_one_doc_cursor::<Product>(cursor)
+                .await
+                .map_err(|e| {
+                    ResponseBuilder::cursor_consumpetion_error("products", e).into_response()
+                })?;
+
+            return Ok(product);
+        }
+    };
+
     let product = db
         .products
         .find_one(filter, option)

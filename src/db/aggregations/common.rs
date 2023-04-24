@@ -21,8 +21,8 @@ pub fn lookup(
             "localField": local_field,
             "foreignField": foreign_field,
             "as": as_,
-            "let": let_,
-            "pipeline": pipeline,
+            "let": let_.unwrap_or(Document::new()),
+            "pipeline": pipeline.unwrap_or(vec![]),
         }
     }
 }
