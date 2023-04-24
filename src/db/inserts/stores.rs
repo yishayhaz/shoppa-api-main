@@ -6,6 +6,7 @@ type InsertStoreResult = Result<Store, InsertDocumentErrors>;
 pub async fn new_store(
     db: &DBExtension,
     name: String,
+    description: String,
     email: String,
     location: String,
 ) -> InsertStoreResult{
@@ -13,6 +14,7 @@ pub async fn new_store(
 
     let mut store = Store::new(
         name,
+        description,
         email,
         location
     );
