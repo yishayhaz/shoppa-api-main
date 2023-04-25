@@ -1,5 +1,7 @@
-use super::super::super::prelude::types::*;
-use crate::db::models::ItemVariants;
+use crate::{
+    db::models::ItemVariants,
+    prelude::{types::*},
+};
 
 #[derive(Deserialize, Validate)]
 pub struct AddProductItemPayload {
@@ -7,6 +9,5 @@ pub struct AddProductItemPayload {
     #[validate(range(min = 13.98))]
     pub price: f64,
     pub in_storage: u64,
-    pub variants: Vec<ItemVariants>
-
+    pub variants: Vec<ItemVariants>,
 }

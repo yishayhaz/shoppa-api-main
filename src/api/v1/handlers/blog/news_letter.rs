@@ -1,6 +1,8 @@
-use super::super::prelude::routes::*;
 use super::types;
-use crate::db::{inserts, inserts::InsertDocumentErrors};
+use crate::{
+    db::{inserts, inserts::InsertDocumentErrors},
+    prelude::{handlers::*, *},
+};
 
 pub async fn signup_to_news_letter(
     db: DBExtension,
@@ -17,10 +19,8 @@ pub async fn signup_to_news_letter(
                     Some(409),
                 )
                 .into_response());
-            },
-            _ => {
-                return Err(e.into_response())
             }
+            _ => return Err(e.into_response()),
         },
     };
 

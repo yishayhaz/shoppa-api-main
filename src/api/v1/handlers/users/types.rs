@@ -1,4 +1,4 @@
-use super::super::prelude::types::*;
+use crate::prelude::types::*;
 
 
 #[derive(Deserialize, Serialize, Validate)]

@@ -1,7 +1,8 @@
-use super::super::prelude::routes::*;
 use crate::{
     db::queries,
     helpers::{cookies::delete_cookie, types::Cookeys},
+    prelude::{handlers::*},
+    api::v1::middlewares::*,
 };
 
 pub async fn get_me(

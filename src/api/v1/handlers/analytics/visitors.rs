@@ -1,7 +1,8 @@
-use super::super::prelude::routes::*;
 use crate::{
+    api::v1::middlewares::*,
     db::inserts,
     helpers::{cookies::create_cookie, types::Cookeys},
+    prelude::{handlers::*, *},
 };
 
 pub async fn add_new_visitor_to_counter(

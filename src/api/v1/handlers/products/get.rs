@@ -1,6 +1,9 @@
-use super::super::prelude::routes::*;
 use super::types;
-use crate::db::queries;
+use crate::{
+    db::queries,
+    prelude::{handlers::*},
+    api::v1::middlewares::*,
+};
 
 pub async fn get_products(
     db: DBExtension,

@@ -1,8 +1,9 @@
-use super::super::prelude::routes::*;
 use super::types::ChangePasswordPayload;
 use crate::{
     db::{queries, updates},
     helpers::security,
+    prelude::{handlers::*},
+    api::v1::middlewares::*,
 };
 
 pub async fn change_password(

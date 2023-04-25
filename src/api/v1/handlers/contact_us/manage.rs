@@ -1,5 +1,9 @@
-use super::{super::prelude::routes::*, types};
-use crate::db::{inserts, queries, updates};
+use super::types;
+use crate::{
+    db::{inserts, queries, updates},
+    prelude::{handlers::*},
+    api::v1::middlewares::*,
+};
 
 pub async fn contact_us_request(
     db: DBExtension,
@@ -18,7 +22,8 @@ pub async fn get_contact_us(
     _: OnlyInDev,
     Query(query): Query<types::GetContactUsQueryParams>,
 ) -> HandlerResponse {
-    let forms = queries::get_contact_us_forms(&db, Some(pagination), sorting.into(), query.status).await?;
+    let forms =
+        queries::get_contact_us_forms(&db, Some(pagination), sorting.into(), query.status).await?;
 
     Ok(ResponseBuilder::success(Some(forms), None, None).into_response())
 }
@@ -27,7 +32,7 @@ pub async fn update_status(
     db: DBExtension,
     _: OnlyInDev,
     Path(form_id): Path<ObjectId>,
-    Json(payload): Json<types::UpdateContactUsPayload>
+    Json(payload): Json<types::UpdateContactUsPayload>,
 ) -> HandlerResponse {
     let contact_us = updates::update_contact_us_by_id(&db, form_id, payload.status).await?;
 

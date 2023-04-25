@@ -1,8 +1,11 @@
-use super::super::prelude::routes::*;
 use super::types::{
     CreateInnerCatgoriePayload, CreateInnerInnerCatgoriePayload, CreateRootCatgoriePayload,
 };
-use crate::db::{inserts, queries};
+use crate::{
+    api::v1::middlewares::*,
+    db::{inserts, queries},
+    prelude::{handlers::*},
+};
 
 pub async fn create_new_root_catagorie(
     db: DBExtension,

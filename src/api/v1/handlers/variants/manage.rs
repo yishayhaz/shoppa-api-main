@@ -1,6 +1,9 @@
-use super::super::prelude::routes::*;
 use super::types::CreateVariantPayload;
-use crate::db::inserts;
+use crate::{
+    api::v1::middlewares::*,
+    db::inserts,
+    prelude::{handlers::*},
+};
 
 pub async fn create_new_variant(
     db: DBExtension,

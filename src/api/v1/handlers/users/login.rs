@@ -1,4 +1,3 @@
-use super::super::prelude::routes::*;
 use super::types::UserLoginPayload;
 use crate::{
     db::queries,
@@ -7,6 +6,8 @@ use crate::{
         security,
         types::Cookeys,
     },
+    prelude::{handlers::*},
+    api::v1::middlewares::*,
 };
 
 pub async fn login(
@@ -41,10 +42,7 @@ pub async fn login(
     Ok(ResponseBuilder::success(Some(user.to_get_me()?), None, None).into_response())
 }
 
-pub async fn logout(
-    cookies: Cookies,
-    Level2Access(_): Level2Access
-) -> HandlerResponse {
+pub async fn logout(cookies: Cookies, Level2Access(_): Level2Access) -> HandlerResponse {
     cookies.add(delete_cookie(&Cookeys::AccessToken));
 
     Ok(ResponseBuilder::<u16>::success(None, None, None).into_response())

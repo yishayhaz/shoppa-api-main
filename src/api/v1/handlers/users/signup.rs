@@ -1,8 +1,9 @@
-use super::super::prelude::routes::*;
 use super::types::UserRegisterPayload;
 use crate::{
     db::{inserts, inserts::InsertDocumentErrors, queries, updates},
     helpers::{cookies::set_access_cookie, security},
+    prelude::{handlers::*, *},
+    api::v1::middlewares::*,
 };
 
 pub async fn signup(

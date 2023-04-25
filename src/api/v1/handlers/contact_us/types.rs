@@ -1,5 +1,7 @@
-use super::super::prelude::types::*;
-use crate::db::models::{ContactFormStatus, ContactUsReason};
+use crate::{
+    db::models::{ContactFormStatus, ContactUsReason},
+    prelude::types::*,
+};
 
 #[derive(Debug, Validate, Deserialize)]
 pub struct ContactUsPayload {

@@ -1,5 +1,7 @@
-use super::super::prelude::routes::*;
-use crate::db::queries;
+use crate::{
+    db::queries,
+    prelude::{handlers::*, *},
+};
 
 pub async fn get_variants(db: DBExtension) -> HandlerResponse {
     let variants = queries::get_variants_for_extarnel(&db).await?;

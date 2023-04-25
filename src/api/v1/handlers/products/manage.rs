@@ -1,6 +1,9 @@
-use super::super::prelude::routes::*;
 use super::types::CreateProductPayload;
-use crate::db::{inserts, queries, inserts::InsertDocumentErrors};
+use crate::{
+    api::v1::middlewares::OnlyInDev,
+    db::{inserts, inserts::InsertDocumentErrors, queries},
+    prelude::handlers::*,
+};
 
 pub async fn create_new_product(
     db: DBExtension,
@@ -17,19 +20,15 @@ pub async fn create_new_product(
     .await?;
 
     if categories.is_none() {
-        return  Err(ResponseBuilder::<u16>::success(None, None, None).into_response());
+        return Err(ResponseBuilder::<u16>::success(None, None, None).into_response());
     }
 
     let categories = categories.unwrap();
 
-    let store = queries::get_store_by_id(
-        &db,
-        &payload.store
-    )
-    .await?;
+    let store = queries::get_store_by_id(&db, &payload.store).await?;
 
     if store.is_none() {
-        return  Err(ResponseBuilder::<u16>::success(None, None, None).into_response());
+        return Err(ResponseBuilder::<u16>::success(None, None, None).into_response());
     }
 
     let store = store.unwrap();
@@ -47,7 +46,8 @@ pub async fn create_new_product(
         inner_category,
         inner_category.categories.get(0).unwrap(),
         payload.variants.unwrap_or(vec![]),
-    ).await;
+    )
+    .await;
 
     match product {
         Ok(v) => Ok(ResponseBuilder::success(Some(v), None, None).into_response()),
@@ -58,5 +58,4 @@ pub async fn create_new_product(
             _ => return Err(e.into_response()),
         },
     }
-
 }
