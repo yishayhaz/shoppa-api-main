@@ -1,5 +1,5 @@
 use super::{super::super::prelude::routes::*, types};
-use crate::db::{populate::ProductsPopulate, queries};
+use crate::db::{populate::ProductsPopulate, queries, updates};
 
 pub async fn add_product_item(
     db: DBExtension,
@@ -32,7 +32,7 @@ pub async fn add_product_item(
         .into_response()),
     };
 
-    // save new product item
+    updates::add_product_item(&db, &product_id, &new_item, None).await?;
 
     Ok(().into_response())
 }
