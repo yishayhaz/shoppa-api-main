@@ -13,8 +13,8 @@ pub struct Store {
     #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
     updated_at: DateTime<Utc>,
 
-    pub name: String,
-    pub description: String,
+    pub name: String, // TODO: min: 4, max: 30
+    pub description: String, // TODO: min: 40, max: 110
     pub email: String,
     pub location: StoreLocation,
     // pub delivery_strategy: String
@@ -25,7 +25,7 @@ pub struct Store {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct StoreLocation {
-    pub free_text: String,
+    pub free_text: String, // TODO: min: 0, max: 60
 }
 
 impl DBModel for Store {
