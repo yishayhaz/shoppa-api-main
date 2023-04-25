@@ -6,7 +6,7 @@ use crate::{
         security,
         types::Cookeys,
     },
-    prelude::{handlers::*},
+    prelude::{handlers::*, *},
     api::v1::middlewares::*,
 };
 
@@ -15,7 +15,7 @@ pub async fn login(
     cookies: Cookies,
     GuestOnly(_): GuestOnly,
     JsonWithValidation(payload): JsonWithValidation<UserLoginPayload>,
-) -> HandlerResponse {
+) -> HandlerResult {
     let user = queries::get_user_by_email(&db, &payload.email).await?;
 
     let user_not_found =
@@ -30,11 +30,11 @@ pub async fn login(
 
     let user_password = match &user.password {
         Some(user_password) => user_password,
-        None => return Err(user_not_found),
+        None => return Ok(user_not_found),
     };
 
     if !security::verify_password(&payload.password, user_password)? {
-        return Err(user_not_found);
+        return Ok(user_not_found);
     }
 
     set_access_cookie(&cookies, &user)?;
@@ -42,7 +42,7 @@ pub async fn login(
     Ok(ResponseBuilder::success(Some(user.to_get_me()?), None, None).into_response())
 }
 
-pub async fn logout(cookies: Cookies, Level2Access(_): Level2Access) -> HandlerResponse {
+pub async fn logout(cookies: Cookies, Level2Access(_): Level2Access) -> HandlerResult {
     cookies.add(delete_cookie(&Cookeys::AccessToken));
 
     Ok(ResponseBuilder::<u16>::success(None, None, None).into_response())

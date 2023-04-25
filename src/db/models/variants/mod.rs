@@ -2,8 +2,8 @@ mod fields;
 
 use super::{
     common::{db_model, embedded_document, DBModel, EmbeddedDocument},
-    prelude::*,
 };
+use crate::prelude::{db_models::*, *};
 
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

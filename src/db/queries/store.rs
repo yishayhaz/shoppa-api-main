@@ -1,39 +1,20 @@
 use super::prelude::*;
+use crate::prelude::*;
 
-type GetStoreResult = Result<Option<models::Store>, Response>;
+type GetStoreResult = Result<Option<models::Store>>;
+// Stores as many stores
+type GetStoresResult = Result<Vec<models::Store>>;
 
-type GetStoresResult = Result<Vec<models::Store>, Response>;
+pub async fn get_stores(db: &DBExtension) -> GetStoresResult {
+    let cursor = db
+        .stores
+        .find(None, None)
+        .await
+        .map_err(|e| Error::DBError(("stores", e)))?;
 
-pub async fn get_stores(
-    db: &DBExtension,
-) -> GetStoresResult {
-    let cursor = match db.stores.find(None, None).await {
-        Ok(cursor) => cursor,
-        Err(_) => {
-            return Err(ResponseBuilder::<u16>::error(
-                // TODO add error code here
-                "",
-                None,
-                Some("Internal Server Error while fetching stores"),
-                Some(500),
-            )
-            .into_response())
-        }
-    };
-
-    let stores = match consume_cursor(cursor).await {
-        Ok(stores) => stores,
-        Err(_) => {
-            return Err(ResponseBuilder::<u16>::error(
-                // TODO add error code here
-                "",
-                None,
-                Some("Internal Server Error while fetching stores"),
-                Some(500),
-            )
-            .into_response())
-        }
-    };
+    let stores = consume_cursor(cursor)
+        .await
+        .map_err(|e| Error::DBError(("stores", e)))?;
 
     Ok(stores)
 }
@@ -43,19 +24,11 @@ async fn get_store(
     filter: Document,
     option: Option<FindOneOptions>,
 ) -> GetStoreResult {
-    let store = match db.stores.find_one(filter, option).await {
-        Ok(store) => store,
-        Err(_) => {
-            return Err(ResponseBuilder::<u16>::error(
-                // TODO add error code here
-                "",
-                None,
-                Some("Internal Server Error while fetching store"),
-                Some(500),
-            )
-            .into_response())
-        }
-    };
+    let store = db
+        .stores
+        .find_one(filter, option)
+        .await
+        .map_err(|e| Error::DBError(("stores", e)))?;
 
     Ok(store)
 }

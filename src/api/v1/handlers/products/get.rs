@@ -1,7 +1,7 @@
 use super::types;
 use crate::{
     db::queries,
-    prelude::{handlers::*},
+    prelude::{handlers::*, *},
     api::v1::middlewares::*,
 };
 
@@ -10,7 +10,7 @@ pub async fn get_products(
     pagination: Pagination,
     sorting: OptionalSorting,
     Query(query): Query<types::GetProductQueryParams>,
-) -> HandlerResponse {
+) -> HandlerResult {
     let products = queries::get_products_for_extarnel(
         &db,
         Some(pagination),

@@ -14,14 +14,14 @@ pub use store::*;
 pub use users::*;
 pub use variants::*;
 
-use axum::response::Response;
 use futures_util::StreamExt;
-use mongodb::{error::Error, Cursor};
+use mongodb::{error::Error as MongoDBError, Cursor};
 use serde::Deserialize;
+use crate::prelude::*;
 
 pub async fn consume_cursor<T: for<'a> Deserialize<'a>>(
     mut cursor: Cursor<T>,
-) -> Result<Vec<T>, Error> {
+) -> StdResult<Vec<T>, MongoDBError> {
     let mut documents: Vec<T> = Vec::new();
 
     while cursor.advance().await? {
@@ -33,7 +33,7 @@ pub async fn consume_cursor<T: for<'a> Deserialize<'a>>(
 
 pub async fn convert_one_doc_cursor<T: for<'a> Deserialize<'a>>(
     mut cursor: Cursor<Document>,
-) -> Result<Option<T>, Error> {
+) -> StdResult<Option<T>, MongoDBError> {
     let doc = cursor.next().await.transpose()?;
 
     if let Some(doc) = doc {
@@ -46,7 +46,7 @@ pub async fn convert_one_doc_cursor<T: for<'a> Deserialize<'a>>(
 
 pub async fn consume_cursor_and_convert<T: for<'a> Deserialize<'a>>(
     mut cursor: Cursor<Document>,
-) -> Result<Vec<T>, Error> {
+) -> StdResult<Vec<T>, MongoDBError> {
     let mut documents: Vec<T> = Vec::new();
 
     while cursor.advance().await? {
@@ -58,4 +58,4 @@ pub async fn consume_cursor_and_convert<T: for<'a> Deserialize<'a>>(
     Ok(documents)
 }
 
-pub type PaginatedResult<T> = Result<(Vec<T>, u64), Response>;
+pub type PaginatedResult<T> = Result<(Vec<T>, u64)>;

@@ -1,14 +1,13 @@
 use crate::{
     db::models::{DBModel, User},
-    helpers::{env::ENV_VARS, types::ResponseBuilder},
+    helpers::env::ENV_VARS,
+    prelude::*,
 };
-use axum::response::{IntoResponse, Response};
+use bson::oid::ObjectId;
 use chrono::Utc;
 use rusty_paseto::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::error::Error;
-use bson::oid::ObjectId;
 
 lazy_static! {
     static ref LOGIN_TOKEN_KEY: PasetoSymmetricKey<V4, Local> =
@@ -21,10 +20,10 @@ pub struct LoginTokenData {
     pub level: i32,
 }
 
-pub fn generate_login_token(user: &User) -> Result<String, Response> {
+pub fn generate_login_token(user: &User) -> Result<String> {
     let user_id = user.id()?.to_string();
 
-    let token_builder = || -> Result<String, Box<dyn Error>> {
+    let token_builder = || -> StdResult<String, Box<dyn std::error::Error>> {
         let in_90_days = (Utc::now() + chrono::Duration::days(90)).to_rfc3339();
 
         let token = PasetoBuilder::<V4, Local>::default()
@@ -38,21 +37,14 @@ pub fn generate_login_token(user: &User) -> Result<String, Response> {
 
     match token_builder() {
         Ok(token) => Ok(token),
-        Err(_) => Err(ResponseBuilder::<u16>::error(
-            // TODO add error code here
-            "",
-            None,
-            Some("Internal Server Error while generating login token"),
-            Some(500),
-        )
-        .into_response()),
+        Err(_) => Err(Error::Static("TODO")),
     }
 }
 
-pub fn decode_login_token(token: &str) -> Result<LoginTokenData, ()> {
+pub fn decode_login_token(token: &str) -> Result<LoginTokenData> {
     let token_data = match PasetoParser::<V4, Local>::default().parse(token, &LOGIN_TOKEN_KEY) {
         Ok(token) => token,
-        Err(_) => return Err(())
+        Err(_) => return Err(Error::Static("TODO")),
     };
 
     let data = serde_json::from_value::<LoginTokenData>(json!({
@@ -62,6 +54,6 @@ pub fn decode_login_token(token: &str) -> Result<LoginTokenData, ()> {
 
     match data {
         Ok(v) => Ok(v),
-        Err(_) => Err(()),
+        Err(_) => Err(Error::Static("TODO")),
     }
 }

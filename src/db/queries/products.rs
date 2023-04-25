@@ -1,8 +1,11 @@
 use super::prelude::*;
-use crate::db::populate::{PopulateOptions, ProductsPopulate};
+use crate::{
+    db::populate::{PopulateOptions, ProductsPopulate},
+    prelude::*,
+};
 use models::Product;
 
-type GetProductResult = Result<Option<Product>, Response>;
+type GetProductResult = Result<Option<Product>>;
 
 async fn get_product(
     db: &DBExtension,
@@ -19,13 +22,11 @@ async fn get_product(
             .products
             .aggregate(pipeline, None)
             .await
-            .map_err(|e| ResponseBuilder::query_error("products", e).into_response())?;
+            .map_err(|e| Error::DBError(("products", e)))?;
 
         let product = convert_one_doc_cursor::<Product>(cursor)
             .await
-            .map_err(|e| {
-                ResponseBuilder::cursor_consumpetion_error("products", e).into_response()
-            })?;
+            .map_err(|e| Error::DBError(("products", e)))?;
 
         return Ok(product);
     };
@@ -34,7 +35,7 @@ async fn get_product(
         .products
         .find_one(filter, option)
         .await
-        .map_err(|e| ResponseBuilder::query_error("products", e).into_response())?;
+        .map_err(|e| Error::DBError(("products", e)))?;
 
     Ok(product)
 }
@@ -114,33 +115,15 @@ pub async fn get_products_for_extarnel(
         ),
     ];
 
-    let cursor = match db.products.aggregate(pipeline, None).await {
-        Ok(v) => v,
-        Err(_) => {
-            return Err(ResponseBuilder::<u16>::error(
-                // TODO add error code here
-                "",
-                None,
-                Some("Internal Server Error while fetching products"),
-                Some(500),
-            )
-            .into_response());
-        }
-    };
+    let cursor = db
+        .products
+        .aggregate(pipeline, None)
+        .await
+        .map_err(|e| Error::DBError(("products", e)))?;
 
-    let products = match consume_cursor(cursor).await {
-        Ok(v) => v,
-        Err(_) => {
-            return Err(ResponseBuilder::<u16>::error(
-                // TODO add error code here
-                "",
-                None,
-                Some("Internal Server Error while fetching products"),
-                Some(500),
-            )
-            .into_response());
-        }
-    };
+    let products = consume_cursor(cursor)
+        .await
+        .map_err(|e| Error::DBError(("products", e)))?;
 
     let mut count = products.len() as i64;
 
@@ -154,16 +137,7 @@ pub async fn get_products_for_extarnel(
         .products
         .count_documents(query, None)
         .await
-        .map_err(|_| {
-            ResponseBuilder::<u16>::error(
-                // TODO add error code here
-                "",
-                None,
-                Some("Internal Server Error while fetching products count"),
-                Some(500),
-            )
-            .into_response()
-        })?;
+        .map_err(|e| Error::DBError(("products", e)))?;
 
     Ok((products, count))
 }

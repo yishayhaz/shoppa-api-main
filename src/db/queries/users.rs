@@ -1,6 +1,8 @@
 use super::prelude::*;
+use crate::prelude::*;
 use models::User;
-type GetUserResult = Result<Option<User>, Response>;
+
+type GetUserResult = Result<Option<User>>;
 
 async fn get_user(
     db: &DBExtension,
@@ -9,7 +11,7 @@ async fn get_user(
 ) -> GetUserResult {
     let user =
         db.users.find_one(filter, option).await.map_err(|e| {
-            ResponseBuilder::query_error(User::get_collection_name(), e).into_response()
+            Error::DBError(("users", e))
         })?;
 
     Ok(user)

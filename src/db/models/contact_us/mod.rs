@@ -1,10 +1,10 @@
 use super::{
-    common::{db_model, DBModel},
-    prelude::*,
+    common::{db_model, DBModel}
 };
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use strum_macros::EnumString;
 mod fields;
+use crate::prelude::{db_models::*, *};
 
 #[derive(Debug, Deserialize, Serialize, Clone, EnumString)]
 pub enum ContactFormStatus {

@@ -1,9 +1,9 @@
 use super::types::UserRegisterPayload;
 use crate::{
+    api::v1::middlewares::*,
     db::{inserts, inserts::InsertDocumentErrors, queries, updates},
     helpers::{cookies::set_access_cookie, security},
     prelude::{handlers::*, *},
-    api::v1::middlewares::*,
 };
 
 pub async fn signup(
@@ -11,12 +11,12 @@ pub async fn signup(
     cookies: Cookies,
     Level1AccessOrNone(token_data): Level1AccessOrNone,
     JsonWithValidation(payload): JsonWithValidation<UserRegisterPayload>,
-) -> HandlerResponse {
+) -> HandlerResult {
     // checking if email alredy in use
     let user_exists = queries::get_user_by_email(&db, &payload.email).await?;
 
     if user_exists.is_some() {
-        return Err(
+        return Ok(
             ResponseBuilder::<u16>::error("", None, Some("User alredy exists"), Some(409))
                 .into_response(),
         );
@@ -54,9 +54,9 @@ pub async fn signup(
         Ok(v) => v,
         Err(e) => match e {
             InsertDocumentErrors::UnknownError => {
-                return Err(ResponseBuilder::<u16>::error("", None, None, None).into_response());
+                return Ok(ResponseBuilder::<u16>::error("", None, None, None).into_response());
             }
-            _ => return Err(e.into_response()),
+            _ => return Ok(e.into_response()),
         },
     };
 

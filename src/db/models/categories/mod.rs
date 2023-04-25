@@ -2,9 +2,9 @@ mod fields;
 
 use super::{
     common::{db_model, embedded_document, DBModel, EmbeddedDocument, RefrenceField},
-    prelude::*,
     Variants,
 };
+use crate::prelude::{db_models::*, *};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Categories {

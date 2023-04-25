@@ -1,14 +1,14 @@
 use super::types;
 use crate::{
     db::{inserts, queries, updates},
-    prelude::{handlers::*},
+    prelude::{handlers::*, *},
     api::v1::middlewares::*,
 };
 
 pub async fn contact_us_request(
     db: DBExtension,
     JsonWithValidation(payload): JsonWithValidation<types::ContactUsPayload>,
-) -> HandlerResponse {
+) -> HandlerResult {
     let _ =
         inserts::new_contact_us_request(&db, payload.email, payload.message, payload.reason).await;
 
@@ -21,7 +21,7 @@ pub async fn get_contact_us(
     sorting: OptionalSorting,
     _: OnlyInDev,
     Query(query): Query<types::GetContactUsQueryParams>,
-) -> HandlerResponse {
+) -> HandlerResult {
     let forms =
         queries::get_contact_us_forms(&db, Some(pagination), sorting.into(), query.status).await?;
 
@@ -33,7 +33,7 @@ pub async fn update_status(
     _: OnlyInDev,
     Path(form_id): Path<ObjectId>,
     Json(payload): Json<types::UpdateContactUsPayload>,
-) -> HandlerResponse {
+) -> HandlerResult {
     let contact_us = updates::update_contact_us_by_id(&db, form_id, payload.status).await?;
 
     Ok(ResponseBuilder::success(contact_us, None, None).into_response())

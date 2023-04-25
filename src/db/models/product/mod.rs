@@ -2,9 +2,9 @@ mod fields;
 
 use super::{
     common::{db_model, embedded_document, DBModel, EmbeddedDocument, RefrenceField},
-    prelude::*,
     Categories, InnerCategories, InnerInnerCategories, Store, Variants,
 };
+use crate::prelude::{db_models::*, *};
 
 // product model
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -141,16 +141,16 @@ impl Product {
         inner_categorie: &InnerCategories,
         inner_inner_categorie: &InnerInnerCategories,
         variants: Vec<ObjectId>,
-    ) -> Result<Self, ()> {
+    ) -> Result<Self> {
         let store_id = match store.id() {
             Ok(id) => id,
-            Err(_) => return Err(()),
+            Err(_) => return Err(Error::Static("TODO")),
         };
 
         let categories = {
             let c_id = match categorie.id() {
                 Ok(id) => id,
-                Err(_) => return Err(()),
+                Err(_) => return Err(Error::Static("TODO")),
             };
 
             vec![
@@ -205,7 +205,7 @@ impl Product {
         };
 
         if !variants.iter().all(|v| allowed_variants.contains(&v)) {
-            return Err(());
+            return Err(Error::Static("TODO"));
         };
 
         Ok(Self {
@@ -236,7 +236,7 @@ impl Product {
         price: f64,
         in_storage: u64,
         new_item_variants: Vec<ItemVariants>,
-    ) -> Result<&ProductItem, ()> {
+    ) -> Result<&ProductItem> {
         let product_variants_length = match &self.variants {
             RefrenceField::NotPopulated(variants) => variants.len(),
             RefrenceField::Populated(variants) => variants.len(),
@@ -244,14 +244,14 @@ impl Product {
 
         if new_item_variants.len() != product_variants_length {
             // not all variants are provided
-            return Err(());
+            return Err(Error::Static("TODO"));
         }
 
         // if there are no variants, we can only have one item
         if product_variants_length == 0 {
             if self.items.len() != 0 {
                 // already has the only variant possible
-                return Err(());
+                return Err(Error::Static("TODO"));
             }
             let item = ProductItem::new(price, in_storage, vec![]);
             self.items.push(item);
@@ -261,14 +261,14 @@ impl Product {
         for item in &self.items {
             if item.variants == new_item_variants {
                 // variant already exists
-                return Err(());
+                return Err(Error::Static("TODO"));
             }
         }
 
         let product_variants = match &self.variants {
             RefrenceField::NotPopulated(_) => {
                 // to create a new item, we need to have the variants populated
-                return Err(());
+                return Err(Error::Static("TODO"));
             }
             RefrenceField::Populated(v) => v,
         };
@@ -289,7 +289,7 @@ impl Product {
             }
             if !found {
                 // variant not found
-                return Err(());
+                return Err(Error::Static("TODO"));
             }
         }
 

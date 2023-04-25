@@ -1,8 +1,8 @@
 use super::{
     common::{db_model, DBModel},
-    prelude::*,
 };
 mod fields;
+use crate::prelude::{db_models::*, *};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Store {

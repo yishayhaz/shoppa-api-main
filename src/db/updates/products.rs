@@ -1,27 +1,23 @@
-use crate::{
-    db::models,
-    helpers::types::{DBExtension, ResponseBuilder},
-};
-use axum::response::IntoResponse;
-use axum::response::Response;
-use bson::{doc, oid::ObjectId, Document, to_bson};
+use crate::{db::models, helpers::types::DBExtension, prelude::*};
+use bson::{doc, oid::ObjectId, to_bson, Document};
 use mongodb::options::FindOneAndUpdateOptions;
 
-type UpdateContactUsResult = Result<Option<models::Product>, Response>;
+type UpdateContactUsResult = Result<Option<models::Product>>;
 
-async fn _update_contact_us_form(
+async fn update_product(
     db: &DBExtension,
     filter: Document,
     update: Document,
     option: Option<FindOneAndUpdateOptions>,
 ) -> UpdateContactUsResult {
-    let products = db.products.find_one_and_update(filter, update, option).await.map_err(|e|{
-        ResponseBuilder::query_error("products", e).into_response()
-    })?;
+    let products = db
+        .products
+        .find_one_and_update(filter, update, option)
+        .await
+        .map_err(|e| Error::DBError(("product", e)))?;
 
     Ok(products)
 }
-
 
 pub async fn add_product_item(
     db: &DBExtension,
@@ -39,5 +35,5 @@ pub async fn add_product_item(
         }
     };
 
-    _update_contact_us_form(db, filters, update, option).await
+    update_product(db, filters, update, option).await
 }

@@ -145,5 +145,3 @@ impl<T: Serialize> IntoResponse for ResponseBuilder<T> {
         (code, Json(self)).into_response()
     }
 }
-
-pub type HandlerResponse = Result<Response, Response>;

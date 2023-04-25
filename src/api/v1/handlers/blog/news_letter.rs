@@ -7,12 +7,12 @@ use crate::{
 pub async fn signup_to_news_letter(
     db: DBExtension,
     JsonWithValidation(payload): JsonWithValidation<types::SignUpToNewsLetterPayload>,
-) -> HandlerResponse {
+) -> HandlerResult {
     let _ = match inserts::new_news_letter_subscriber(&db, payload.email).await {
         Ok(_) => {}
         Err(e) => match e {
             InsertDocumentErrors::AlredyExists => {
-                return Err(ResponseBuilder::<u16>::error(
+                return Ok(ResponseBuilder::<u16>::error(
                     "",
                     None,
                     Some("looks like you alredy subscribed"),
@@ -20,7 +20,7 @@ pub async fn signup_to_news_letter(
                 )
                 .into_response());
             }
-            _ => return Err(e.into_response()),
+            _ => return Ok(e.into_response()),
         },
     };
 

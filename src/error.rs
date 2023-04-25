@@ -8,6 +8,12 @@ pub enum Error {
 	Generic(String),
 	/// For starter, to remove as code matures.
 	Static(&'static str),
+    // The string is for the collection name.
+    DBError((&'static str, mongodb::error::Error)),
+    // The string is for the collection name.
+    NoEntityId(&'static str),
+    HashError(argon2::password_hash::Error),
+    
 
 }
 

@@ -7,7 +7,6 @@ mod sites_visite;
 mod store;
 mod user;
 mod variants;
-mod prelude;
 
 pub use categories::{Categories, InnerCategories, InnerInnerCategories};
 pub use common::{DBModel, EmbeddedDocument};

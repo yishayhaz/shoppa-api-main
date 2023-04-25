@@ -1,16 +1,15 @@
-use std::fmt::format;
-
 use super::prelude::*;
 use crate::db::models;
+use crate::prelude::*;
 
-type GetContactForms = Result<Vec<models::ContactUsForm>, Response>;
+type GetContactForms = Result<Vec<models::ContactUsForm>>;
 
 pub async fn get_contact_us_forms(
   db: &DBExtension, 
   pagination: Option<Pagination>,
   sorting: Option<Sorter>,
   status: Option<models::ContactFormStatus>
-) -> Result<Vec<Document>, Response> {
+) -> Result<Vec<Document>> {
 
     let pagination = pagination.unwrap_or_default();
     let sorting = sorting.unwrap_or_default();
@@ -41,11 +40,11 @@ pub async fn get_contact_us_forms(
         .contact_us_form
         .aggregate(pipeline, None)
         .await
-        .map_err(|e| ResponseBuilder::query_error("contact_us", e).into_response())?;
+        .map_err(|e| Error::DBError(("contact_us", e)))?;
 
     let forms = consume_cursor(cursor)
         .await
-        .map_err(|e| ResponseBuilder::cursor_consumpetion_error("contact_us", e).into_response())?;
+        .map_err(|e| Error::DBError(("contact_us", e)))?;
 
     Ok(forms)
 }

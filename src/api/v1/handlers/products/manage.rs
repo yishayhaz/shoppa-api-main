@@ -2,14 +2,14 @@ use super::types::CreateProductPayload;
 use crate::{
     api::v1::middlewares::OnlyInDev,
     db::{inserts, inserts::InsertDocumentErrors, queries},
-    prelude::handlers::*,
+    prelude::{handlers::*, *},
 };
 
 pub async fn create_new_product(
     db: DBExtension,
     _: OnlyInDev,
     JsonWithValidation(payload): JsonWithValidation<CreateProductPayload>,
-) -> HandlerResponse {
+) -> HandlerResult {
     let categories = queries::get_category_hierarchy_for_subsubcategory(
         &db,
         // we can safely unwrap since the CreateProductPayload validate the length of the categories
@@ -20,7 +20,7 @@ pub async fn create_new_product(
     .await?;
 
     if categories.is_none() {
-        return Err(ResponseBuilder::<u16>::success(None, None, None).into_response());
+        return Ok(ResponseBuilder::<u16>::success(None, None, None).into_response());
     }
 
     let categories = categories.unwrap();
@@ -28,7 +28,7 @@ pub async fn create_new_product(
     let store = queries::get_store_by_id(&db, &payload.store).await?;
 
     if store.is_none() {
-        return Err(ResponseBuilder::<u16>::success(None, None, None).into_response());
+        return Ok(ResponseBuilder::<u16>::success(None, None, None).into_response());
     }
 
     let store = store.unwrap();
@@ -53,9 +53,9 @@ pub async fn create_new_product(
         Ok(v) => Ok(ResponseBuilder::success(Some(v), None, None).into_response()),
         Err(e) => match e {
             InsertDocumentErrors::UnknownError => {
-                return Err(ResponseBuilder::<u16>::error("", None, None, None).into_response());
+                return Ok(ResponseBuilder::<u16>::error("", None, None, None).into_response());
             }
-            _ => return Err(e.into_response()),
+            _ => return Ok(e.into_response()),
         },
     }
 }

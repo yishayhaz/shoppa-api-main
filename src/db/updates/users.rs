@@ -1,33 +1,20 @@
-use crate::{
-    db::models,
-    helpers::types::{DBExtension, ResponseBuilder},
-};
-use axum::response::IntoResponse;
-use axum::response::Response;
+use crate::{db::models, helpers::types::DBExtension, prelude::*};
 use bson::{doc, oid::ObjectId, Document};
 use mongodb::options::FindOneAndUpdateOptions;
 
-type UpdateUserResult = Result<Option<models::User>, Response>;
+type UpdateUserResult = Result<Option<models::User>>;
 
-async fn _update_user(
+async fn update_user(
     db: &DBExtension,
     filter: Document,
     update: Document,
     option: Option<FindOneAndUpdateOptions>,
 ) -> UpdateUserResult {
-    let user = match db.users.find_one_and_update(filter, update, option).await {
-        Ok(user) => user,
-        Err(_) => {
-            return Err(ResponseBuilder::<u16>::error(
-                // TODO add error code here
-                "",
-                None,
-                Some("Internal Server Error while fetching user"),
-                Some(500),
-            )
-            .into_response());
-        }
-    };
+    let user = db
+        .users
+        .find_one_and_update(filter, update, option)
+        .await
+        .map_err(|e| Error::DBError(("users", e)))?;
 
     Ok(user)
 }
@@ -53,7 +40,7 @@ pub async fn update_user_to_level_2(
         }
     };
 
-    _update_user(db, filter, update, None).await
+    update_user(db, filter, update, None).await
 }
 
 pub async fn update_user_password(
@@ -71,5 +58,5 @@ pub async fn update_user_password(
         }
     };
 
-    _update_user(db, filter, update, None).await
+    update_user(db, filter, update, None).await
 }

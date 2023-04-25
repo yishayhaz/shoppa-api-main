@@ -4,17 +4,17 @@ use super::types::{
 use crate::{
     api::v1::middlewares::*,
     db::{inserts, queries},
-    prelude::{handlers::*},
+    prelude::{handlers::*, *},
 };
 
 pub async fn create_new_root_catagorie(
     db: DBExtension,
     _: OnlyInDev,
     Json(payload): Json<CreateRootCatgoriePayload>,
-) -> HandlerResponse {
+) -> HandlerResult {
     if let Some(variants_ids) = &payload.variants {
         if !queries::validate_many_variants_exist(&db, &variants_ids).await? {
-            return Err(ResponseBuilder::<u16>::error(
+            return Ok(ResponseBuilder::<u16>::error(
                 "",
                 None,
                 Some("Some of the provided variants dont exist"),
@@ -34,10 +34,10 @@ pub async fn create_new_inner_catagorie(
     _: OnlyInDev,
     Path(parent_id): Path<ObjectId>,
     Json(payload): Json<CreateInnerCatgoriePayload>,
-) -> HandlerResponse {
+) -> HandlerResult {
     if let Some(variants_ids) = &payload.variants {
         if !queries::validate_many_variants_exist(&db, variants_ids).await? {
-            return Err(ResponseBuilder::<u16>::error(
+            return Ok(ResponseBuilder::<u16>::error(
                 "",
                 None,
                 Some("Some of the provided variants dont exist"),
@@ -57,10 +57,10 @@ pub async fn create_new_inner_inner_catagorie(
     _: OnlyInDev,
     Path((parent_parent_id, parent_id)): Path<(ObjectId, ObjectId)>,
     Json(payload): Json<CreateInnerInnerCatgoriePayload>,
-) -> HandlerResponse {
+) -> HandlerResult {
     if let Some(variants_ids) = &payload.variants {
         if !queries::validate_many_variants_exist(&db, &variants_ids).await? {
-            return Err(ResponseBuilder::<u16>::error(
+            return Ok(ResponseBuilder::<u16>::error(
                 "",
                 None,
                 Some("Some of the provided variants dont exist"),

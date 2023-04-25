@@ -1,26 +1,19 @@
 use super::prelude::*;
 use crate::db::models::Categories;
+use crate::prelude::*;
 
-type GetCategorieResult = Result<Option<models::Categories>, Response>;
+type GetCategorieResult = Result<Option<models::Categories>>;
 
 async fn get_category(
     db: &DBExtension,
     filter: Document,
     option: Option<FindOneOptions>,
 ) -> GetCategorieResult {
-    let categorie = match db.categories.find_one(filter, option).await {
-        Ok(categorie) => categorie,
-        Err(_) => {
-            return Err(ResponseBuilder::<u16>::error(
-                // TODO add error code here
-                "",
-                None,
-                Some("Internal Server Error while fetching categorie"),
-                Some(500),
-            )
-            .into_response());
-        }
-    };
+    let categorie = db
+        .categories
+        .find_one(filter, option)
+        .await
+        .map_err(|e| Error::DBError(("category", e)))?;
 
     Ok(categorie)
 }
@@ -79,7 +72,7 @@ pub async fn get_categories_for_extarnel(
     db: &DBExtension,
     id: Option<ObjectId>,
     child_id: Option<ObjectId>,
-) -> Result<Vec<Document>, Response> {
+) -> Result<Vec<Document>> {
     let mut pipeline = vec![];
 
     if let Some(id) = id {
@@ -101,7 +94,9 @@ pub async fn get_categories_for_extarnel(
                 false,
             ));
 
-            pipeline.push(aggregations::replace_root(Categories::fields().categories().categories));
+            pipeline.push(aggregations::replace_root(
+                Categories::fields().categories().categories,
+            ));
         }
     };
     pipeline.push(aggregations::project(
@@ -112,26 +107,14 @@ pub async fn get_categories_for_extarnel(
             Categories::fields().updated_at: aggregations::convert_to_string_safe("$updated_at")
         }),
     ));
-    
-    let cursor = db.categories.aggregate(pipeline, None).await.map_err(|_| {
-        ResponseBuilder::<u16>::error(
-            // TODO add error code here
-            "",
-            None,
-            Some("Internal Server Error while fetching categories"),
-            Some(500),
-        )
-        .into_response()
-    })?;
 
-    Ok(consume_cursor(cursor).await.map_err(|_| {
-        ResponseBuilder::<u16>::error(
-            // TODO add error code here
-            "",
-            None,
-            Some("Internal Server Error while consuming categories cursor"),
-            Some(500),
-        )
-        .into_response()
-    })?)
+    let cursor = db
+        .categories
+        .aggregate(pipeline, None)
+        .await
+        .map_err(|e| Error::DBError(("category", e)))?;
+
+    Ok(consume_cursor(cursor)
+        .await
+        .map_err(|e| Error::DBError(("category", e)))?)
 }

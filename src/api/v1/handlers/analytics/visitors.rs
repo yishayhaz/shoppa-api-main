@@ -9,7 +9,7 @@ pub async fn add_new_visitor_to_counter(
     db: DBExtension,
     cookies: Cookies,
     ClientIpAddress(ip): ClientIpAddress,
-) -> HandlerResponse {
+) -> HandlerResult {
     let cookie_key = Cookeys::VisitIndicator.get();
 
     match cookies.get(cookie_key) {

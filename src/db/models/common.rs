@@ -1,4 +1,4 @@
-use super::prelude::*;
+use crate::prelude::{db_models::*, *};
 
 // TODO add Des to the required trait for DBModel
 pub trait DBModel: Serialize + Clone {
@@ -6,7 +6,7 @@ pub trait DBModel: Serialize + Clone {
     fn get_indexes() -> Vec<IndexModel>;
     fn created_at(&self) -> DateTime<Utc>;
     fn updated_at(&self) -> DateTime<Utc>;
-    fn id(&self) -> Result<&ObjectId, Response>;
+    fn id(&self) -> Result<&ObjectId>;
     fn update_id(&mut self, id: ObjectId) -> ();
 }
 
@@ -14,7 +14,7 @@ pub trait EmbeddedDocument: Serialize + Clone {
     fn created_at(&self) -> DateTime<Utc>;
     fn updated_at(&self) -> DateTime<Utc>;
     fn id(&self) -> &ObjectId;
-    fn into_bson(&self) -> Result<Bson, Response>;
+    fn into_bson(&self) -> Result<Bson>;
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -39,17 +39,11 @@ macro_rules! db_model {
             self.updated_at
         }
 
-        fn id(&self) -> Result<&ObjectId, Response> {
+        fn id(&self) -> Result<&ObjectId> {
             match &self.id {
                 Some(id) => Ok(id),
                 // TODO add error code here
-                None => Err(ResponseBuilder::<u16>::error(
-                    "",
-                    None,
-                    Some(concat!(stringify!($Self), " id is None")),
-                    Some(500),
-                )
-                .into_response()),
+                None => Err(Error::Static("TODO")),
             }
         }
 
@@ -78,16 +72,10 @@ macro_rules! embedded_document {
             &self.id
         }
 
-        fn into_bson(&self) -> Result<Bson, Response> {
+        fn into_bson(&self) -> Result<Bson> {
             match bson::to_bson(&self) {
                 Ok(b) => Ok(b),
-                Err(_) => Err(ResponseBuilder::<u16>::error(
-                    "",
-                    None,
-                    Some(concat!(stringify!($Self), " Faild at into bson!")),
-                    Some(500),
-                )
-                .into_response()),
+                Err(_) => Err(Error::Static("TODO")),
             }
         }
     };

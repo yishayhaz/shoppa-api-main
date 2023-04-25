@@ -2,10 +2,10 @@ mod fields;
 
 use super::{
     common::{db_model, DBModel, RefrenceField},
-    prelude::*,
     Product,
 };
 use serde_json::{json, Value};
+use crate::prelude::{db_models::*, *};
 
 #[serde_with::serde_as]
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -126,7 +126,7 @@ impl User {
         }
     }
 
-    pub fn to_get_me(&self) -> Result<Value, Response> {
+    pub fn to_get_me(&self) -> Result<Value> {
         Ok(json!({
             "_id": self.id()?.to_string(),
             "name": self.name,
