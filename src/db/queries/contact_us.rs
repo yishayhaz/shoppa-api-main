@@ -2,7 +2,7 @@ use super::prelude::*;
 use crate::db::models;
 use crate::prelude::*;
 
-type GetContactForms = Result<Vec<models::ContactUsForm>>;
+// type GetContactForms = Result<Vec<models::ContactUsForm>>;
 
 pub async fn get_contact_us_forms(
   db: &DBExtension, 

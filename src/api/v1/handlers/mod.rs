@@ -6,4 +6,3 @@ pub mod products;
 pub mod users;
 pub mod variants;
 pub mod stores;
-pub mod search;

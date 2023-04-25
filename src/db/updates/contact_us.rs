@@ -1,8 +1,4 @@
-use crate::{
-    db::models,
-    helpers::types::{DBExtension, ResponseBuilder},
-    prelude::*,
-};
+use crate::{db::models, helpers::types::DBExtension, prelude::*};
 use bson::{doc, oid::ObjectId, Bson, Document};
 use mongodb::options::FindOneAndUpdateOptions;
 

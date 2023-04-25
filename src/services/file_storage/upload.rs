@@ -11,7 +11,7 @@ async fn upload_file(
 ) {
     let acl = if public { "public-read" } else { "private" };
 
-    let p_o = storage_client
+    let _p_o = storage_client
         .put_object()
         .bucket(ENV_VARS.BUCKET_NAME.clone())
         .set_key(Some(key))
