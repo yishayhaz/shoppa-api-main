@@ -3,8 +3,8 @@ pub struct ProductFields {
     pub created_at: &'static str,
     pub updated_at: &'static str,
     pub brand: &'static str,
-    pub name: &'static str,
-    pub description: &'static str,
+    pub name: &'static str, // Todo: min: 10, max: 80
+    pub description: &'static str, // Todo: min: 20, max: 150
     pub keywords: &'static str,
     pub store: &'static str,
     pub categories: &'static str,
