@@ -185,12 +185,11 @@ impl Default for Sorter {
     }
 }
 
-
-impl SortDireaction {
-    pub fn into_bson(&self) -> bson::Bson {
-        match self {
-            Self::Ascending => Bson::Int32(1),
-            Self::Descending => Bson::Int32(-1)
+impl From<&SortDireaction> for bson::Bson {
+    fn from(sort_dir: &SortDireaction) -> Self {
+        match sort_dir {
+            SortDireaction::Ascending => Bson::Int32(1),
+            SortDireaction::Descending => Bson::Int32(-1)
         }
     }
 }
@@ -198,7 +197,7 @@ impl SortDireaction {
 impl Into<Document> for Sorter {
     fn into(self) -> Document {
         doc!{
-            self.field: self.direction.into_bson()
+            self.field: &self.direction
         }
     }
 }

@@ -9,19 +9,19 @@ use serde::Serialize;
 use serde_json::{json, Value};
 
 #[derive(Serialize, Debug)]
-pub struct ResponseBuilder<T: Serialize> {
+pub struct ResponseBuilder<'a, T: Serialize> {
     #[serde(skip)]
     code: u16,
-    message: Option<&'static str>,
+    message: Option<&'a str>,
     success: bool,
     // #[serde(serialize_with = "serialize_any_object_id_as_string")]
     content: Option<T>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    error_code: Option<&'static str>,
+    error_code: Option<&'a str>,
 }
 
-impl<T: Serialize> ResponseBuilder<T> {
-    pub fn success(content: Option<T>, message: Option<&'static str>, code: Option<u16>) -> Self {
+impl<'a, T: Serialize> ResponseBuilder<'a, T> {
+    pub fn success(content: Option<T>, message: Option<&'a str>, code: Option<u16>) -> Self {
         let code = match code {
             Some(code) => {
                 if code < 200 || code > 299 {
@@ -43,9 +43,9 @@ impl<T: Serialize> ResponseBuilder<T> {
     }
 
     pub fn error(
-        error_code: &'static str,
+        error_code: &'a str,
         content: Option<T>,
-        message: Option<&'static str>,
+        message: Option<&'a str>,
         code: Option<u16>,
     ) -> Self {
         let code = match code {
@@ -68,7 +68,7 @@ impl<T: Serialize> ResponseBuilder<T> {
         }
     }
 
-    pub fn validation_error(content: Option<T>, message: Option<&'static str>) -> Self {
+    pub fn validation_error(content: Option<T>, message: Option<&'a str>) -> Self {
         let message = match message {
             Some(message) => message,
             None => "Validation error",
@@ -84,7 +84,7 @@ impl<T: Serialize> ResponseBuilder<T> {
     }
 }
 
-impl ResponseBuilder<Value> {
+impl ResponseBuilder<'_, Value> {
     pub fn paginated_response<T: Serialize>(content: &(Vec<T>, u64)) -> Self {
         let content = json!(
             {
@@ -103,8 +103,8 @@ impl ResponseBuilder<Value> {
     }
 }
 
-impl ResponseBuilder<String> {
-    pub fn cursor_consumpetion_error(collection: &'static str, error: Error) -> Self {
+impl <'a> ResponseBuilder<'a, String> {
+    pub fn cursor_consumpetion_error(collection: &'a str, error: Error) -> Self {
         let kind = *error.kind;
 
         Self {
@@ -116,7 +116,7 @@ impl ResponseBuilder<String> {
         }
     }
 
-    pub fn query_error(collection: &'static str, error: Error) -> Self {
+    pub fn query_error(collection: &'a str, error: Error) -> Self {
         let kind = *error.kind;
         Self {
             code: 500,
@@ -127,7 +127,7 @@ impl ResponseBuilder<String> {
         }
     }
 
-    pub fn not_found_error(collection: &'static str, id: &ObjectId) -> Self {
+    pub fn not_found_error(collection: &'a str, id: &ObjectId) -> Self {
         Self {
             code: 404,
             message: Some(collection),
@@ -138,7 +138,7 @@ impl ResponseBuilder<String> {
     }
 }
 
-impl<T: Serialize> IntoResponse for ResponseBuilder<T> {
+impl<'a, T: Serialize> IntoResponse for ResponseBuilder<'a, T> {
     fn into_response(self) -> Response {
         let code = StatusCode::from_u16(self.code).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
 
