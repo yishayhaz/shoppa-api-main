@@ -59,3 +59,12 @@ pub async fn create_new_product(
         },
     }
 }
+
+pub async fn view_product(
+    db: DBExtension,
+    _: OnlyInDev,
+    Path(product_id): Path<ObjectId>,
+) -> HandlerResult {
+    // TODO: implement this
+    Ok(ResponseBuilder::success(Some(""), None, None).into_response())
+}
