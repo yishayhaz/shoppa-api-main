@@ -1,7 +1,7 @@
 use super::types::CreateProductPayload;
 use crate::{
     api::v1::middlewares::OnlyInDev,
-    db::{inserts, inserts::InsertDocumentErrors, queries},
+    db::{inserts, inserts::InsertDocumentErrors, queries, updates},
     prelude::{handlers::*, *},
 };
 
@@ -60,11 +60,17 @@ pub async fn create_new_product(
     }
 }
 
-pub async fn view_product(
+pub async fn add_view_to_product(
     db: DBExtension,
     _: OnlyInDev,
     Path(product_id): Path<ObjectId>,
 ) -> HandlerResult {
-    // TODO: implement this
-    Ok(ResponseBuilder::success(Some(""), None, None).into_response())
+    let product = updates::add_view_to_product(&db, &product_id, None).await?;
+
+    if let Some(product) = product {
+        // the views is being returend before the update, so we need to add 1 to the views
+        return Ok(ResponseBuilder::success(Some(product.analytics.views + 1), None, None).into_response());
+    }
+
+    Ok(ResponseBuilder::not_found_error("product", &product_id).into_response())
 }

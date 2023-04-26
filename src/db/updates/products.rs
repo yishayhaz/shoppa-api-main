@@ -2,14 +2,14 @@ use crate::{db::models, helpers::types::DBExtension, prelude::*};
 use bson::{doc, oid::ObjectId, to_bson, Document};
 use mongodb::options::FindOneAndUpdateOptions;
 
-type UpdateContactUsResult = Result<Option<models::Product>>;
+type UpdateProductResult = Result<Option<models::Product>>;
 
 async fn update_product(
     db: &DBExtension,
     filter: Document,
     update: Document,
     option: Option<FindOneAndUpdateOptions>,
-) -> UpdateContactUsResult {
+) -> UpdateProductResult {
     let products = db
         .products
         .find_one_and_update(filter, update, option)
@@ -24,7 +24,7 @@ pub async fn add_product_item(
     product_id: &ObjectId,
     item: &models::ProductItem,
     option: Option<FindOneAndUpdateOptions>,
-) -> UpdateContactUsResult {
+) -> UpdateProductResult {
     let filters = doc! {
         "_id": product_id
     };
@@ -32,6 +32,25 @@ pub async fn add_product_item(
     let update = doc! {
         "$push": {
             "items": to_bson(item).unwrap()
+        }
+    };
+
+    update_product(db, filters, update, option).await
+}
+
+
+pub async fn add_view_to_product(
+    db: &DBExtension,
+    product_id: &ObjectId,
+    option: Option<FindOneAndUpdateOptions>,
+) -> UpdateProductResult {
+    let filters = doc! {
+        "_id": product_id
+    };
+
+    let update = doc! {
+        "$inc": {
+            "analytics.views": 1
         }
     };
 

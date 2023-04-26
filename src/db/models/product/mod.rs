@@ -29,6 +29,7 @@ pub struct Product {
     pub variants: RefrenceField<Vec<Variants>, Vec<ObjectId>>,
     pub images: Vec<ProductImage>,
     pub items: Vec<ProductItem>, // pub product_info: Vec<String>
+    pub analytics: ProductAnalytics,
 }
 
 //product item, eg variants represantion of the product
@@ -75,6 +76,11 @@ pub struct StoreField {
 pub struct ProductImage {
     #[serde(rename = "_id")]
     pub id: ObjectId,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ProductAnalytics {
+    pub views: u64,
 }
 
 impl DBModel for Product {
@@ -224,6 +230,7 @@ impl Product {
             variants: RefrenceField::NotPopulated(variants),
             images: vec![],
             items: vec![],
+            analytics: ProductAnalytics { views: 0 },
         })
     }
 
