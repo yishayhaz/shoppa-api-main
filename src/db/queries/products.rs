@@ -98,6 +98,7 @@ pub async fn get_products_for_extarnel(
                 Product::fields().name,
                 Product::fields().keywords,
                 "store.name",
+                "analytics"
             ],
             Some(doc! {
                 Product::fields().categories: {
