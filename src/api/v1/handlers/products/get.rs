@@ -4,9 +4,11 @@ use crate::{
     prelude::{handlers::*, *},
     api::v1::middlewares::*,
 };
+use axum::extract::MatchedPath;
 
 pub async fn get_products(
     db: DBExtension,
+    path: MatchedPath,
     pagination: Pagination,
     sorting: OptionalSorting<ProductSortBy>,
     Query(query): Query<types::GetProductQueryParams>,
@@ -17,6 +19,8 @@ pub async fn get_products(
         sorting.into(),
         query.free_text,
         query.store_id,
+        query.category,
+        path.as_str().ends_with("/infinite")
     )
     .await?;
 

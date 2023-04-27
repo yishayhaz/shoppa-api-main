@@ -83,11 +83,11 @@ pub struct ProductAnalytics {
     pub views: u64,
 }
 
-#[derive(EnumString, Deserialize)]
+#[derive(EnumString, Deserialize, Debug, Clone, PartialEq)]
 pub enum ProductSortBy {
     #[strum(serialize = "popularity", serialize = "pop", serialize = "p", serialize = "Popularity")]
     Popularity,
-    #[strum(serialize = "price", serialize = "pr", serialize = "p", serialize = "Price")]
+    #[strum(serialize = "date", serialize = "da", serialize = "d", serialize = "Date")]
     Date,
     #[strum(serialize = "relevance", serialize = "rel", serialize = "r", serialize = "Relevance")]
     Relevance

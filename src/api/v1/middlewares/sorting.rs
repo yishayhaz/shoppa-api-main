@@ -14,17 +14,17 @@ pub type OptionalSorting<T> = MyOption<Sorter<T>>;
 impl<S, T> FromRequestParts<S> for OptionalSorting<T>
 where
     S: Sync + Send,
-    T: FromStr + Default + DeserializeOwned
+    T: DeserializeOwned + FromStr + Sync + Send
 {
     type Rejection = Response;
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let res = Query::<Sorter<T>>::from_request_parts(parts, state).await;
 
-        if res.is_err() {
-            return Ok(MyOption::None);
+        if let Ok(res) = res {
+            return Ok(MyOption::Some(res.0));
         }
 
-        Ok(MyOption::Some(res.unwrap().0))
+        Ok(MyOption::None)
     }
 }

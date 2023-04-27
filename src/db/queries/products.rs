@@ -3,7 +3,7 @@ use crate::{
     db::populate::{PopulateOptions, ProductsPopulate},
     prelude::*,
 };
-use models::Product;
+use models::{Product, ProductSortBy};
 
 type GetProductResult = Result<Option<Product>>;
 
@@ -57,21 +57,12 @@ pub async fn get_products_for_extarnel(
     db: &DBExtension,
     pagination: Option<Pagination>,
     sorting: Option<Sorter<models::ProductSortBy>>,
-    free_text: Option<String>,
+    mut free_text: Option<String>,
     store_id: Option<ObjectId>,
+    category: Option<ObjectId>,
+    infinite: bool,
 ) -> PaginatedResult<Document> {
     let pagination = pagination.unwrap_or_default();
-
-    let mut query = match &free_text {
-        Some(text) => doc! {
-            "$text": {"$search": text}
-        },
-        None => doc! {},
-    };
-
-    if store_id.is_some() {
-        query.insert("store._id", store_id.unwrap());
-    }
 
     let sort_stage = match sorting {
         None => {
@@ -80,10 +71,94 @@ pub async fn get_products_for_extarnel(
                     "score": { "$meta": "textScore" }
                 })
             } else {
-                aggregations::sort(Sorter::default())
+                // this is the default sorting
+                aggregations::sort(doc! {
+                    Product::fields().created_at: -1
+                })
             }
         }
-        Some(v) => aggregations::sort(v.into()),
+        Some(sort) => {
+            let direcation = &sort.direction;
+            match sort.sort_by {
+                ProductSortBy::Date => {
+                    // free text and infinte can only be used in Relevance sorting
+                    if infinite {
+                        free_text = None;
+                    }
+                    aggregations::sort(doc! {
+                        Product::fields().created_at: direcation
+                    })
+                }
+                ProductSortBy::Popularity => {
+                    // free text and infinte can only be used in Relevance sorting
+                    if infinite {
+                        free_text = None;
+                    }
+                    aggregations::sort(doc! {
+                        "analytics.views": direcation
+                    })
+                }
+                ProductSortBy::Relevance => {
+                    if free_text.is_some() {
+                        aggregations::sort(doc! {
+                            "score": { "$meta": "textScore" }
+                        })
+                    } else {
+                        // this is the default sorting
+                        aggregations::sort(doc! {
+                            Product::fields().created_at: -1
+                        })
+                    }
+                }
+            }
+        }
+    };
+
+    let query = match infinite {
+        true => {
+            let mut q = match free_text {
+                Some(text) => doc! {
+                   "$or": [
+                        {"$text": {"$search": text}}, {"_id": {"$exists": true}}
+                   ]
+                },
+                None => doc! {},
+            };
+            if let Some(store_id) = store_id {
+                q.insert("store._id", store_id);
+            }
+
+            if let Some(category) = category {
+                q.insert(
+                    "categories._id",
+                    doc! {
+                    "$in": [category]},
+                );
+            }
+            q
+        }
+        false => {
+            let mut q = match free_text {
+                Some(text) => doc! {
+                    "$text": {"$search": text}
+                },
+                None => doc! {},
+            };
+
+            if let Some(store_id) = store_id {
+                q.insert("store._id", store_id);
+            }
+
+            if let Some(category) = category {
+                q.insert(
+                    "categories._id",
+                    doc! {
+                    "$in": [category]},
+                );
+            }
+
+            q
+        }
     };
 
     let pipeline = [
@@ -98,7 +173,7 @@ pub async fn get_products_for_extarnel(
                 Product::fields().name,
                 Product::fields().keywords,
                 "store.name",
-                "analytics"
+                "analytics",
             ],
             Some(doc! {
                 Product::fields().categories: {
