@@ -154,7 +154,7 @@ where
         }
     };
 
-    let login_cookie = match cookies.get(Cookeys::AccessToken.get()) {
+    let login_cookie = match cookies.get(Cookeys::AccessToken.to_string().as_str()) {
         Some(c) => c,
         None => {
             return Err((AuthErrors::MissingToken, Some(cookies)));

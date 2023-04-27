@@ -8,7 +8,7 @@ pub fn create_cookie<'a>(
     exp: f64,
     http_only: bool,
 ) -> Cookie<'a> {
-    let mut cookie = Cookie::new(key.get(), value);
+    let mut cookie = Cookie::new(key.to_string(), value);
 
     cookie.set_http_only(http_only);
 
@@ -26,7 +26,7 @@ pub fn create_cookie<'a>(
 pub fn delete_cookie<'a>(
     key: &'a Cookeys,
 ) -> Cookie<'a> {
-    let mut cookie = Cookie::new(key.get(), "");
+    let mut cookie = Cookie::new(key.to_string(), "");
 
     cookie.set_max_age(Duration::seconds_f64(0.0));
 

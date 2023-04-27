@@ -24,3 +24,4 @@ pub struct GetProductQueryParams {
     pub store_id: Option<ObjectId>,
     pub category: Option<ObjectId>,
 }
+
