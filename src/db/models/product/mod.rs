@@ -83,6 +83,16 @@ pub struct ProductAnalytics {
     pub views: u64,
 }
 
+#[derive(EnumString, Deserialize)]
+pub enum ProductSortBy {
+    #[strum(serialize = "popularity", serialize = "pop", serialize = "p", serialize = "Popularity")]
+    Popularity,
+    #[strum(serialize = "price", serialize = "pr", serialize = "p", serialize = "Price")]
+    Date,
+    #[strum(serialize = "relevance", serialize = "rel", serialize = "r", serialize = "Relevance")]
+    Relevance
+}
+
 impl DBModel for Product {
     fn get_collection_name() -> &'static str {
         "products"

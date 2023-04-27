@@ -1,20 +1,22 @@
 pub mod aggregations;
 pub mod inserts;
 pub mod models;
+pub mod populate;
 pub mod queries;
 pub mod updates;
-pub mod populate;
+
+use std::str::FromStr;
 
 use crate::helpers::env::ENV_VARS;
+use bson::{doc, Bson};
 use models::DBModel;
 use mongodb::{
     error::Error,
     options::{ClientOptions, ResolverConfig},
     Client, Collection,
 };
-use bson::{Bson, doc, Document};
-use serde_repr::{Deserialize_repr, Serialize_repr};
 use serde::Deserialize;
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
 pub async fn connect() -> Result<Client, Error> {
     let options = ClientOptions::parse_with_resolver_config(
@@ -152,10 +154,10 @@ pub struct Pagination {
 }
 
 #[derive(Deserialize)]
-pub struct Sorter {
-    #[serde(rename="sort_field")]
-    pub field: String,
-    #[serde(rename="sort_direction")]
+pub struct Sorter<T: FromStr> {
+    #[serde(rename = "sort_by")]
+    pub sort_by: T,
+    #[serde(rename = "sort_direction")]
     pub direction: SortDireaction,
 }
 
@@ -176,10 +178,10 @@ impl Default for Pagination {
     }
 }
 
-impl Default for Sorter {
+impl Default for Sorter<String> {
     fn default() -> Self {
         Sorter {
-            field: String::from("created_at"),
+            sort_by: String::from("created_at"),
             direction: SortDireaction::Descending,
         }
     }
@@ -189,15 +191,7 @@ impl From<&SortDireaction> for bson::Bson {
     fn from(sort_dir: &SortDireaction) -> Self {
         match sort_dir {
             SortDireaction::Ascending => Bson::Int32(1),
-            SortDireaction::Descending => Bson::Int32(-1)
-        }
-    }
-}
-
-impl Into<Document> for Sorter {
-    fn into(self) -> Document {
-        doc!{
-            self.field: &self.direction
+            SortDireaction::Descending => Bson::Int32(-1),
         }
     }
 }

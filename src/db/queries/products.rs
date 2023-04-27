@@ -56,7 +56,7 @@ pub async fn get_product_by_id(
 pub async fn get_products_for_extarnel(
     db: &DBExtension,
     pagination: Option<Pagination>,
-    sorting: Option<Sorter>,
+    sorting: Option<Sorter<models::ProductSortBy>>,
     free_text: Option<String>,
     store_id: Option<ObjectId>,
 ) -> PaginatedResult<Document> {
@@ -80,7 +80,7 @@ pub async fn get_products_for_extarnel(
                     "score": { "$meta": "textScore" }
                 })
             } else {
-                aggregations::sort(Sorter::default().into())
+                aggregations::sort(Sorter::default())
             }
         }
         Some(v) => aggregations::sort(v.into()),

@@ -7,7 +7,7 @@ use crate::prelude::*;
 pub async fn get_contact_us_forms(
   db: &DBExtension, 
   pagination: Option<Pagination>,
-  sorting: Option<Sorter>,
+  sorting: Option<Sorter<String>>,
   status: Option<models::ContactFormStatus>
 ) -> Result<Vec<Document>> {
 
@@ -23,7 +23,9 @@ pub async fn get_contact_us_forms(
     };
 
     let pipeline = [
-      aggregations::sort(sorting.into()),
+      aggregations::sort(doc! {
+        sorting.sort_by: &sorting.direction
+      }),
       aggregations::skip(pagination.offset),
       aggregations::limit(pagination.amount),
       aggregations::match_query(&query),

@@ -18,7 +18,7 @@ pub async fn contact_us_request(
 pub async fn get_contact_us(
     db: DBExtension,
     pagination: Pagination,
-    sorting: OptionalSorting,
+    sorting: OptionalSorting<String>,
     _: OnlyInDev,
     Query(query): Query<types::GetContactUsQueryParams>,
 ) -> HandlerResult {

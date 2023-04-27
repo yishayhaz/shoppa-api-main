@@ -4,4 +4,5 @@ pub use bson::{doc, oid::ObjectId, Bson};
 pub use chrono::{DateTime, Utc};
 pub use mongodb::{IndexModel, options::IndexOptions};
 pub use serde::{Deserialize, Serialize};
+pub use strum_macros::{EnumString};
 pub use crate::helpers::types::ResponseBuilder;
