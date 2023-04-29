@@ -270,12 +270,16 @@ pub async fn get_products_names_for_autocomplete(
 ) -> Result<Vec<Document>> {
     let query = match store_id {
         Some(store_id) => doc! {
-            "$text": {"$search": free_text}, "store._id": store_id
+            "$text": {"$search": &free_text}, "store._id": store_id
         },
         None => doc! {
-            "$text": {"$search": free_text}
+            "$text": {"$search": &free_text}
         },
     };
+
+    let free_text_regex  = free_text.split_ascii_whitespace().map(|text| {
+        String::from(text)
+    }).collect::<Vec<String>>().join("|");
 
     let cursor = db
         .products
@@ -291,17 +295,20 @@ pub async fn get_products_names_for_autocomplete(
                     ProjectIdOptions::Keep,
                     [],
                     Some(doc! {
-                            "item_id": "$items._id",
-                            "name": {
-                               "$cond": [
-                                    { "$eq": ["$items.name", ""] },
-                                    "$name",
-                                    "$items.name"
-                                ]
-                            },
-                            "views": "$analytics.views"
-                        }),
+                        "item_id": "$items._id",
+                        "name": {
+                            "$cond": [
+                                {
+                                    "$eq": [{"$type": "$items.name"}, "string"]
+                                },
+                                "$items.name",
+                                "$name",
+                            ]
+                        },
+                        "views": "$analytics.views"
+                    }),
                 ),
+                aggregations::match_query(&doc! {"name": {"$regex": free_text_regex, "$options": "i"}}),
             ],
             None,
         )
