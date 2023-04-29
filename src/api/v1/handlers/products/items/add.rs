@@ -23,7 +23,12 @@ pub async fn add_product_item(
 
     let mut product = product.unwrap();
 
-    let new_item = product.add_item(payload.price, payload.in_storage, payload.variants)?;
+    let new_item = product.add_item(
+        payload.price,
+        payload.in_storage,
+        payload.variants,
+        payload.name,
+    )?;
 
     updates::add_product_item(&db, &product_id, &new_item, None).await?;
 

@@ -4,7 +4,6 @@ use bson::{doc, Document};
 pub enum ProjectIdOptions {
     Keep,
     Remove,
-    ToString,
 }
 
 pub fn lookup(
@@ -63,9 +62,6 @@ pub fn project(
         ProjectIdOptions::Keep => {}
         ProjectIdOptions::Remove => {
             project_stage.insert("_id", 0);
-        }
-        ProjectIdOptions::ToString => {
-            project_stage.insert("_id", doc! {"$toString": "$_id"});
         }
     }
 

@@ -10,6 +10,7 @@ pub fn router() -> Router {
         .nest("/:product_id/items", items::router())
         .route("/:product_id/view", routing::put(manage::add_view_to_product))
         .route("/:product_id", routing::get(get::get_product))
+        .route("/autocomplete", routing::get(get::products_names_for_autocomplete))
         .route("/infinite", routing::get(get::get_products))
         .route("/search", routing::get(get::get_products))
         .route("/", routing::post(manage::create_new_product))

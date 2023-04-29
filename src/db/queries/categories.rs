@@ -100,7 +100,7 @@ pub async fn get_categories_for_extarnel(
         }
     };
     pipeline.push(aggregations::project(
-        ProjectIdOptions::ToString,
+        ProjectIdOptions::Keep,
         [Categories::fields().name].to_vec(),
         Some(doc! {
             Categories::fields().created_at: aggregations::convert_to_string_safe("$created_at"),

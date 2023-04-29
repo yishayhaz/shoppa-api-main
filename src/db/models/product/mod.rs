@@ -48,6 +48,7 @@ pub struct ProductItem {
     // so it will be uniqe with the product id to make sure there is no double items with
     // the same variants, the length of the variants field here need to be the same as the one in the parent product.
     pub variants: Vec<ItemVariants>,
+    pub name: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -253,6 +254,7 @@ impl Product {
         price: f64,
         in_storage: u64,
         new_item_variants: Vec<ItemVariants>,
+        name: Option<String>,
     ) -> Result<&ProductItem> {
         let product_variants_length = match &self.variants {
             RefrenceField::NotPopulated(variants) => variants.len(),
@@ -270,7 +272,7 @@ impl Product {
                 // already has the only variant possible
                 return Err(Error::Static("TODO"));
             }
-            let item = ProductItem::new(price, in_storage, vec![]);
+            let item = ProductItem::new(price, in_storage, vec![], name);
             self.items.push(item);
             return Ok(self.items.last().unwrap());
         }
@@ -310,7 +312,7 @@ impl Product {
             }
         }
 
-        let item = ProductItem::new(price, in_storage, new_item_variants);
+        let item = ProductItem::new(price, in_storage, new_item_variants, name);
 
         self.items.push(item);
 
@@ -335,7 +337,7 @@ impl EmbeddedDocument for ProductItem {
 }
 
 impl ProductItem {
-    fn new(price: f64, in_storage: u64, variants: Vec<ItemVariants>) -> Self {
+    fn new(price: f64, in_storage: u64, variants: Vec<ItemVariants>, name: Option<String>) -> Self {
         Self {
             id: ObjectId::new(),
             created_at: chrono::Utc::now(),
@@ -343,6 +345,7 @@ impl ProductItem {
             price,
             in_storage,
             variants,
+            name
         }
     }
 }

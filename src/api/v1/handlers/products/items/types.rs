@@ -10,4 +10,5 @@ pub struct AddProductItemPayload {
     pub price: f64,
     pub in_storage: u64,
     pub variants: Vec<ItemVariants>,
+    pub name: Option<String>,
 }

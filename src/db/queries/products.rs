@@ -167,7 +167,7 @@ pub async fn get_products_for_extarnel(
         aggregations::skip(pagination.offset),
         aggregations::limit(pagination.amount),
         aggregations::project(
-            ProjectIdOptions::ToString,
+            ProjectIdOptions::Keep,
             vec![
                 Product::fields().brand,
                 Product::fields().name,
@@ -229,12 +229,12 @@ pub async fn get_one_product_for_extarnel(
     let pipeline = [
         aggregations::match_query(&filter),
         aggregations::lookup_product_variants(Some(vec![aggregations::project(
-            ProjectIdOptions::ToString,
-            ["type", "name", "values"],
+            ProjectIdOptions::Keep,
+            ["type", "name", "values.name", "values._id"],
             None,
         )])),
         aggregations::project(
-            ProjectIdOptions::ToString,
+            ProjectIdOptions::Keep,
             [
                 "created_at",
                 "brand",
@@ -245,9 +245,10 @@ pub async fn get_one_product_for_extarnel(
                 "categories.name",
                 "categories._id",
                 "analytics.views",
-                "items"
+                "items",
+                "variants",
             ],
-            None
+            None,
         ),
     ];
 
@@ -258,6 +259,56 @@ pub async fn get_one_product_for_extarnel(
         .map_err(|e| Error::DBError(("products", e)))?;
 
     Ok(convert_one_doc_cursor(cursor)
+        .await
+        .map_err(|e| Error::DBError(("products", e)))?)
+}
+
+pub async fn get_products_names_for_autocomplete(
+    db: &DBExtension,
+    free_text: String,
+    store_id: Option<ObjectId>,
+) -> Result<Vec<Document>> {
+    let query = match store_id {
+        Some(store_id) => doc! {
+            "$text": {"$search": free_text}, "store._id": store_id
+        },
+        None => doc! {
+            "$text": {"$search": free_text}
+        },
+    };
+
+    let cursor = db
+        .products
+        .aggregate(
+            [
+                aggregations::match_query(&query),
+                aggregations::sort(doc! {
+                    "score": { "$meta": "textScore" }
+                }),
+                aggregations::limit(10),
+                aggregations::unwind("items", false),
+                aggregations::project(
+                    ProjectIdOptions::Keep,
+                    [],
+                    Some(doc! {
+                            "item_id": "$items._id",
+                            "name": {
+                               "$cond": [
+                                    { "$eq": ["$items.name", ""] },
+                                    "$name",
+                                    "$items.name"
+                                ]
+                            },
+                            "views": "$analytics.views"
+                        }),
+                ),
+            ],
+            None,
+        )
+        .await
+        .map_err(|e| Error::DBError(("products", e)))?;
+
+    Ok(consume_cursor(cursor)
         .await
         .map_err(|e| Error::DBError(("products", e)))?)
 }

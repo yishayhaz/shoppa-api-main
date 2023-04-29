@@ -40,7 +40,7 @@ pub async fn validate_many_variants_exist(
 
 pub async fn get_variants_for_extarnel(db: &DBExtension) -> PaginatedResult<Document> {
     let pipeline = [aggregations::project(
-        ProjectIdOptions::ToString,
+        ProjectIdOptions::Keep,
         vec![Variants::fields().name],
         None,
     )];
