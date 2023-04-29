@@ -10,7 +10,7 @@ pub async fn create_new_variant(
     _: OnlyInDev,
     JsonWithValidation(payload): JsonWithValidation<CreateVariantPayload>,
 ) -> HandlerResult {
-    let _ = inserts::new_variant(&db, payload.name, payload.values).await;
+    let _ = inserts::new_variant(&db, payload.name, payload.values, payload.type_).await;
 
     Ok(().into_response())
 }

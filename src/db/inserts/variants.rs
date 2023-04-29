@@ -1,5 +1,5 @@
 use super::prelude::*;
-use crate::db::models::{VariantValue, Variants};
+use crate::db::models::{VariantValue, Variants, VariantType};
 
 type InsertVariantResult = Result<Variants, InsertDocumentErrors>;
 
@@ -7,13 +7,14 @@ pub async fn new_variant(
     db: &DBExtension,
     name: String,
     value_names: Vec<String>,
+    type_: VariantType,
 ) -> InsertVariantResult {
     let values = value_names
         .into_iter()
         .map(|name| VariantValue::new(name))
         .collect();
 
-    let mut variant = Variants::new(name, values);
+    let mut variant = Variants::new(name, values, type_);
 
     let res = match db.variants.insert_one(&variant, None).await {
         Ok(v) => v,

@@ -16,5 +16,5 @@ pub use product::{Product, ProductItem, ItemVariants, ProductSortBy};
 pub use sites_visite::SiteVisit;
 pub use store::Store;
 pub use user::{Cart, Genders, User};
-pub use variants::{Variants, VariantValue};
+pub use variants::{Variants, VariantValue, VariantType};
 pub use common::RefrenceField;

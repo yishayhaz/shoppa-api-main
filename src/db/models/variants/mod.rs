@@ -4,7 +4,7 @@ use super::{
     common::{db_model, embedded_document, DBModel, EmbeddedDocument},
 };
 use crate::prelude::{db_models::*, *};
-
+use strum_macros::{EnumString, Display};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Variants {
@@ -17,6 +17,8 @@ pub struct Variants {
 
     pub name: String,
     pub values: Vec<VariantValue>,
+    #[serde(rename = "type")]
+    pub type_: VariantType,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -30,6 +32,21 @@ pub struct VariantValue {
 
     pub name: String,
 }
+
+
+#[derive(Serialize, Deserialize, EnumString, Display, Debug, Clone)]
+pub enum VariantType {
+    Color,
+    Size,
+    Material,
+    Weight,
+    Length,
+    Width,
+    Height,
+    Volume,
+    Other,
+}
+
 
 impl DBModel for Variants {
     fn get_collection_name() -> &'static str {
@@ -69,13 +86,14 @@ impl Into<Bson> for VariantValue {
 }
 
 impl Variants {
-    pub fn new(name: String, values: Vec<VariantValue>) -> Self {
+    pub fn new(name: String, values: Vec<VariantValue>, type_: VariantType) -> Self {
         Self {
             id: None,
             created_at: Utc::now(),
             updated_at: Utc::now(),
             name,
             values,
+            type_
         }
     }
 
