@@ -230,23 +230,25 @@ pub async fn get_one_product_for_extarnel(
         aggregations::match_query(&filter),
         aggregations::lookup_product_variants(Some(vec![aggregations::project(
             ProjectIdOptions::ToString,
-            ["type", "name", "values.name"],
-            Some(doc! {
-                "values._id": aggregations::convert_to_string_safe("$values._id"),
-            }),
+            ["type", "name", "values"],
+            None,
         )])),
-        aggregations::project(ProjectIdOptions::ToString, [
-            "created_at",
-            "brand",
-            "name",
-            "description",
-            "keywords",
-            "store.name",
-            "categories.name",
-        ], Some(doc! {
-            "store._id": aggregations::convert_to_string_safe("$store._id"),
-            "categories._id": aggregations::convert_to_string_safe("$categories._id"),
-        }))
+        aggregations::project(
+            ProjectIdOptions::ToString,
+            [
+                "created_at",
+                "brand",
+                "name",
+                "description",
+                "keywords",
+                "store",
+                "categories.name",
+                "categories._id",
+                "analytics.views",
+                "items"
+            ],
+            None
+        ),
     ];
 
     let cursor = db
