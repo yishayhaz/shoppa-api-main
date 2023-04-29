@@ -1,5 +1,5 @@
 use crate::prelude::types::*;
-use crate::db::models::ProductSortBy;
+
 #[derive(Deserialize, Serialize, Debug, Clone, Validate)]
 pub struct CreateProductPayload {
     #[validate(length(min = 8, max = 64))]
@@ -23,6 +23,6 @@ pub struct GetProductQueryParams {
     #[serde(default, deserialize_with = "empty_string_as_none")]
     pub store_id: Option<ObjectId>,
     #[serde(default, deserialize_with = "empty_string_as_none")]
-    pub category: Option<ObjectId>,
+    pub category_id: Option<ObjectId>,
 }
 

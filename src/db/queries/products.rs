@@ -59,7 +59,7 @@ pub async fn get_products_for_extarnel(
     sorting: Option<Sorter<models::ProductSortBy>>,
     mut free_text: Option<String>,
     store_id: Option<ObjectId>,
-    category: Option<ObjectId>,
+    category_id: Option<ObjectId>,
     infinite: bool,
 ) -> PaginatedResult<Document> {
     let pagination = pagination.unwrap_or_default();
@@ -128,11 +128,11 @@ pub async fn get_products_for_extarnel(
                 q.insert("store._id", store_id);
             }
 
-            if let Some(category) = category {
+            if let Some(category_id) = category_id {
                 q.insert(
                     "categories._id",
                     doc! {
-                    "$in": [category]},
+                    "$in": [category_id]},
                 );
             }
             q
@@ -149,11 +149,11 @@ pub async fn get_products_for_extarnel(
                 q.insert("store._id", store_id);
             }
 
-            if let Some(category) = category {
+            if let Some(category_id) = category_id {
                 q.insert(
                     "categories._id",
                     doc! {
-                    "$in": [category]},
+                    "$in": [category_id]},
                 );
             }
 
@@ -216,4 +216,46 @@ pub async fn get_products_for_extarnel(
         .map_err(|e| Error::DBError(("products", e)))?;
 
     Ok((products, count))
+}
+
+pub async fn get_one_product_for_extarnel(
+    db: &DBExtension,
+    id: &ObjectId,
+) -> Result<Option<Document>> {
+    let filter = doc! {
+        "_id": id,
+    };
+
+    let pipeline = [
+        aggregations::match_query(&filter),
+        aggregations::lookup_product_variants(Some(vec![aggregations::project(
+            ProjectIdOptions::ToString,
+            ["type", "name", "values.name"],
+            Some(doc! {
+                "values._id": aggregations::convert_to_string_safe("$values._id"),
+            }),
+        )])),
+        aggregations::project(ProjectIdOptions::ToString, [
+            "created_at",
+            "brand",
+            "name",
+            "description",
+            "keywords",
+            "store.name",
+            "categories.name",
+        ], Some(doc! {
+            "store._id": aggregations::convert_to_string_safe("$store._id"),
+            "categories._id": aggregations::convert_to_string_safe("$categories._id"),
+        }))
+    ];
+
+    let cursor = db
+        .products
+        .aggregate(pipeline, None)
+        .await
+        .map_err(|e| Error::DBError(("products", e)))?;
+
+    Ok(convert_one_doc_cursor(cursor)
+        .await
+        .map_err(|e| Error::DBError(("products", e)))?)
 }

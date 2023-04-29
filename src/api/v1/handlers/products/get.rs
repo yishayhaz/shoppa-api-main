@@ -19,10 +19,25 @@ pub async fn get_products(
         sorting.into(),
         query.free_text,
         query.store_id,
-        query.category,
+        query.category_id,
         path.as_str().ends_with("/infinite")
     )
     .await?;
 
     Ok(ResponseBuilder::paginated_response(&products).into_response())
+}
+
+
+pub async fn get_product(
+    db: DBExtension,
+    Path(product_id): Path<ObjectId>,
+) -> HandlerResult {
+    
+    let product = queries::get_one_product_for_extarnel(&db, &product_id).await?;
+
+    if product.is_none(){
+        return Ok(ResponseBuilder::not_found_error("products", &product_id).into_response());
+    }
+
+    Ok(ResponseBuilder::success(product, None, None).into_response())
 }

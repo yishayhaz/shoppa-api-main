@@ -50,7 +50,7 @@ pub fn unset(fields: Vec<&'static str>) -> Document {
 
 pub fn project(
     id_option: ProjectIdOptions,
-    keep: Vec<&'static str>,
+    keep: impl IntoIterator<Item = &'static str>,
     extra: Option<Document>,
 ) -> Document {
     let mut project_stage = Document::new();

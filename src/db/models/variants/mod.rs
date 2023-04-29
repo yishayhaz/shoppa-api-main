@@ -35,6 +35,7 @@ pub struct VariantValue {
 
 
 #[derive(Serialize, Deserialize, EnumString, Display, Debug, Clone)]
+#[serde(rename_all = "lowercase")]
 pub enum VariantType {
     Color,
     Size,

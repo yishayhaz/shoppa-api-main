@@ -103,7 +103,7 @@ impl ResponseBuilder<'_, Value> {
     }
 }
 
-impl <'a> ResponseBuilder<'a, String> {
+impl<'a> ResponseBuilder<'a, String> {
     pub fn cursor_consumpetion_error(collection: &'a str, error: Error) -> Self {
         let kind = *error.kind;
 
