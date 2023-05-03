@@ -320,6 +320,7 @@ pub async fn get_products_names_for_autocomplete(
         .map_err(|e| Error::DBError(("products", e)))?)
 }
 
+// todo: omer-review
 pub async fn get_products_count(db: &DBExtension, store_id: Option<ObjectId>, category_id: Option<ObjectId>) -> Result<u64> {
     let mut query = doc! {};
 
