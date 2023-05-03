@@ -26,3 +26,10 @@ pub struct GetProductQueryParams {
     pub category_id: Option<ObjectId>,
 }
 
+#[derive(Deserialize, Debug, Clone, Validate)]
+pub struct GetProductsCountQueryParams {
+    #[serde(default, deserialize_with = "empty_string_as_none")]
+    pub store_id: Option<ObjectId>,
+    #[serde(default, deserialize_with = "empty_string_as_none")]
+    pub category_id: Option<ObjectId>,
+}
