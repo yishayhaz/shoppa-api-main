@@ -7,6 +7,7 @@ use axum::{routing, Router};
 
 pub fn router() -> Router {
     Router::new()
+        .route("/count", routing::get(get::products_count))
         .nest("/:product_id/items", items::router())
         .route("/:product_id/view", routing::put(manage::add_view_to_product))
         .route("/:product_id", routing::get(get::get_product))

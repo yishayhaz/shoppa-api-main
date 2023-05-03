@@ -37,3 +37,12 @@ pub async fn get_store_by_id(
 
     Ok(ResponseBuilder::success(Some(store), None, None).into_response())
 }
+
+pub async fn get_stores_count(
+    db: DBExtension,
+    _: OnlyInDev,
+) -> HandlerResult {
+    let count = queries::get_stores_count(&db).await?;
+
+    Ok(ResponseBuilder::success(Some(count), None, None).into_response())
+}

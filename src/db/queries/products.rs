@@ -319,3 +319,28 @@ pub async fn get_products_names_for_autocomplete(
         .await
         .map_err(|e| Error::DBError(("products", e)))?)
 }
+
+// todo: omer-review
+pub async fn get_products_count(db: &DBExtension, store_id: Option<ObjectId>, category_id: Option<ObjectId>) -> Result<u64> {
+    let mut query = doc! {};
+
+    if let Some(store_id) = store_id {
+        query.insert("store._id", store_id);
+    }
+
+    if let Some(category_id) = category_id {
+        query.insert(
+            "categories._id",
+            doc! {
+            "$in": [category_id]},
+        );
+    }
+
+    let count = db
+        .products
+        .count_documents(query, None)
+        .await
+        .map_err(|e| Error::DBError(("products", e)))?;
+
+    Ok(count)
+}

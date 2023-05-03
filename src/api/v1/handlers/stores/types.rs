@@ -1,6 +1,5 @@
 use crate::prelude::types::*;
 
-
 #[derive(Debug, Validate, Deserialize, Serialize)]
 pub struct CreateStorePayload {
     #[validate(email)]

@@ -50,3 +50,12 @@ pub async fn products_names_for_autocomplete(
 
     Ok(ResponseBuilder::success(Some(products), None, None).into_response())
 }
+
+pub async fn products_count(
+    db: DBExtension,
+    Query(query): Query<types::GetProductsCountQueryParams>,
+) -> HandlerResult {
+    let count = queries::get_products_count(&db, query.store_id, query.category_id).await?;
+
+    Ok(ResponseBuilder::success(Some(count), None, None).into_response())
+}
