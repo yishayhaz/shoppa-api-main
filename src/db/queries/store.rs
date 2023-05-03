@@ -40,3 +40,13 @@ pub async fn get_store_by_id(db: &DBExtension, id: &ObjectId) -> GetStoreResult 
 
     get_store(db, filter, None).await
 }
+
+pub async fn get_stores_count(db: &DBExtension) -> Result<u64> {
+    let count = db
+        .stores
+        .count_documents(None, None)
+        .await
+        .map_err(|e| Error::DBError(("stores", e)))?;
+
+    Ok(count)
+}
