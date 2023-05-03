@@ -41,6 +41,7 @@ pub async fn get_store_by_id(db: &DBExtension, id: &ObjectId) -> GetStoreResult 
     get_store(db, filter, None).await
 }
 
+// todo: omer-review
 pub async fn get_stores_count(db: &DBExtension) -> Result<u64> {
     let count = db
         .stores
