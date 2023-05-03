@@ -100,33 +100,6 @@ impl DBModel for Product {
     }
 
     fn get_indexes() -> Vec<IndexModel> {
-        // we can add language key for the product to imrpove the text index,
-        // or to set the default to hebrew
-
-        let text_index_options = IndexOptions::builder()
-            .weights(doc! {
-                "name": 200,
-                "keywords": 100,
-                "description": 100,
-                "brand": 50,
-                "categories.name": 50,
-                "store.name": 20
-            })
-            .name(String::from("search_text_index"))
-            .default_language(String::from("none"))
-            .build();
-
-        let text_index = IndexModel::builder()
-            .keys(doc! {
-                "name": "text",
-                "description": "text",
-                "categories.name": "text",
-                "brand": "text",
-                "keywords": "text",
-                "store.name": "text"
-            })
-            .options(text_index_options)
-            .build();
 
         let unique_index_options = IndexOptions::builder()
             .unique(true)
@@ -141,7 +114,8 @@ impl DBModel for Product {
             .options(unique_index_options)
             .build();
 
-        vec![text_index, uniqe_index]
+        vec![uniqe_index]
+
     }
 
     db_model!(Product);
