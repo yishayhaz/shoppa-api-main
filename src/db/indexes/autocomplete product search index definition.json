@@ -1,0 +1,37 @@
+{
+  "mappings": {
+    "dynamic": false,
+    "fields": {
+      "items": {
+        "fields": {
+          "name": [
+            {
+              "tokenization": "rightEdgeGram",
+              "type": "autocomplete"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "stringFacet"
+            }
+          ]
+        },
+        "type": "document"
+      },
+      "name": [
+        {
+          "maxGrams": 16,
+          "tokenization": "rightEdgeGram",
+          "type": "autocomplete"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "stringFacet"
+        }
+      ]
+    }
+  }
+}

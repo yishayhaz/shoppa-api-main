@@ -1,0 +1,55 @@
+{
+  "mappings": {
+    "dynamic": false,
+    "fields": {
+      "brand": {
+        "type": "string"
+      },
+      "categories": {
+        "fields": {
+          "_id": {
+            "type": "objectId"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "type": "document"
+      },
+      "description": {
+        "ignoreAbove": 100,
+        "type": "string"
+      },
+      "items": {
+        "fields": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "type": "document"
+      },
+      "keywords": {
+        "type": "string"
+      },
+      "name": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "stringFacet"
+        }
+      ],
+      "store": {
+        "fields": {
+          "_id": {
+            "type": "objectId"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "type": "document"
+      }
+    }
+  }
+}

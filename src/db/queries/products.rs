@@ -64,106 +64,106 @@ pub async fn get_products_for_extarnel(
 ) -> PaginatedResult<Document> {
     let pagination = pagination.unwrap_or_default();
 
-    let sort_stage = match sorting {
-        None => {
-            if free_text.is_some() {
-                aggregations::sort(doc! {
-                    "score": { "$meta": "textScore" }
-                })
-            } else {
-                // this is the default sorting
-                aggregations::sort(doc! {
-                    Product::fields().created_at: -1
-                })
-            }
-        }
-        Some(sort) => {
-            let direcation = &sort.direction;
-            match sort.sort_by {
-                ProductSortBy::Date => {
-                    // free text and infinte can only be used in Relevance sorting
-                    if infinite {
-                        free_text = None;
-                    }
-                    aggregations::sort(doc! {
-                        Product::fields().created_at: direcation
-                    })
-                }
-                ProductSortBy::Popularity => {
-                    // free text and infinte can only be used in Relevance sorting
-                    if infinite {
-                        free_text = None;
-                    }
-                    aggregations::sort(doc! {
-                        "analytics.views": direcation
-                    })
-                }
-                ProductSortBy::Relevance => {
-                    if free_text.is_some() {
-                        aggregations::sort(doc! {
-                            "score": { "$meta": "textScore" }
-                        })
-                    } else {
-                        // this is the default sorting
-                        aggregations::sort(doc! {
-                            Product::fields().created_at: -1
-                        })
-                    }
-                }
-            }
-        }
-    };
+    // let sort_stage = match sorting {
+    //     None => {
+    //         if free_text.is_some() {
+    //             aggregations::sort(doc! {
+    //                 "score": { "$meta": "textScore" }
+    //             })
+    //         } else {
+    //             // this is the default sorting
+    //             aggregations::sort(doc! {
+    //                 Product::fields().created_at: -1
+    //             })
+    //         }
+    //     }
+    //     Some(sort) => {
+    //         let direcation = &sort.direction;
+    //         match sort.sort_by {
+    //             ProductSortBy::Date => {
+    //                 // free text and infinte can only be used in Relevance sorting
+    //                 if infinite {
+    //                     free_text = None;
+    //                 }
+    //                 aggregations::sort(doc! {
+    //                     Product::fields().created_at: direcation
+    //                 })
+    //             }
+    //             ProductSortBy::Popularity => {
+    //                 // free text and infinte can only be used in Relevance sorting
+    //                 if infinite {
+    //                     free_text = None;
+    //                 }
+    //                 aggregations::sort(doc! {
+    //                     "analytics.views": direcation
+    //                 })
+    //             }
+    //             ProductSortBy::Relevance => {
+    //                 if free_text.is_some() {
+    //                     aggregations::sort(doc! {
+    //                         "score": { "$meta": "textScore" }
+    //                     })
+    //                 } else {
+    //                     // this is the default sorting
+    //                     aggregations::sort(doc! {
+    //                         Product::fields().created_at: -1
+    //                     })
+    //                 }
+    //             }
+    //         }
+    //     }
+    // };
 
-    let query = match infinite {
-        true => {
-            let mut q = match free_text {
-                Some(text) => doc! {
-                   "$or": [
-                        {"$text": {"$search": text}}, {"_id": {"$exists": true}}
-                   ]
-                },
-                None => doc! {},
-            };
-            if let Some(store_id) = store_id {
-                q.insert("store._id", store_id);
-            }
+    // let query = match infinite {
+    //     true => {
+    //         let mut q = match free_text {
+    //             Some(text) => doc! {
+    //                "$or": [
+    //                     {"$text": {"$search": text}}, {"_id": {"$exists": true}}
+    //                ]
+    //             },
+    //             None => doc! {},
+    //         };
+    //         if let Some(store_id) = store_id {
+    //             q.insert("store._id", store_id);
+    //         }
 
-            if let Some(category_id) = category_id {
-                q.insert(
-                    "categories._id",
-                    doc! {
-                    "$in": [category_id]},
-                );
-            }
-            q
-        }
-        false => {
-            let mut q = match free_text {
-                Some(text) => doc! {
-                    "$text": {"$search": text}
-                },
-                None => doc! {},
-            };
+    //         if let Some(category_id) = category_id {
+    //             q.insert(
+    //                 "categories._id",
+    //                 doc! {
+    //                 "$in": [category_id]},
+    //             );
+    //         }
+    //         q
+    //     }
+    //     false => {
+    //         let mut q = match free_text {
+    //             Some(text) => doc! {
+    //                 "$text": {"$search": text}
+    //             },
+    //             None => doc! {},
+    //         };
 
-            if let Some(store_id) = store_id {
-                q.insert("store._id", store_id);
-            }
+    //         if let Some(store_id) = store_id {
+    //             q.insert("store._id", store_id);
+    //         }
 
-            if let Some(category_id) = category_id {
-                q.insert(
-                    "categories._id",
-                    doc! {
-                    "$in": [category_id]},
-                );
-            }
+    //         if let Some(category_id) = category_id {
+    //             q.insert(
+    //                 "categories._id",
+    //                 doc! {
+    //                 "$in": [category_id]},
+    //             );
+    //         }
 
-            q
-        }
-    };
+    //         q
+    //     }
+    // };
 
-    let pipeline = [
-        aggregations::match_query(&query),
-        sort_stage,
+    let mut pipeline = aggregations::search_products(&free_text, &category_id, &store_id);
+
+    pipeline.extend([
         aggregations::skip(pagination.offset),
         aggregations::limit(pagination.amount),
         aggregations::project(
@@ -189,7 +189,7 @@ pub async fn get_products_for_extarnel(
                 Product::fields().created_at: aggregations::convert_to_string_safe("$created_at")
             }),
         ),
-    ];
+    ]);
 
     let cursor = db
         .products
@@ -209,13 +209,13 @@ pub async fn get_products_for_extarnel(
         return Ok((products, count as u64));
     }
 
-    let count = db
-        .products
-        .count_documents(query, None)
-        .await
-        .map_err(|e| Error::DBError(("products", e)))?;
+    // let count = db
+    //     .products
+    //     .count_documents(query, None)
+    //     .await
+    //     .map_err(|e| Error::DBError(("products", e)))?;
 
-    Ok((products, count))
+    Ok((products, 1))
 }
 
 pub async fn get_one_product_for_extarnel(
