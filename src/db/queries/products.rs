@@ -174,7 +174,8 @@ pub async fn get_products_for_extarnel(
         .await
         .map_err(|e| Error::DBError(("products", e)))?;
 
-    let products = consume_cursor(cursor)
+    let products = cursor
+        .consume()
         .await
         .map_err(|e| Error::DBError(("products", e)))?;
 
@@ -186,7 +187,7 @@ pub async fn get_products_for_extarnel(
         return Ok((products, count as u64));
     }
 
-    let count = db
+    let cursor = db
         .products
         .aggregate(
             [
@@ -198,14 +199,7 @@ pub async fn get_products_for_extarnel(
         .await
         .map_err(|e| Error::DBError(("products", e)))?;
 
-    let count = consume_cursor::<Document>(count).await.map_err(|e| Error::DBError(("products", e)))?;
-    
-    let count = count
-        .first()
-        .ok_or(Error::Static(""))?
-        .get_i32("count").unwrap_or(0);
-
-    Ok((products, count as u64))
+    Ok((products, cursor.extract_count().await?))
 }
 
 pub async fn get_one_product_for_extarnel(
