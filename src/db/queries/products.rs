@@ -268,47 +268,39 @@ pub async fn get_products_names_for_autocomplete(
     free_text: String,
     store_id: Option<ObjectId>,
 ) -> Result<Vec<Document>> {
-    let query = match store_id {
-        Some(store_id) => doc! {
-            "$text": {"$search": &free_text}, "store._id": store_id
-        },
-        None => doc! {
-            "$text": {"$search": &free_text}
-        },
+    let filters = match store_id {
+        Some(store_id) => vec![doc! {
+        "equals": {
+            "value": store_id,
+            "path": "store._id"
+        }}],
+        None => vec![],
     };
 
-    let free_text_regex  = free_text.split_ascii_whitespace().map(|text| {
-        String::from(text)
-    }).collect::<Vec<String>>().join("|");
-
+    // TODO in the future we need to use the embeddeddocuments search to return the must
+    // relevant product item and not the first one
     let cursor = db
         .products
         .aggregate(
             [
-                aggregations::match_query(&query),
+                aggregations::autocomplete_products_search(&free_text, filters),
+                aggregations::add_fields(doc! {
+                    "score": {
+                        "$meta": "searchScore"
+                    }
+                }),
                 aggregations::sort(doc! {
-                    "score": { "$meta": "textScore" }
+                    "score": -1
                 }),
                 aggregations::limit(10),
-                aggregations::unwind("items", false),
                 aggregations::project(
                     ProjectIdOptions::Keep,
-                    [],
+                    ["name"],
                     Some(doc! {
-                        "item_id": "$items._id",
-                        "name": {
-                            "$cond": [
-                                {
-                                    "$eq": [{"$type": "$items.name"}, "string"]
-                                },
-                                "$items.name",
-                                "$name",
-                            ]
-                        },
+                        "item_id": {"$first": "$items._id"},
                         "views": "$analytics.views"
                     }),
                 ),
-                aggregations::match_query(&doc! {"name": {"$regex": free_text_regex, "$options": "i"}}),
             ],
             None,
         )
@@ -321,7 +313,11 @@ pub async fn get_products_names_for_autocomplete(
 }
 
 // todo: omer-review
-pub async fn get_products_count(db: &DBExtension, store_id: Option<ObjectId>, category_id: Option<ObjectId>) -> Result<u64> {
+pub async fn get_products_count(
+    db: &DBExtension,
+    store_id: Option<ObjectId>,
+    category_id: Option<ObjectId>,
+) -> Result<u64> {
     let mut query = doc! {};
 
     if let Some(store_id) = store_id {

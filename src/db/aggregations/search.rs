@@ -147,7 +147,7 @@ pub fn search_products(
     ]
 }
 
-pub fn autocomplete_products_search(query: &String) -> Document {
+pub fn autocomplete_products_search(query: &String, filters: Vec<Document>) -> Document {
     aggregations::search(doc! {
             "index": "autocomplete",
             "compound": {
@@ -171,6 +171,7 @@ pub fn autocomplete_products_search(query: &String) -> Document {
                     }
                 }
             ],
+            "filter": filters,
             "minimumShouldMatch": 1
         }
     })
