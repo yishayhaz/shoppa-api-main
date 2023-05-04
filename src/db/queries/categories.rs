@@ -114,7 +114,8 @@ pub async fn get_categories_for_extarnel(
         .await
         .map_err(|e| Error::DBError(("category", e)))?;
 
-    Ok(consume_cursor(cursor)
+    Ok(cursor
+        .consume()
         .await
         .map_err(|e| Error::DBError(("category", e)))?)
 }

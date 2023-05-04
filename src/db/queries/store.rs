@@ -12,7 +12,8 @@ pub async fn get_stores(db: &DBExtension) -> GetStoresResult {
         .await
         .map_err(|e| Error::DBError(("stores", e)))?;
 
-    let stores = consume_cursor(cursor)
+    let stores = cursor
+        .consume()
         .await
         .map_err(|e| Error::DBError(("stores", e)))?;
 

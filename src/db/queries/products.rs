@@ -24,7 +24,8 @@ async fn get_product(
             .await
             .map_err(|e| Error::DBError(("products", e)))?;
 
-        let product = convert_one_doc_cursor::<Product>(cursor)
+        let product = cursor
+            .convert_one_doc::<Product>()
             .await
             .map_err(|e| Error::DBError(("products", e)))?;
 
@@ -242,7 +243,8 @@ pub async fn get_one_product_for_extarnel(
         .await
         .map_err(|e| Error::DBError(("products", e)))?;
 
-    Ok(convert_one_doc_cursor(cursor)
+    Ok(cursor
+        .convert_one_doc()
         .await
         .map_err(|e| Error::DBError(("products", e)))?)
 }
@@ -291,7 +293,8 @@ pub async fn get_products_names_for_autocomplete(
         .await
         .map_err(|e| Error::DBError(("products", e)))?;
 
-    Ok(consume_cursor(cursor)
+    Ok(cursor
+        .consume()
         .await
         .map_err(|e| Error::DBError(("products", e)))?)
 }

@@ -51,7 +51,8 @@ pub async fn get_variants_for_extarnel(db: &DBExtension) -> PaginatedResult<Docu
         .await
         .map_err(|e| Error::DBError(("variants", e)))?;
 
-    let variants = consume_cursor(cursor)
+    let variants = cursor
+        .consume()
         .await
         .map_err(|e| Error::DBError(("variants", e)))?;
 

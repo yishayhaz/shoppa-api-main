@@ -20,45 +20,6 @@ use mongodb::{error::Error as MongoDBError, Cursor};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 
-pub async fn consume_cursor<T: for<'a> Deserialize<'a>>(
-    mut cursor: Cursor<T>,
-) -> StdResult<Vec<T>, MongoDBError> {
-    let mut documents: Vec<T> = Vec::new();
-
-    while cursor.advance().await? {
-        documents.push(cursor.deserialize_current()?);
-    }
-
-    Ok(documents)
-}
-
-pub async fn convert_one_doc_cursor<T: for<'a> Deserialize<'a>>(
-    mut cursor: Cursor<Document>,
-) -> StdResult<Option<T>, MongoDBError> {
-    let doc = cursor.next().await.transpose()?;
-
-    if let Some(doc) = doc {
-        let doc = bson::from_bson::<T>(Bson::Document(doc))?;
-        return Ok(Some(doc));
-    }
-
-    Ok(None)
-}
-
-pub async fn consume_cursor_and_convert<T: for<'a> Deserialize<'a>>(
-    mut cursor: Cursor<Document>,
-) -> StdResult<Vec<T>, MongoDBError> {
-    let mut documents: Vec<T> = Vec::new();
-
-    while cursor.advance().await? {
-        documents.push(bson::from_bson::<T>(Bson::Document(
-            cursor.deserialize_current()?,
-        ))?);
-    }
-
-    Ok(documents)
-}
-
 pub type PaginatedResult<T> = Result<(Vec<T>, u64)>;
 
 #[async_trait]
@@ -67,13 +28,13 @@ pub trait CursorConsumer<T> {
 }
 
 #[async_trait]
-pub trait CursorConverter<T> {
-    async fn convert_one_doc(self) -> StdResult<Option<T>, MongoDBError>;
-    async fn consume_and_convert(self) -> StdResult<Vec<T>, MongoDBError>;
-}
-
-#[async_trait]
-pub trait CursorExtractors {
+pub trait CursorConverter {
+    async fn convert_one_doc<T: for<'a> Deserialize<'a>>(
+        self,
+    ) -> StdResult<Option<T>, MongoDBError>;
+    async fn consume_and_convert<T: for<'a> Deserialize<'a> + Send + Sync>(
+        self,
+    ) -> StdResult<Vec<T>, MongoDBError>;
     async fn extract_count(self) -> Result<u64>;
 }
 
@@ -94,11 +55,10 @@ where
 }
 
 #[async_trait]
-impl<T> CursorConverter<T> for Cursor<Document>
-where
-    T: for<'a> Deserialize<'a> + Sync + Send,
-{
-    async fn convert_one_doc(mut self) -> StdResult<Option<T>, MongoDBError> {
+impl CursorConverter for Cursor<Document> {
+    async fn convert_one_doc<T: for<'a> Deserialize<'a>>(
+        mut self,
+    ) -> StdResult<Option<T>, MongoDBError> {
         let doc = self.next().await.transpose()?;
 
         if let Some(doc) = doc {
@@ -108,7 +68,9 @@ where
 
         Ok(None)
     }
-    async fn consume_and_convert(mut self) -> StdResult<Vec<T>, MongoDBError> {
+    async fn consume_and_convert<T: for<'a> Deserialize<'a> + Send + Sync>(
+        mut self,
+    ) -> StdResult<Vec<T>, MongoDBError> {
         let mut documents: Vec<T> = Vec::new();
 
         while self.advance().await? {
@@ -119,10 +81,6 @@ where
 
         Ok(documents)
     }
-}
-
-#[async_trait]
-impl CursorExtractors for Cursor<Document> {
     // TODO improve error handling
     async fn extract_count(mut self) -> Result<u64> {
         let doc = self
