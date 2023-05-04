@@ -64,106 +64,93 @@ pub async fn get_products_for_extarnel(
 ) -> PaginatedResult<Document> {
     let pagination = pagination.unwrap_or_default();
 
-    // let sort_stage = match sorting {
-    //     None => {
-    //         if free_text.is_some() {
-    //             aggregations::sort(doc! {
-    //                 "score": { "$meta": "textScore" }
-    //             })
-    //         } else {
-    //             // this is the default sorting
-    //             aggregations::sort(doc! {
-    //                 Product::fields().created_at: -1
-    //             })
-    //         }
-    //     }
-    //     Some(sort) => {
-    //         let direcation = &sort.direction;
-    //         match sort.sort_by {
-    //             ProductSortBy::Date => {
-    //                 // free text and infinte can only be used in Relevance sorting
-    //                 if infinite {
-    //                     free_text = None;
-    //                 }
-    //                 aggregations::sort(doc! {
-    //                     Product::fields().created_at: direcation
-    //                 })
-    //             }
-    //             ProductSortBy::Popularity => {
-    //                 // free text and infinte can only be used in Relevance sorting
-    //                 if infinite {
-    //                     free_text = None;
-    //                 }
-    //                 aggregations::sort(doc! {
-    //                     "analytics.views": direcation
-    //                 })
-    //             }
-    //             ProductSortBy::Relevance => {
-    //                 if free_text.is_some() {
-    //                     aggregations::sort(doc! {
-    //                         "score": { "$meta": "textScore" }
-    //                     })
-    //                 } else {
-    //                     // this is the default sorting
-    //                     aggregations::sort(doc! {
-    //                         Product::fields().created_at: -1
-    //                     })
-    //                 }
-    //             }
-    //         }
-    //     }
-    // };
+    let sort_stage = match sorting {
+        None => {
+            if free_text.is_some() {
+                aggregations::sort(doc! {
+                    "score": -1
+                })
+            } else {
+                // this is the default sorting
+                aggregations::sort(doc! {
+                    Product::fields().created_at: -1
+                })
+            }
+        }
+        Some(sort) => {
+            let direcation = &sort.direction;
+            match sort.sort_by {
+                ProductSortBy::Date => {
+                    // free text and infinte can only be used in Relevance sorting
+                    if infinite {
+                        free_text = None;
+                    }
+                    aggregations::sort(doc! {
+                        Product::fields().created_at: direcation
+                    })
+                }
+                ProductSortBy::Popularity => {
+                    // free text and infinte can only be used in Relevance sorting
+                    if infinite {
+                        free_text = None;
+                    }
+                    aggregations::sort(doc! {
+                        "analytics.views": direcation
+                    })
+                }
+                ProductSortBy::Relevance => {
+                    if free_text.is_some() {
+                        aggregations::sort(doc! {
+                            "score": direcation
+                        })
+                    } else {
+                        // this is the default sorting
+                        aggregations::sort(doc! {
+                            Product::fields().created_at: -1
+                        })
+                    }
+                }
+            }
+        }
+    };
 
-    // let query = match infinite {
-    //     true => {
-    //         let mut q = match free_text {
-    //             Some(text) => doc! {
-    //                "$or": [
-    //                     {"$text": {"$search": text}}, {"_id": {"$exists": true}}
-    //                ]
-    //             },
-    //             None => doc! {},
-    //         };
-    //         if let Some(store_id) = store_id {
-    //             q.insert("store._id", store_id);
-    //         }
+    let mut min_should_match = 1;
 
-    //         if let Some(category_id) = category_id {
-    //             q.insert(
-    //                 "categories._id",
-    //                 doc! {
-    //                 "$in": [category_id]},
-    //             );
-    //         }
-    //         q
-    //     }
-    //     false => {
-    //         let mut q = match free_text {
-    //             Some(text) => doc! {
-    //                 "$text": {"$search": text}
-    //             },
-    //             None => doc! {},
-    //         };
+    if infinite {
+        min_should_match = 0;
+    }
 
-    //         if let Some(store_id) = store_id {
-    //             q.insert("store._id", store_id);
-    //         }
+    let filters = {
+        let mut f = vec![];
 
-    //         if let Some(category_id) = category_id {
-    //             q.insert(
-    //                 "categories._id",
-    //                 doc! {
-    //                 "$in": [category_id]},
-    //             );
-    //         }
+        if let Some(store_id) = store_id {
+            f.push(doc! {
+                "equals": {
+                    "value": store_id,
+                    "path": "store._id"
+                }
+            });
+        };
 
-    //         q
-    //     }
-    // };
+        if let Some(category_id) = category_id {
+            f.push(doc! {
+                "equals": {
+                    "value": category_id,
+                    "path": "categories._id"
+                }
+            });
+        }
+        f
+    };
 
-    let mut pipeline = aggregations::search_products(&free_text, &category_id, &store_id);
-
-    pipeline.extend([
+    let pipeline = [
+        aggregations::search_products(&free_text, &filters, Some(min_should_match)),
+        aggregations::add_fields(doc! {
+            "score": {
+                "$meta": "searchScore"
+            }
+        }),
+        sort_stage,
         aggregations::skip(pagination.offset),
         aggregations::limit(pagination.amount),
         aggregations::project(
@@ -172,24 +159,14 @@ pub async fn get_products_for_extarnel(
                 Product::fields().brand,
                 Product::fields().name,
                 Product::fields().keywords,
-                "store.name",
                 "analytics",
+                Product::fields().categories,
+                Product::fields().created_at,
+                Product::fields().store,
             ],
-            Some(doc! {
-                Product::fields().categories: {
-                "$map": {
-                    "input": "$categories",
-                    "in": {
-                        "_id":{"$toString": "$$this._id"},
-                        "name": "$$this.name"
-                    }
-                    }
-                },
-                "store._id": aggregations::convert_to_string_safe("$store._id"),
-                Product::fields().created_at: aggregations::convert_to_string_safe("$created_at")
-            }),
+            None,
         ),
-    ]);
+    ];
 
     let cursor = db
         .products
@@ -209,13 +186,26 @@ pub async fn get_products_for_extarnel(
         return Ok((products, count as u64));
     }
 
-    // let count = db
-    //     .products
-    //     .count_documents(query, None)
-    //     .await
-    //     .map_err(|e| Error::DBError(("products", e)))?;
+    let count = db
+        .products
+        .aggregate(
+            [
+                aggregations::search_products(&free_text, &filters, Some(min_should_match)),
+                aggregations::count("count"),
+            ],
+            None,
+        )
+        .await
+        .map_err(|e| Error::DBError(("products", e)))?;
 
-    Ok((products, 1))
+    let count = consume_cursor::<Document>(count).await.map_err(|e| Error::DBError(("products", e)))?;
+    
+    let count = count
+        .first()
+        .ok_or(Error::Static(""))?
+        .get_i32("count").unwrap_or(0);
+
+    Ok((products, count as u64))
 }
 
 pub async fn get_one_product_for_extarnel(
@@ -312,7 +302,6 @@ pub async fn get_products_names_for_autocomplete(
         .map_err(|e| Error::DBError(("products", e)))?)
 }
 
-// todo: omer-review
 pub async fn get_products_count(
     db: &DBExtension,
     store_id: Option<ObjectId>,

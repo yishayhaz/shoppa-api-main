@@ -14,7 +14,7 @@ pub use store::*;
 pub use users::*;
 pub use variants::*;
 
-use futures_util::StreamExt;
+use futures_util::{StreamExt, Stream};
 use mongodb::{error::Error as MongoDBError, Cursor};
 use serde::Deserialize;
 use crate::prelude::*;
@@ -59,3 +59,29 @@ pub async fn consume_cursor_and_convert<T: for<'a> Deserialize<'a>>(
 }
 
 pub type PaginatedResult<T> = Result<(Vec<T>, u64)>;
+
+#[async_trait]
+trait CursorHelper
+{
+    // async fn consume(self) -> StdResult<Vec<Self>, MongoDBError>;
+    // async fn consume_and_convert(self) -> StdResult<Vec<Self>, MongoDBError>;
+    async fn convert_one_doc(self) -> StdResult<Option<Document>, MongoDBError>;
+}
+
+// #[async_trait]
+// impl CursorHelper for Cursor<T>
+// // where
+// //     T: for<'de> Deserialize<'de> + Stream + StreamExt,
+//  {
+
+//     async fn convert_one_doc(self) -> StdResult<Option<Document>, MongoDBError> {
+//         let doc = self.next().await.transpose()?;
+
+//         if let Some(doc) = doc {
+//             let doc = bson::from_bson::<T>(Bson::Document(doc))?;
+//             return Ok(Some(doc));
+//         }
+
+//         Ok(None)
+//     }
+// }

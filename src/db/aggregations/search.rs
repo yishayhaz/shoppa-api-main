@@ -1,35 +1,15 @@
 use std::vec;
 
 use super::common as aggregations;
-use bson::{doc, oid::ObjectId, Document};
+use bson::{doc, Document};
 
 pub fn search_products(
     query: &Option<String>,
-    category_id: &Option<ObjectId>,
-    store_id: &Option<ObjectId>,
-) -> Vec<Document> {
-    if query.is_none() && category_id.is_none() && store_id.is_none() {
-        return vec![aggregations::match_query(&doc! {})];
-    }
-
-    let mut filters = vec![];
-
-    if let Some(category_id) = category_id {
-        filters.push(doc! {
-            "equals": {
-                "value": category_id,
-                "path": "categories._id"
-            }
-        });
-    }
-
-    if let Some(store_id) = store_id {
-        filters.push(doc! {
-            "equals": {
-                "value": store_id,
-                "path": "store._id"
-            }
-        });
+    filters: &Vec<Document>,
+    minimum_should_match: Option<i32>,
+) -> Document {
+    if query.is_none() && filters.is_empty() {
+        return aggregations::match_query(&doc! {});
     }
 
     let mut compound = doc! {};
@@ -124,27 +104,14 @@ pub fn search_products(
                 },
             ],
         );
-        compound.insert("minimumShouldMatch", 1);
+        compound.insert("minimumShouldMatch", minimum_should_match.unwrap_or(1));
     }
 
-    if filters.len() > 0 {
-        compound.insert("filter", filters);
-    }
+    compound.insert("filter", filters);
 
-    vec![
-        aggregations::search(doc! {
-            "compound": compound
-        }),
-        aggregations::add_fields(doc! {
-                "score": {
-                    "$meta": "searchScore"
-                }
-
-        }),
-        aggregations::sort(doc! {
-            "score": -1
-        }),
-    ]
+    aggregations::search(doc! {
+        "compound": compound
+    })
 }
 
 pub fn autocomplete_products_search(query: &String, filters: Vec<Document>) -> Document {

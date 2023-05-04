@@ -46,7 +46,8 @@ pub async fn products_names_for_autocomplete(
     }
 
     let products =
-        queries::get_products_names_for_autocomplete(&db, query.free_text.unwrap(), query.store_id).await?;
+        queries::get_products_names_for_autocomplete(&db, query.free_text.unwrap(), query.store_id)
+            .await?;
 
     Ok(ResponseBuilder::success(Some(products), None, None).into_response())
 }
