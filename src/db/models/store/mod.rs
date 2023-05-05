@@ -1,6 +1,4 @@
-use super::{
-    common::{db_model, DBModel},
-};
+use super::common::{db_model, DBModel};
 mod fields;
 use crate::prelude::{db_models::*, *};
 
@@ -13,7 +11,7 @@ pub struct Store {
     #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
     updated_at: DateTime<Utc>,
 
-    pub name: String, // TODO: min: 4, max: 30
+    pub name: String,        // TODO: min: 4, max: 30
     pub description: String, // TODO: min: 40, max: 110
     pub email: String,
     pub location: StoreLocation,

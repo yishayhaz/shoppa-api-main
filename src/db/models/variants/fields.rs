@@ -6,12 +6,12 @@ pub struct VariantsFields {
     pub values: &'static str,
 }
 
-pub const FIELDS: VariantsFields = VariantsFields{
+pub const FIELDS: VariantsFields = VariantsFields {
     id: "_id",
     created_at: "created_at",
     updated_at: "updated_at",
     name: "name",
-    values: "values"
+    values: "values",
 };
 
 pub struct VariantValueFields {
@@ -22,16 +22,28 @@ pub struct VariantValueFields {
     pub value: &'static str,
 }
 
-const VALUES_FIELDS: VariantValueFields = VariantValueFields{
+const VALUES_FIELDS_RELATIVE: VariantValueFields = VariantValueFields {
     id: "_id",
     created_at: "created_at",
     updated_at: "updated_at",
     label: "label",
-    value: "value"
+    value: "value",
+};
+
+const VALUES_FIELDS: VariantValueFields = VariantValueFields {
+    id: "values._id",
+    created_at: "values.created_at",
+    updated_at: "values.updated_at",
+    label: "values.label",
+    value: "values.value",
 };
 
 impl VariantsFields {
-    pub fn values(&self) -> &VariantValueFields {
-        &VALUES_FIELDS
+    pub fn values(&self, relative: bool) -> &VariantValueFields {
+        if relative {
+            &VALUES_FIELDS_RELATIVE
+        } else {
+            &VALUES_FIELDS
+        }
     }
 }
