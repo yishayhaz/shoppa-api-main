@@ -26,8 +26,7 @@ async fn get_product(
 
         let product = cursor
             .convert_one_doc::<Product>()
-            .await
-            .map_err(|e| Error::DBError(("products", e)))?;
+            .await?;
 
         return Ok(product);
     };
@@ -177,8 +176,7 @@ pub async fn get_products_for_extarnel(
 
     let products = cursor
         .consume()
-        .await
-        .map_err(|e| Error::DBError(("products", e)))?;
+        .await?;
 
     let mut count = products.len() as i64;
 
@@ -245,8 +243,7 @@ pub async fn get_one_product_for_extarnel(
 
     Ok(cursor
         .convert_one_doc()
-        .await
-        .map_err(|e| Error::DBError(("products", e)))?)
+        .await?)
 }
 
 pub async fn get_products_names_for_autocomplete(
@@ -295,8 +292,7 @@ pub async fn get_products_names_for_autocomplete(
 
     Ok(cursor
         .consume()
-        .await
-        .map_err(|e| Error::DBError(("products", e)))?)
+        .await?)
 }
 
 pub async fn get_products_count(

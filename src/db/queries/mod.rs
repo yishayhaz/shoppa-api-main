@@ -16,7 +16,7 @@ pub use variants::*;
 
 use crate::prelude::*;
 use futures_util::StreamExt;
-use mongodb::{error::Error as MongoDBError, Cursor};
+use mongodb::Cursor;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 
@@ -24,17 +24,13 @@ pub type PaginatedResult<T> = Result<(Vec<T>, u64)>;
 
 #[async_trait]
 pub trait CursorConsumer<T> {
-    async fn consume(self) -> StdResult<Vec<T>, MongoDBError>;
+    async fn consume(self) -> Result<Vec<T>>;
 }
 
 #[async_trait]
 pub trait CursorConverter {
-    async fn convert_one_doc<T: for<'a> Deserialize<'a>>(
-        self,
-    ) -> StdResult<Option<T>, MongoDBError>;
-    async fn consume_and_convert<T: for<'a> Deserialize<'a> + Send + Sync>(
-        self,
-    ) -> StdResult<Vec<T>, MongoDBError>;
+    async fn convert_one_doc<T: for<'a> Deserialize<'a>>(self) -> Result<Option<T>>;
+    async fn consume_and_convert<T: for<'a> Deserialize<'a> + Send + Sync>(self) -> Result<Vec<T>>;
     async fn extract_count(self) -> Result<u64>;
 }
 
@@ -43,11 +39,18 @@ impl<T> CursorConsumer<T> for Cursor<T>
 where
     T: DeserializeOwned + Sync + Send + Unpin,
 {
-    async fn consume(mut self) -> StdResult<Vec<T>, MongoDBError> {
+    async fn consume(mut self) -> Result<Vec<T>> {
         let mut documents: Vec<T> = Vec::new();
 
-        while self.advance().await? {
-            documents.push(self.deserialize_current()?);
+        while self
+            .advance()
+            .await
+            .map_err(|e| Error::DBError(("unknown", e)))?
+        {
+            documents.push(
+                self.deserialize_current()
+                    .map_err(|e| Error::DBError(("unknown", e)))?,
+            );
         }
 
         Ok(documents)
@@ -56,13 +59,16 @@ where
 
 #[async_trait]
 impl CursorConverter for Cursor<Document> {
-    async fn convert_one_doc<T: for<'a> Deserialize<'a>>(
-        mut self,
-    ) -> StdResult<Option<T>, MongoDBError> {
-        let doc = self.next().await.transpose()?;
+    async fn convert_one_doc<T: for<'a> Deserialize<'a>>(mut self) -> Result<Option<T>> {
+        let doc = self
+            .next()
+            .await
+            .transpose()
+            .map_err(|e| Error::DBError(("unknown", e)))?;
 
         if let Some(doc) = doc {
-            let doc = bson::from_bson::<T>(Bson::Document(doc))?;
+            let doc = bson::from_bson::<T>(Bson::Document(doc))
+                .map_err(|e| Error::DBError(("unknown", e.into())))?;
             return Ok(Some(doc));
         }
 
@@ -70,13 +76,21 @@ impl CursorConverter for Cursor<Document> {
     }
     async fn consume_and_convert<T: for<'a> Deserialize<'a> + Send + Sync>(
         mut self,
-    ) -> StdResult<Vec<T>, MongoDBError> {
+    ) -> Result<Vec<T>> {
         let mut documents: Vec<T> = Vec::new();
 
-        while self.advance().await? {
-            documents.push(bson::from_bson::<T>(Bson::Document(
-                self.deserialize_current()?,
-            ))?);
+        while self
+            .advance()
+            .await
+            .map_err(|e| Error::DBError(("unknown", e)))?
+        {
+            documents.push(
+                bson::from_bson::<T>(Bson::Document(
+                    self.deserialize_current()
+                        .map_err(|e| Error::DBError(("unknown", e)))?,
+                ))
+                .map_err(|e| Error::DBError(("unknown", e.into())))?,
+            );
         }
 
         Ok(documents)
@@ -87,7 +101,7 @@ impl CursorConverter for Cursor<Document> {
             .next()
             .await
             .transpose()
-            .map_err(|e| Error::DBError(("unknown", MongoDBError::from(e))))?;
+            .map_err(|e| Error::DBError(("unknown", e)))?;
 
         if let Some(doc) = doc {
             let count = doc.get_i32("count").unwrap_or(0) as u64;

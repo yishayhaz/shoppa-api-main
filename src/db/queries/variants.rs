@@ -53,8 +53,7 @@ pub async fn get_variants_for_extarnel(db: &DBExtension) -> PaginatedResult<Docu
 
     let variants = cursor
         .consume()
-        .await
-        .map_err(|e| Error::DBError(("variants", e)))?;
+        .await?;
 
     let count = variants.len() as u64;
 

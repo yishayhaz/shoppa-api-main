@@ -42,8 +42,7 @@ pub async fn get_contact_us_forms(
 
     let forms = cursor
         .consume()
-        .await
-        .map_err(|e| Error::DBError(("contact_us", e)))?;
+        .await?;
 
     Ok(forms)
 }
