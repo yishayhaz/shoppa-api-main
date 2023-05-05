@@ -6,12 +6,12 @@ type InsertVariantResult = Result<Variants, InsertDocumentErrors>;
 pub async fn new_variant(
     db: &DBExtension,
     name: String,
-    value_names: Vec<String>,
+    values: Vec<impl Into<VariantValue>>,
     type_: VariantType,
 ) -> InsertVariantResult {
-    let values = value_names
+    let values = values
         .into_iter()
-        .map(|name| VariantValue::new(name))
+        .map(|item| item.into())
         .collect();
 
     let mut variant = Variants::new(name, values, type_);

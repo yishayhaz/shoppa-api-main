@@ -10,12 +10,20 @@ pub enum Error {
 	Static(&'static str),
     // The string is for the collection name.
     DBError((&'static str, mongodb::error::Error)),
+    // DBInsertError(InsertDocumentErrors),
     // The string is for the collection name.
     NoEntityId(&'static str),
     HashError(argon2::password_hash::Error),
     Serilaztion
-    
 
+}
+
+pub enum InsertDocumentErrors {
+    UnknownError,
+    AlredyExists,
+    BsonConversionError,
+    PopulatedRefField,
+    InvalidArgumentsForModel,
 }
 
 

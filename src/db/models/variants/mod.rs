@@ -29,8 +29,10 @@ pub struct VariantValue {
     created_at: DateTime<Utc>,
     #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
     updated_at: DateTime<Utc>,
-
-    pub name: String,
+    // must be between 1 to 15 chars
+    pub label: String,
+    // must be between 1 to 15 chars
+    pub value: String,
 }
 
 
@@ -81,7 +83,8 @@ impl Into<Bson> for VariantValue {
             "_id": self.id,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
-            "name": self.name
+            "label": self.label,
+            "value": self.value
         })
     }
 }
@@ -104,12 +107,13 @@ impl Variants {
 }
 
 impl VariantValue {
-    pub fn new(name: String) -> Self {
+    pub fn new(value: String, label: String) -> Self {
         Self {
             id: ObjectId::new(),
             created_at: Utc::now(),
             updated_at: Utc::now(),
-            name,
+            value,
+            label
         }
     }
 }

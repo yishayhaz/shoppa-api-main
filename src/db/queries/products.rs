@@ -213,7 +213,7 @@ pub async fn get_one_product_for_extarnel(
         aggregations::match_query(&filter),
         aggregations::lookup_product_variants(Some(vec![aggregations::project(
             ProjectIdOptions::Keep,
-            ["type", "name", "values.name", "values._id"],
+            ["type", "name", "values.label", "values._id", "values.value"],
             None,
         )])),
         aggregations::project(
