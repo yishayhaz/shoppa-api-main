@@ -41,7 +41,7 @@ pub async fn get_store_by_id(db: &DBExtension, id: &ObjectId) -> GetStoreResult 
     get_store(db, filter, None).await
 }
 
-// todo: omer-review
+
 pub async fn get_stores_count(db: &DBExtension) -> Result<u64> {
     let count = db
         .stores
@@ -50,4 +50,39 @@ pub async fn get_stores_count(db: &DBExtension) -> Result<u64> {
         .map_err(|e| Error::DBError(("stores", e)))?;
 
     Ok(count)
+}
+
+pub async fn get_stores_names_for_autocomplete(
+    db: &DBExtension,
+    free_text: String,
+) -> Result<Vec<Document>> {
+
+    let cursor = db
+        .stores
+        .aggregate(
+            [
+                aggregations::autocomplete_store_search(&free_text),
+                aggregations::add_fields(doc! {
+                    "score": {
+                        "$meta": "searchScore"
+                    }
+                }),
+                aggregations::sort(doc! {
+                    "score": -1
+                }),
+                aggregations::limit(3),
+                aggregations::project(
+                    ProjectIdOptions::Keep,
+                    ["name"],
+                    None
+                ),
+            ],
+            None,
+        )
+        .await
+        .map_err(|e| Error::DBError(("stores", e)))?;
+
+    Ok(cursor
+        .consume()
+        .await?)
 }

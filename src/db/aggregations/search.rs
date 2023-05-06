@@ -28,6 +28,43 @@ fn autocomplete(path: &str, query: &String) -> Document {
     }
 }
 
+fn text_search(
+    path: &str,
+    query: &String,
+    score_boost: Option<u8>,
+    max_edits: Option<u8>,
+) -> Document {
+    // max_edits should be 1 or 2
+    let mut base = doc! {
+            "query": query,
+            "path": path,
+    };
+
+    if let Some(score_boost) = score_boost {
+        base.insert(
+            "score",
+            doc! {
+                "boost": {
+                    "value": score_boost as i32
+                }
+            },
+        );
+    };
+
+    if let Some(max_edits) = max_edits {
+        base.insert(
+            "fuzzy",
+            doc! {
+                "maxEdits": max_edits as i32
+            },
+        );
+    };
+
+    doc! {
+        "text": base
+    }
+}
+
 pub fn search_products(
     query: &Option<String>,
     filters: &Vec<Document>,
@@ -43,90 +80,13 @@ pub fn search_products(
         compound.insert(
             "should",
             vec![
-                doc! {
-                    "text": {
-                        "query": query,
-                        "path": "name",
-                        "fuzzy": {
-                            "maxEdits": 2
-                        },
-                        "score": {
-                            "boost": {
-                                "value": 20
-                            }
-                        }
-                    }
-                },
-                doc! {
-                    "text": {
-                        "query": query,
-                        "path": "items.name",
-                        "fuzzy": {
-                            "maxEdits": 2
-                        }
-                    }
-                },
-                doc! {
-                    "text": {
-                        "query": query,
-                        "path": "keywords",
-                        "fuzzy": {
-                            "maxEdits": 1
-                        },
-                        "score": {
-                            "boost": {
-                                "value": 10
-                            }
-                        }
-                    }
-                },
-                doc! {
-                    "text": {
-                        "query": query,
-                        "path": "description",
-                        "score": {
-                            "boost": {
-                                "value": 10
-                            }
-                        }
-                    }
-                },
-                doc! {
-                    "text": {
-                        "query": query,
-                        "path": "brand",
-                        "fuzzy": {
-                            "maxEdits": 2
-                        },
-                        "score": {
-                            "boost": {
-                                "value": 5
-                            }
-                        }
-                    }
-                },
-                doc! {
-                    "text": {
-                        "query": query,
-                        "path": "categories.name",
-                        "score": {
-                            "boost": {
-                                "value": 5
-                            }
-                        }
-                    }
-                },
-                doc! {
-                    "text": {
-                        "query": query,
-                        "path": "store.name",
-                        "score": {
-                            "boost": {
-                                "value": 2
-                            }
-                        }
-                    }
-                },
+                text_search("name", query, Some(20), Some(2)),
+                text_search("items.name", query, None, Some(2)),
+                text_search("keywords", query, Some(10), Some(1)),
+                text_search("description", query, Some(10), None),
+                text_search("brand", query, Some(5), Some(2)),
+                text_search("categories.name", query, Some(5), None),
+                text_search("store.name", query, Some(2), None),
             ],
         );
         compound.insert("minimumShouldMatch", minimum_should_match.unwrap_or(1));
@@ -148,6 +108,16 @@ pub fn autocomplete_products_search(query: &String, filters: Vec<Document>) -> D
             ],
             "filter": filters,
             "minimumShouldMatch": 1
+        }
+    })
+}
+
+pub fn autocomplete_store_search(query: &String) -> Document {
+    aggregations::search(doc! {
+        "compound": {
+            "should": [
+                autocomplete("name", query),
+            ],
         }
     })
 }
