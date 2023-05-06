@@ -15,7 +15,7 @@ fn autocomplete(path: &str, query: &String) -> Document {
         };
     }
 
-    let max_edits = if query_len < 5 { 1 } else { 2 };
+    let max_edits = if query_len < 4 { 1 } else { 2 };
 
     doc! {
         "autocomplete": {
