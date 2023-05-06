@@ -250,15 +250,28 @@ pub async fn get_products_names_for_autocomplete(
     db: &DBExtension,
     free_text: String,
     store_id: Option<ObjectId>,
+    category_id: Option<ObjectId>,
 ) -> Result<Vec<Document>> {
-    let filters = match store_id {
-        Some(store_id) => vec![doc! {
-        "equals": {
-            "value": store_id,
-            "path": "store._id"
-        }}],
-        None => vec![],
+    
+    let mut filters = vec![];
+
+    if let Some(store_id) = store_id {
+        filters.push(doc! {
+            "equals": {
+                "value": store_id,
+                "path": "store._id"
+            }
+        });
     };
+
+    if let Some(category_id) = category_id {
+        filters.push(doc! {
+            "equals": {
+                "value": category_id,
+                "path": "categories._id"
+            }
+        });
+    }
 
     // TODO in the future we need to use the embeddeddocuments search to return the must
     // relevant product item and not the first one

@@ -45,9 +45,13 @@ pub async fn products_names_for_autocomplete(
         return Ok(ResponseBuilder::<Vec<u16>>::success(Some(vec![]), None, None).into_response());
     }
 
-    let products =
-        queries::get_products_names_for_autocomplete(&db, query.free_text.unwrap(), query.store_id)
-            .await?;
+    let products = queries::get_products_names_for_autocomplete(
+        &db,
+        query.free_text.unwrap(),
+        query.store_id,
+        query.category_id,
+    )
+    .await?;
 
     Ok(ResponseBuilder::success(Some(products), None, None).into_response())
 }

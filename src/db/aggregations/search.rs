@@ -3,6 +3,31 @@ use std::vec;
 use super::common as aggregations;
 use bson::{doc, Document};
 
+fn autocomplete(path: &str, query: &String) -> Document {
+    let query_len = query.chars().collect::<Vec<char>>().len();
+
+    if query_len < 3 {
+        return doc! {
+            "autocomplete": {
+                "query": query,
+                "path": path
+            }
+        };
+    }
+
+    let max_edits = if query_len < 5 { 1 } else { 2 };
+
+    doc! {
+        "autocomplete": {
+            "query": query,
+            "path": path,
+            "fuzzy": {
+                "maxEdits": max_edits,
+            }
+        }
+    }
+}
+
 pub fn search_products(
     query: &Option<String>,
     filters: &Vec<Document>,
@@ -116,27 +141,10 @@ pub fn search_products(
 
 pub fn autocomplete_products_search(query: &String, filters: Vec<Document>) -> Document {
     aggregations::search(doc! {
-            "index": "autocomplete",
             "compound": {
             "should": [
-                {
-                    "autocomplete": {
-                        "query": query,
-                        "path": "name",
-                        "fuzzy": {
-                            "maxEdits": 2
-                        }
-                    }
-                },
-                {
-                    "autocomplete": {
-                        "query": query,
-                        "path": "items.name",
-                        "fuzzy": {
-                            "maxEdits": 2
-                        }
-                    }
-                }
+                autocomplete("name", query),
+                autocomplete("items.name", query),
             ],
             "filter": filters,
             "minimumShouldMatch": 1

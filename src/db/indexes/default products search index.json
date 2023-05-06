@@ -22,9 +22,18 @@
       },
       "items": {
         "fields": {
-          "name": {
-            "type": "string"
-          }
+          "name": [
+            {
+              "tokenization": "rightEdgeGram",
+              "type": "autocomplete"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "stringFacet"
+            }
+          ]
         },
         "type": "document"
       },
@@ -32,6 +41,11 @@
         "type": "string"
       },
       "name": [
+        {
+          "maxGrams": 16,
+          "tokenization": "rightEdgeGram",
+          "type": "autocomplete"
+        },
         {
           "type": "string"
         },
