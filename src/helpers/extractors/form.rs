@@ -1,4 +1,5 @@
 use super::super::types::ResponseBuilder;
+use crate::error::Error;
 use async_trait::async_trait;
 use axum::{
     body::HttpBody,
@@ -11,11 +12,25 @@ use bytes::Bytes;
 use serde::de::DeserializeOwned;
 use validator::{Validate, ValidationErrors};
 
-pub struct MultipartFrom<T: TryFrom<Multipart>>(pub T);
 
-pub struct MultipartFormWithValidation<T: Validate + TryFrom<Multipart>>(pub T);
+#[async_trait]
+pub trait FromMultipart: Sized + Send + Sync {
+    async fn from_multipart(multipart: Multipart) -> Result<Self, Error>;
+}
+
+pub struct MultipartFrom<T: FromMultipart>(pub T);
+
+pub struct MultipartFormWithValidation<T: Validate + FromMultipart>(pub T);
 
 pub struct FormWithValidation<T: Validate>(pub T);
+
+#[derive(Debug)]
+pub struct FileField {
+    pub file_name: String,
+    pub content_type: String,
+    pub data: Bytes,
+}
+
 pub enum FormValidationError {
     FormError(FormRejection),
     FormValidation(ValidationErrors),
@@ -100,8 +115,7 @@ where
     B: HttpBody + Send + 'static,
     B::Error: Into<BoxError>,
 
-    T: DeserializeOwned + TryFrom<Multipart>,
-    T::Error: IntoResponse,
+    T: DeserializeOwned + FromMultipart,
     S: Send + Sync,
 {
     type Rejection = Response;
@@ -113,7 +127,7 @@ where
             .map_err(|_| FormValidationError::InvalidBoundry.into_response())?;
 
         Ok(MultipartFrom(
-            T::try_from(multipart).map_err(|e| e.into_response())?,
+            T::from_multipart(multipart).await.map_err(|e| e.into_response())?,
         ))
     }
 }
@@ -125,8 +139,7 @@ where
     B: HttpBody + Send + 'static,
     B::Error: Into<BoxError>,
 
-    T: DeserializeOwned + TryFrom<Multipart> + Validate,
-    T::Error: IntoResponse,
+    T: DeserializeOwned + FromMultipart + Validate,
     S: Send + Sync,
 {
     type Rejection = Response;
@@ -136,7 +149,7 @@ where
 
         data.validate()
             .map_err(|e| FormValidationError::FormValidation(e).into_response())?;
-        
+
         Ok(MultipartFormWithValidation(data))
     }
 }

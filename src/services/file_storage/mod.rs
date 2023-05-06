@@ -25,9 +25,8 @@ pub async fn connect() -> StorageClient {
         ))
         .load()
         .await;
-    
+
     let client = StorageClient::new(&config);
 
     client
-
 }
