@@ -14,5 +14,6 @@ pub fn router() -> Router {
         .route("/autocomplete", routing::get(get::products_names_for_autocomplete))
         .route("/infinite", routing::get(get::get_products))
         .route("/search", routing::get(get::get_products))
+        .route("/test", routing::post(manage::test_route))
         .route("/", routing::post(manage::create_new_product))
 }

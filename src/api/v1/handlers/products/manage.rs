@@ -1,8 +1,8 @@
-use super::types::CreateProductPayload;
+use super::types::{CreateProductPayload, UploadPayload};
 use crate::{
     api::v1::middlewares::OnlyInDev,
     db::{inserts, inserts::InsertDocumentErrors, queries, updates},
-    prelude::{handlers::*, *},
+    prelude::{handlers::*, *}, helpers::extractors::{MultipartFormWithValidation, MultipartFrom},
 };
 
 pub async fn create_new_product(
@@ -74,3 +74,8 @@ pub async fn add_view_to_product(
 
     Ok(ResponseBuilder::not_found_error("product", &product_id).into_response())
 }
+
+
+pub async fn test_route(
+    payload: MultipartFrom<UploadPayload>
+){}

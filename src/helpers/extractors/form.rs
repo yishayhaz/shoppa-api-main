@@ -24,11 +24,11 @@ pub struct MultipartFormWithValidation<T: Validate + FromMultipart>(pub T);
 
 pub struct FormWithValidation<T: Validate>(pub T);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FileField {
     pub file_name: String,
     pub content_type: String,
-    pub data: Bytes,
+    pub file: Bytes,
 }
 
 pub enum FormValidationError {
@@ -115,7 +115,7 @@ where
     B: HttpBody + Send + 'static,
     B::Error: Into<BoxError>,
 
-    T: DeserializeOwned + FromMultipart,
+    T: FromMultipart,
     S: Send + Sync,
 {
     type Rejection = Response;
@@ -139,7 +139,7 @@ where
     B: HttpBody + Send + 'static,
     B::Error: Into<BoxError>,
 
-    T: DeserializeOwned + FromMultipart + Validate,
+    T: FromMultipart + Validate,
     S: Send + Sync,
 {
     type Rejection = Response;

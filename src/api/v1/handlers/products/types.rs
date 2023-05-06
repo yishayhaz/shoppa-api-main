@@ -1,5 +1,6 @@
-use crate::prelude::{types::*, *};
+use crate::{prelude::{types::*, *}, helpers::extractors::{FromMultipart, FileField}};
 use axum::{extract::Multipart, async_trait};
+use bytes::Bytes;
 
 
 #[derive(Deserialize, Serialize, Debug, Clone, Validate)]
@@ -36,32 +37,30 @@ pub struct GetProductsCountQueryParams {
     pub category_id: Option<ObjectId>,
 }
 
-#[derive(Deserialize, Debug, Clone, Validate)]
+#[derive(Debug, Clone, Validate)]
 pub struct UploadPayload {
-    pub file: Vec<u8>,
+    pub file: FileField,
 }
 
-// #[async_trait]
-// impl TryFrom<Multipart> for UploadPayload {
-//     type Error = Error;
+#[async_trait]
+impl FromMultipart for UploadPayload {
+    async fn from_multipart(mut multipart: Multipart) -> Result<Self> {
+        let mut file: Option<FileField> = None;
 
-//     async fn try_from(multipart: Multipart) -> Result<Self> {
-//         while let Some(field) = multipart.next_field().await.unwrap() {
-//             let name = field.name().unwrap().to_string();
-//             let file_name = field.file_name().unwrap().to_string();
-//             let content_type = field.content_type().unwrap().to_string();
-//             let data = field.bytes().await.unwrap();
-    
-//             println!(
-//                 "Length of `{}` (`{}`: `{}`) is {} bytes",
-//                 name,
-//                 file_name,
-//                 content_type,
-//                 data.len()
-//             );
-//         }
-//         Ok(UploadPayload{
-//             file: vec![],
-//         })
-//     }
-// }
+        // TODO improve error handling
+        while let Some(field) = multipart.next_field().await.map_err(|e|Error::Static("No field"))? {
+            let name = field.name().unwrap_or_default().to_string();
+
+            if name == "file" {
+                let content_type = field.content_type();
+                tracing::info!("Content type: {:?}", content_type);
+                let file_name = field.file_name().unwrap_or_default().to_string();
+                tracing::info!("File name: {:?}", file_name);
+                let data = field.bytes().await.unwrap();
+                tracing::info!("File size: {:?}", data.len());
+            }
+
+        }
+        Err(Error::Static("No file field"))
+    }
+}
