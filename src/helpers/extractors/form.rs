@@ -12,7 +12,6 @@ use bytes::Bytes;
 use serde::de::DeserializeOwned;
 use validator::{Validate, ValidationErrors};
 
-
 #[async_trait]
 pub trait FromMultipart: Sized + Send + Sync {
     async fn from_multipart(multipart: Multipart) -> Result<Self, Error>;
@@ -29,6 +28,7 @@ pub struct FileField {
     pub file_name: String,
     pub content_type: String,
     pub file: Bytes,
+    pub file_extension: String,
 }
 
 pub enum FormValidationError {
@@ -127,7 +127,9 @@ where
             .map_err(|_| FormValidationError::InvalidBoundry.into_response())?;
 
         Ok(MultipartFrom(
-            T::from_multipart(multipart).await.map_err(|e| e.into_response())?,
+            T::from_multipart(multipart)
+                .await
+                .map_err(|e| e.into_response())?,
         ))
     }
 }
