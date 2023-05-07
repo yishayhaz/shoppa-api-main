@@ -12,6 +12,6 @@ pub use crate::db::{
 };
 pub use crate::helpers::{
     extractors::{JsonWithValidation, QueryWithValidation},
-    types::{DBExtension, ResponseBuilder},
+    types::{DBExtension, ResponseBuilder, StorgeClientExtension},
 };
 pub use bson::oid::ObjectId;

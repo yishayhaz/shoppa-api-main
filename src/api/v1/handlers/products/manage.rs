@@ -2,7 +2,9 @@ use super::types::{CreateProductPayload, UploadPayload};
 use crate::{
     api::v1::middlewares::OnlyInDev,
     db::{inserts, inserts::InsertDocumentErrors, queries, updates},
-    prelude::{handlers::*, *}, helpers::extractors::{MultipartFormWithValidation, MultipartFrom},
+    helpers::extractors::MultipartFrom,
+    prelude::{handlers::*, *},
+    services::file_storage::upload_file,
 };
 
 pub async fn create_new_product(
@@ -69,13 +71,24 @@ pub async fn add_view_to_product(
 
     if let Some(product) = product {
         // the views is being returend before the update, so we need to add 1 to the views
-        return Ok(ResponseBuilder::success(Some(product.analytics.views + 1), None, None).into_response());
+        return Ok(
+            ResponseBuilder::success(Some(product.analytics.views + 1), None, None).into_response(),
+        );
     }
 
     Ok(ResponseBuilder::not_found_error("product", &product_id).into_response())
 }
 
-
 pub async fn test_route(
-    payload: MultipartFrom<UploadPayload>
-){}
+    storage_client: StorgeClientExtension,
+    MultipartFrom(payload): MultipartFrom<UploadPayload>,
+) {
+    let _ = upload_file(
+        &storage_client,
+        true,
+        payload.file.file,
+        payload.file.file_name,
+        payload.file.content_type,
+    )
+    .await;
+}
