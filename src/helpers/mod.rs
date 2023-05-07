@@ -6,3 +6,4 @@ pub mod cookies;
 pub mod setup;
 pub mod extractors;
 pub mod parser;
+pub mod random;

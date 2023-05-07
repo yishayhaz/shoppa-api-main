@@ -1,4 +1,4 @@
-use super::common::{db_model, DBModel};
+use super::common::{db_model, DBModel, FileDocument};
 mod fields;
 use crate::prelude::{db_models::*, *};
 
@@ -11,14 +11,15 @@ pub struct Store {
     #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
     updated_at: DateTime<Utc>,
 
-    pub name: String,        // TODO: min: 4, max: 30
-    pub description: String, // TODO: min: 40, max: 110
+    pub name: String,        // TODO min: 4, max: 30
+    pub description: String, // TODO min: 40, max: 110
     pub email: String,
     pub location: StoreLocation,
+    pub banner: Option<FileDocument>,
+    pub logo: Option<FileDocument>,
+
     // pub delivery_strategy: String
     // pub bank_details: ?
-    // pub logo(s): ?
-    // pub banner(s): ?
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -62,6 +63,8 @@ impl Store {
             location: StoreLocation {
                 free_text: location,
             },
+            banner: None,
+            logo: None,
         }
     }
 

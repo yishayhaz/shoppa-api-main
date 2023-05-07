@@ -1,7 +1,9 @@
-use crate::{prelude::{types::*, *}, helpers::extractors::{FromMultipart, FileField}};
-use axum::{extract::Multipart, async_trait};
-use bytes::Bytes;
-
+use crate::{
+    helpers::extractors::{FileField, FromMultipart},
+    prelude::{types::*, *},
+};
+use axum::{async_trait, extract::Multipart};
+// use bytes::Bytes;
 
 #[derive(Deserialize, Serialize, Debug, Clone, Validate)]
 pub struct CreateProductPayload {
@@ -46,30 +48,32 @@ pub struct UploadPayload {
 impl FromMultipart for UploadPayload {
     async fn from_multipart(mut multipart: Multipart) -> Result<Self> {
         let mut file: Option<FileField> = None;
-
+        
         // TODO improve
-        while let Some(field) = multipart.next_field().await.map_err(|e|Error::Static("No field"))? {
+        while let Some(field) = multipart
+            .next_field()
+            .await
+            .map_err(|e| Error::Static("No field"))?
+        {
             let name = field.name().unwrap_or_default().to_string();
 
             if name == "file" {
-
                 let file_name = field.file_name().unwrap_or_default().to_string();
                 tracing::info!("File name: {:?}", &file_name);
                 let content_type = field.content_type().unwrap().to_string();
                 tracing::info!("Content type: {:?}", &content_type);
                 let data = field.bytes().await.unwrap();
                 tracing::info!("File size: {:?}", &data.len());
-                
+
                 file = Some(FileField {
                     file_name,
                     content_type,
                     file: data,
                 });
             }
-
         }
-        Ok(Self{
-            file: file.unwrap()
+        Ok(Self {
+            file: file.unwrap(),
         })
     }
 }

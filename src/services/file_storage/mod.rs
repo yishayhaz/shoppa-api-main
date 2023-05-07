@@ -5,6 +5,7 @@ use aws_sdk_s3 as s3;
 
 pub type StorageClient = s3::Client;
 pub use upload::*;
+mod keys;
 
 pub async fn connect() -> StorageClient {
     // for some reason you cant spacify the creadtinal directly

@@ -1,5 +1,31 @@
 use crate::prelude::{db_models::*, *};
 
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct FileDocument {
+    #[serde(rename = "_id")]
+    id: ObjectId,
+    pub public: bool,
+    pub hidden: bool,
+    pub file_name: String,
+    pub path: String,
+    pub size: u64,
+    pub mime_type: String,
+    pub file_type: FileTypes,
+    #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
+    created_at: DateTime<Utc>,
+    #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
+    updated_at: DateTime<Utc>,
+}
+
+#[derive(Deserialize, Debug, Clone, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum FileTypes {
+    Image,
+    Video,
+    Audio,
+    Document,
+}
+
 // TODO add Des to the required trait for DBModel
 pub trait DBModel: Serialize + Clone {
     fn get_collection_name() -> &'static str;
@@ -82,3 +108,32 @@ macro_rules! embedded_document {
 }
 
 pub(crate) use {db_model, embedded_document};
+
+impl EmbeddedDocument for FileDocument {
+    embedded_document!(FileDocument);
+}
+
+impl FileDocument {
+    pub fn new(
+        public: bool,
+        hidden: bool,
+        file_name: String,
+        path: String,
+        size: u64,
+        mime_type: String,
+        file_type: FileTypes,
+    ) -> Self {
+        Self {
+            id: ObjectId::new(),
+            public,
+            hidden,
+            file_name,
+            path,
+            size,
+            mime_type,
+            file_type,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        }
+    }
+}

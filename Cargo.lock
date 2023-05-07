@@ -2373,6 +2373,7 @@ dependencies = [
  "http",
  "lazy_static",
  "mongodb",
+ "rand 0.8.5",
  "rusty_paseto",
  "serde",
  "serde_json",
