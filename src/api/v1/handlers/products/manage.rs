@@ -87,8 +87,8 @@ pub async fn test_route(
         &storage_client,
         true,
         payload.file.file,
-        payload.file.file_name,
-        payload.file.content_type,
+        &payload.file.file_name,
+        &payload.file.content_type,
     )
     .await;
 }

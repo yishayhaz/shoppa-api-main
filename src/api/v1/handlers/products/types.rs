@@ -48,7 +48,7 @@ pub struct UploadPayload {
 impl FromMultipart for UploadPayload {
     async fn from_multipart(mut multipart: Multipart) -> Result<Self> {
         let mut file: Option<FileField> = None;
-        
+
         // TODO improve
         while let Some(field) = multipart
             .next_field()
@@ -69,6 +69,7 @@ impl FromMultipart for UploadPayload {
                     file_name,
                     content_type,
                     file: data,
+                    file_extension: String::from("TODO"),
                 });
             }
         }
