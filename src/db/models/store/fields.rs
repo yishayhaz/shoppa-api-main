@@ -6,6 +6,8 @@ pub struct StoreFields {
     pub description: &'static str,
     pub email: &'static str,
     pub location: &'static str,
+    pub banner: &'static str,
+    pub logo: &'static str,
 }
 
 pub const FIELDS: StoreFields = StoreFields {
@@ -16,4 +18,6 @@ pub const FIELDS: StoreFields = StoreFields {
     description: "description",
     email: "email",
     location: "location",
+    banner: "banner",
+    logo: "logo",
 };

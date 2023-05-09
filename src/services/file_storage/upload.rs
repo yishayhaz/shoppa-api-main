@@ -42,25 +42,29 @@ pub async fn upload_product_image(
 pub async fn upload_store_logo(
     storage_client: &StorageClient,
     file: Bytes,
-    // TODO create content type enum and a function to get the file extension
     content_type: &String,
     store_id: &ObjectId,
-) {
+    file_extension: &String,
+) -> String {
 
-    let key = keys::generate_store_logo_key(store_id, content_type);
+    let key = keys::generate_store_logo_key(store_id, file_extension);
 
-    upload_file(storage_client, true, file, &key, content_type).await
+    upload_file(storage_client, true, file, &key, content_type).await;
+
+    key
 }
 
 pub async fn upload_store_banner(
     storage_client: &StorageClient,
     file: Bytes,
-    // TODO create content type enum and a function to get the file extension
     content_type: &String,
     store_id: &ObjectId,
-) {
+    file_extension: &String,
+) -> String {
 
-    let key = keys::generate_store_banner_key(store_id, content_type);
+    let key = keys::generate_store_banner_key(store_id, file_extension);
 
-    upload_file(storage_client, true, file, &key, content_type).await
+    upload_file(storage_client, true, file, &key, content_type).await;
+
+    key
 }

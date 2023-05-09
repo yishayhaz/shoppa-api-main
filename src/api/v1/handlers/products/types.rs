@@ -53,7 +53,7 @@ impl FromMultipart for UploadPayload {
         while let Some(field) = multipart
             .next_field()
             .await
-            .map_err(|e| Error::Static("No field"))?
+            .map_err(|_| Error::Static("No field"))?
         {
             let name = field.name().unwrap_or_default().to_string();
 
@@ -68,6 +68,7 @@ impl FromMultipart for UploadPayload {
                 file = Some(FileField {
                     file_name,
                     content_type,
+                    size: data.len(),
                     file: data,
                     file_extension: String::from("TODO"),
                 });

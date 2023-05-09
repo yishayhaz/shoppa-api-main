@@ -9,7 +9,7 @@ mod user;
 mod variants;
 
 pub use categories::{Categories, InnerCategories, InnerInnerCategories};
-pub use common::{DBModel, EmbeddedDocument};
+pub use common::{DBModel, EmbeddedDocument, FileDocument, FileTypes};
 pub use contact_us::{ContactUsForm, ContactUsReason, ContactFormStatus};
 pub use news_letter::NewsLetterSubscriber;
 pub use product::{Product, ProductItem, ItemVariants, ProductSortBy};

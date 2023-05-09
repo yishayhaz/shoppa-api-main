@@ -1,5 +1,5 @@
-use crate::{db::models, helpers::types::DBExtension, prelude::*};
-use bson::{doc, oid::ObjectId, to_bson, Document};
+use crate::{db::models::{self, EmbeddedDocument}, helpers::types::DBExtension, prelude::*};
+use bson::{doc, oid::ObjectId, Document};
 use mongodb::options::FindOneAndUpdateOptions;
 
 type UpdateProductResult = Result<Option<models::Product>>;
@@ -31,7 +31,7 @@ pub async fn add_product_item(
 
     let update = doc! {
         "$push": {
-            "items": to_bson(item).unwrap()
+            "items": item.into_bson()?
         }
     };
 

@@ -116,7 +116,6 @@ impl EmbeddedDocument for FileDocument {
 impl FileDocument {
     pub fn new(
         public: bool,
-        hidden: bool,
         file_name: String,
         path: String,
         size: u64,
@@ -126,7 +125,7 @@ impl FileDocument {
         Self {
             id: ObjectId::new(),
             public,
-            hidden,
+            hidden: false,
             file_name,
             path,
             size,

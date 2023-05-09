@@ -29,6 +29,7 @@ pub struct FileField {
     pub content_type: String,
     pub file: Bytes,
     pub file_extension: String,
+    pub size: usize,
 }
 
 pub enum FormValidationError {
