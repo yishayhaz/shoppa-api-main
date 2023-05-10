@@ -1,4 +1,5 @@
 use crate::helpers::types::ResponseBuilder;
+use axum::extract::multipart::MultipartError;
 use axum::response::{IntoResponse, Response};
 use validator::ValidationErrors;
 // Main Crate Error
@@ -17,6 +18,7 @@ pub enum Error {
     HashError(argon2::password_hash::Error),
     Serilaztion,
     StructValidation(ValidationErrors),
+    MultiPartFormError(MultipartError),
 }
 
 pub enum InsertDocumentErrors {
@@ -60,6 +62,13 @@ impl IntoResponse for Error {
             Self::StructValidation(e) => {
                 ResponseBuilder::validation_error(Some(e), None).into_response()
             }
+            Self::MultiPartFormError(e) => ResponseBuilder::error(
+                "",
+                Some(e.to_string().as_str()),
+                Some("MultiPartForm Error"),
+                Some(500),
+            )
+            .into_response(),
         }
     }
 }

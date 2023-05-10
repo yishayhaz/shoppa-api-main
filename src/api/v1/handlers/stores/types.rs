@@ -34,18 +34,30 @@ impl FromMultipart for UpdateStorePayload {
         while let Some(field) = multipart
             .next_field()
             .await
-            .map_err(|_| Error::Static("No field"))?
+            .map_err(Error::MultiPartFormError)?
         {
+            if logo.is_some() && banner.is_some() {
+                break;
+            }
+
             let name = field.name().unwrap_or_default().to_string();
 
             if name == "logo" || name == "banner" {
                 let file_name = field.file_name().unwrap_or_default().to_string();
 
+                if file_name == "" {
+                    return Err(Error::Static("No file name provided"));
+                }
+
                 let content_type = field.content_type().unwrap_or_default().to_string();
 
-                let data = field.bytes().await.map_err(|_| Error::Static("No field"))?;
+                let data = field.bytes().await.map_err(Error::MultiPartFormError)?;
 
                 let file_ext = file_name.split(".").last().unwrap_or_default().to_string();
+
+                if file_ext == "" {
+                    return Err(Error::Static("No file extension provided"));
+                }
 
                 if name == "logo" {
                     logo = Some(FileField {
