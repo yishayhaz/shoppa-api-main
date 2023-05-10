@@ -5,6 +5,7 @@ mod products;
 mod store;
 mod users;
 mod variants;
+mod analytics;
 
 use bson::{Bson, Document};
 pub use categories::*;
@@ -13,6 +14,7 @@ pub use products::*;
 pub use store::*;
 pub use users::*;
 pub use variants::*;
+pub use analytics::*;
 
 use crate::prelude::*;
 use futures_util::StreamExt;

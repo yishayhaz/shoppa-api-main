@@ -1,6 +1,6 @@
 use crate::{
     api::v1::middlewares::*,
-    db::inserts,
+    db::{inserts, queries},
     helpers::{cookies::create_cookie, types::Cookeys},
     prelude::{handlers::*, *},
 };
@@ -30,4 +30,12 @@ pub async fn add_new_visitor_to_counter(
     };
 
     Ok(ResponseBuilder::<u16>::success(None, None, None).into_response())
+}
+
+pub async fn get_views_count(
+    db: DBExtension,
+) -> HandlerResult {
+    let views_count: u64 = queries::get_views_count(&db).await?;
+
+    Ok(ResponseBuilder::<u64>::success(Some(views_count), None, None).into_response())
 }
