@@ -13,6 +13,10 @@ pub fn router() -> Router {
             "/:product_id/view",
             routing::put(manage::add_view_to_product),
         )
+        .route(
+            "/:product_id/upload-files",
+            routing::put(manage::upload_product_images),
+        )
         .route("/:product_id", routing::get(get::get_product))
         .route(
             "/autocomplete",
