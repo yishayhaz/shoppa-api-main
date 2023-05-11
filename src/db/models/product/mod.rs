@@ -49,7 +49,7 @@ pub struct ProductItem {
     // the same variants, the length of the variants field here need to be the same as the one in the parent product.
     pub variants: Vec<ItemVariants>,
     pub name: Option<String>,
-    pub images_refs: Vec<ObjectId>
+    pub images_refs: Vec<ObjectId>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -228,6 +228,7 @@ impl Product {
         in_storage: u64,
         new_item_variants: Vec<ItemVariants>,
         name: Option<String>,
+        images_refs: Vec<ObjectId>,
     ) -> Result<&ProductItem> {
         let product_variants_length = match &self.variants {
             RefrenceField::NotPopulated(variants) => variants.len(),
@@ -239,13 +240,25 @@ impl Product {
             return Err(Error::Static("TODO"));
         }
 
+        if images_refs.len() > self.images.len() {
+            // to many images
+            return Err(Error::Static("TODO"));
+        }
+
+        let images_ids = self.images.iter().map(|i| i.id.clone()).collect::<Vec<_>>();
+
+        if !images_refs.iter().all(|i| images_ids.contains(i)) {
+            // not all images are in the product
+            return Err(Error::Static("TODO"));
+        }
+
         // if there are no variants, we can only have one item
         if product_variants_length == 0 {
             if self.items.len() != 0 {
                 // already has the only variant possible
                 return Err(Error::Static("TODO"));
             }
-            let item = ProductItem::new(price, in_storage, vec![], name);
+            let item = ProductItem::new(price, in_storage, vec![], name, images_refs);
             self.items.push(item);
             return Ok(self.items.last().unwrap());
         }
@@ -285,7 +298,7 @@ impl Product {
             }
         }
 
-        let item = ProductItem::new(price, in_storage, new_item_variants, name);
+        let item = ProductItem::new(price, in_storage, new_item_variants, name, images_refs);
 
         self.items.push(item);
 
@@ -310,7 +323,13 @@ impl EmbeddedDocument for ProductItem {
 }
 
 impl ProductItem {
-    fn new(price: f64, in_storage: u64, variants: Vec<ItemVariants>, name: Option<String>) -> Self {
+    fn new(
+        price: f64,
+        in_storage: u64,
+        variants: Vec<ItemVariants>,
+        name: Option<String>,
+        images_refs: Vec<ObjectId>,
+    ) -> Self {
         Self {
             id: ObjectId::new(),
             created_at: chrono::Utc::now(),
@@ -319,7 +338,7 @@ impl ProductItem {
             in_storage,
             variants,
             name,
-            images_refs: vec![]
+            images_refs,
         }
     }
 }
