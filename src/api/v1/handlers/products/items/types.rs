@@ -11,4 +11,18 @@ pub struct AddProductItemPayload {
     pub in_storage: u64,
     pub variants: Vec<ItemVariants>,
     pub name: Option<String>,
+    // TODO impl
+    pub images_refs: Option<Vec<ObjectId>>,
+}
+
+
+#[derive(Deserialize, Validate)]
+pub struct UpdateProductItemPayload {
+    // the store will come from the product id in the url
+    #[validate(range(min = 13.98))]
+    pub price: f64,
+    pub in_storage: u64,
+    pub name: Option<String>,
+    // TODO impl
+    pub images_refs: Option<Vec<ObjectId>>,
 }

@@ -49,6 +49,7 @@ pub struct ProductItem {
     // the same variants, the length of the variants field here need to be the same as the one in the parent product.
     pub variants: Vec<ItemVariants>,
     pub name: Option<String>,
+    pub images_refs: Vec<ObjectId>
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -91,7 +92,7 @@ pub enum ProductSortBy {
     #[serde(alias = "date", alias = "da", alias = "d", alias = "Date")]
     Date,
     #[serde(alias = "relevance", alias = "rel", alias = "r", alias = "Relevance")]
-    Relevance
+    Relevance,
 }
 
 impl DBModel for Product {
@@ -100,7 +101,6 @@ impl DBModel for Product {
     }
 
     fn get_indexes() -> Vec<IndexModel> {
-
         let unique_index_options = IndexOptions::builder()
             .unique(true)
             .name(String::from("unique_product_for_store"))
@@ -115,7 +115,6 @@ impl DBModel for Product {
             .build();
 
         vec![uniqe_index]
-
     }
 
     db_model!(Product);
@@ -319,7 +318,8 @@ impl ProductItem {
             price,
             in_storage,
             variants,
-            name
+            name,
+            images_refs: vec![]
         }
     }
 }
