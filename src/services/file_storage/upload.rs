@@ -1,70 +1,86 @@
-use super::StorageClient;
 use super::keys;
+use super::StorageClient;
 use crate::helpers::env::ENV_VARS;
-use bytes::Bytes;
 use bson::oid::ObjectId;
+use bytes::Bytes;
 
-pub async fn upload_file(
-    storage_client: &StorageClient,
+pub struct Uploader<'a> {
     public: bool,
+    pub key: String,
+    content_type: &'a String,
     file: Bytes,
-    key: &String,
-    content_type: &String,
-) {
-    let acl = if public { "public-read" } else { "private" };
-
-    let p_o = storage_client
-        .put_object()
-        .bucket(ENV_VARS.BUCKET_NAME.clone())
-        .key(key)
-        .acl(acl.into())
-        .body(file.into())
-        .content_type(content_type);
-
-    let res = p_o.send().await;
-
-    tracing::info!("Upload result: {:?}", res);
 }
 
-pub async fn upload_product_image(
-    storage_client: &StorageClient,
+impl Uploader<'_> {
+    pub fn key(&self) -> &String {
+        &self.key
+    }
+
+    pub async fn fire(self, storage_client: &StorageClient) {
+        let acl = if self.public {
+            "public-read"
+        } else {
+            "private"
+        };
+
+        let p_o = storage_client
+            .put_object()
+            .bucket(ENV_VARS.BUCKET_NAME.clone())
+            .key(self.key)
+            .acl(acl.into())
+            .body(self.file.into())
+            .content_type(self.content_type);
+
+        let res = p_o.send().await;
+
+        tracing::info!("Upload result: {:?}", res);
+    }
+}
+
+pub fn upload_product_image<'a>(
     file: Bytes,
     // TODO create content type enum and a function to get the file extension
-    content_type: &String,
+    content_type: &'a String,
     product_id: &ObjectId,
-) {
-
+) -> Uploader<'a> {
     let key = keys::generate_product_image_key(product_id, content_type);
 
-    upload_file(storage_client, true, file, &key, content_type).await
+    Uploader {
+        public: true,
+        key,
+        content_type,
+        file,
+    }
 }
 
-pub async fn upload_store_logo(
-    storage_client: &StorageClient,
+pub fn upload_store_logo<'a>(
     file: Bytes,
-    content_type: &String,
+    content_type: &'a String,
     store_id: &ObjectId,
     file_extension: &String,
-) -> String {
-
+) -> Uploader<'a> {
     let key = keys::generate_store_logo_key(store_id, file_extension);
 
-    upload_file(storage_client, true, file, &key, content_type).await;
-
-    key
+    Uploader {
+        public: true,
+        key,
+        content_type,
+        file,
+    }
 }
 
-pub async fn upload_store_banner(
-    storage_client: &StorageClient,
+pub fn upload_store_banner<'a>(
     file: Bytes,
-    content_type: &String,
+    content_type: &'a String,
     store_id: &ObjectId,
     file_extension: &String,
-) -> String {
-
+) -> Uploader<'a> {
     let key = keys::generate_store_banner_key(store_id, file_extension);
 
-    upload_file(storage_client, true, file, &key, content_type).await;
-
-    key
+    Uploader {
+        public: true,
+        key,
+        content_type,
+        file,
+    }
 }

@@ -46,7 +46,7 @@ pub async fn get_store_by_id(
 
 pub async fn get_stores_count(db: DBExtension, _: OnlyInDev) -> HandlerResult {
     let count = queries::get_stores_count(&db).await?;
-
+    
     Ok(ResponseBuilder::success(Some(count), None, None).into_response())
 }
 
@@ -71,43 +71,45 @@ pub async fn update_store(
     // TODO in the future, first update the db with the new data using a transaction and then upload the files
     // TODO if the upload fails, rollback the transaction
     if let Some(logo) = payload.logo {
-        let res = file_storage::upload_store_logo(
-            &storage_client,
+        let upload = file_storage::upload_store_logo(
             logo.file,
             &logo.content_type,
             &store_id,
             &logo.file_extension,
-        )
-        .await;
-
+        );
+        
+        
         logo_doc = Some(FileDocument::new(
             true,
             logo.file_name,
-            res,
+            upload.key.clone(),
             logo.size as u64,
-            logo.content_type,
+            logo.content_type.clone(),
             FileTypes::Image,
-        ))
+        ));
+
+        upload.fire(&storage_client).await;
     }
 
     if let Some(banner) = payload.banner {
-        let res = file_storage::upload_store_banner(
-            &storage_client,
+        let upload = file_storage::upload_store_banner(
             banner.file,
             &banner.content_type,
             &store_id,
             &banner.file_extension,
-        )
-        .await;
+        );
 
+        
         banner_doc = Some(FileDocument::new(
             true,
             banner.file_name,
-            res,
+            upload.key.clone(),
             banner.size as u64,
-            banner.content_type,
+            banner.content_type.clone(),
             FileTypes::Image,
-        ))
+        ));
+
+        upload.fire(&storage_client).await;
     }
 
     updates::update_store(&db, &store_id, logo_doc, banner_doc, None).await?;

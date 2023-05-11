@@ -4,7 +4,7 @@ use crate::{
     db::{inserts, inserts::InsertDocumentErrors, queries, updates},
     helpers::extractors::MultipartFrom,
     prelude::{handlers::*, *},
-    services::file_storage::upload_file,
+    services::file_storage,
 };
 
 pub async fn create_new_product(
@@ -77,18 +77,4 @@ pub async fn add_view_to_product(
     }
 
     Ok(ResponseBuilder::not_found_error("product", &product_id).into_response())
-}
-
-pub async fn test_route(
-    storage_client: StorgeClientExtension,
-    MultipartFrom(payload): MultipartFrom<UploadPayload>,
-) {
-    let _ = upload_file(
-        &storage_client,
-        true,
-        payload.file.file,
-        &payload.file.file_name,
-        &payload.file.content_type,
-    )
-    .await;
 }

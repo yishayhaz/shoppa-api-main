@@ -104,9 +104,10 @@ pub fn get_cors_layer() -> CorsLayer {
         .allow_credentials(true)
         .allow_origin(AllowOrigin::predicate(
             |origin: &HeaderValue, _request_parts: &RequestParts| {
-                origin
-                    .as_bytes()
-                    .ends_with(ENV_VARS.CORS_DOMAIN.as_bytes())
+                if ENV_VARS.is_production() {
+                    return origin.as_bytes().ends_with(ENV_VARS.CORS_DOMAIN.as_bytes());
+                }
+                true
             },
         ))
         .allow_headers(AllowHeaders::list(headers))
