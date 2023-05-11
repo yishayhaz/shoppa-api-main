@@ -230,6 +230,7 @@ pub async fn get_one_product_for_extarnel(
                 "analytics.views",
                 "items",
                 "variants",
+                "images"
             ],
             None,
         ),
