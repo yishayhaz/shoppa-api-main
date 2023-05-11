@@ -40,14 +40,14 @@ pub struct GetProductsCountQueryParams {
 }
 
 #[derive(Debug, Clone, Validate)]
-pub struct UploadPayload {
-    pub file: FileField,
+pub struct UploadProductImagesPayload {
+    pub files: Vec<FileField>,
 }
 
 #[async_trait]
-impl FromMultipart for UploadPayload {
+impl FromMultipart for UploadProductImagesPayload {
     async fn from_multipart(mut multipart: Multipart) -> Result<Self> {
-        let mut file: Option<FileField> = None;
+        let mut files: Vec<FileField> = vec![];
 
         // TODO improve
         while let Some(field) = multipart
@@ -57,25 +57,14 @@ impl FromMultipart for UploadPayload {
         {
             let name = field.name().unwrap_or_default().to_string();
 
-            if name == "file" {
+            if name == "files" {
                 let file_name = field.file_name().unwrap_or_default().to_string();
-                tracing::info!("File name: {:?}", &file_name);
                 let content_type = field.content_type().unwrap().to_string();
-                tracing::info!("Content type: {:?}", &content_type);
                 let data = field.bytes().await.unwrap();
-                tracing::info!("File size: {:?}", &data.len());
 
-                file = Some(FileField {
-                    file_name,
-                    content_type,
-                    size: data.len(),
-                    file: data,
-                    file_extension: String::from("TODO"),
-                });
+                files.push(FileField::new(file_name, content_type, data));
             }
         }
-        Ok(Self {
-            file: file.unwrap(),
-        })
+        Ok(Self { files })
     }
 }

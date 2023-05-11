@@ -42,8 +42,9 @@ pub fn upload_product_image<'a>(
     // TODO create content type enum and a function to get the file extension
     content_type: &'a String,
     product_id: &ObjectId,
+    file_extension: &String,
 ) -> Uploader<'a> {
-    let key = keys::generate_product_image_key(product_id, content_type);
+    let key = keys::generate_product_image_key(product_id, file_extension);
 
     Uploader {
         public: true,

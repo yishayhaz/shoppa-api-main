@@ -32,6 +32,25 @@ pub struct FileField {
     pub size: usize,
 }
 
+impl FileField {
+    pub fn new(file_name: String, content_type: String, file: Bytes) -> Self {
+        let size = file.len();
+        // TODO validate file extension
+        let file_extension = match file_name.split('.').last() {
+            Some(ext) => ext.to_string(),
+            None => String::from(""),
+        };
+
+        Self {
+            file_name,
+            content_type,
+            file,
+            file_extension,
+            size,
+        }
+    }
+}
+
 pub enum FormValidationError {
     FormError(FormRejection),
     FormValidation(ValidationErrors),

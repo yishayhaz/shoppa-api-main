@@ -1,10 +1,15 @@
-use super::types::{CreateProductPayload, UploadPayload};
+use super::types::{CreateProductPayload, UploadProductImagesPayload};
 use crate::{
     api::v1::middlewares::OnlyInDev,
-    db::{inserts, inserts::InsertDocumentErrors, queries, updates},
+    db::{
+        self, inserts,
+        inserts::InsertDocumentErrors,
+        models::{FileDocument, FileTypes},
+        queries, updates,
+    },
     helpers::extractors::MultipartFrom,
     prelude::{handlers::*, *},
-    services::file_storage,
+    services::file_storage::upload_product_image,
 };
 
 pub async fn create_new_product(
@@ -64,7 +69,6 @@ pub async fn create_new_product(
 
 pub async fn add_view_to_product(
     db: DBExtension,
-    _: OnlyInDev,
     Path(product_id): Path<ObjectId>,
 ) -> HandlerResult {
     let product = updates::add_view_to_product(&db, &product_id, None).await?;
@@ -77,4 +81,48 @@ pub async fn add_view_to_product(
     }
 
     Ok(ResponseBuilder::not_found_error("product", &product_id).into_response())
+}
+
+pub async fn upload_product_images(
+    db: DBExtension,
+    storage_client: StorgeClientExtension,
+    Path(product_id): Path<ObjectId>,
+    _: OnlyInDev,
+    MultipartFrom(payload): MultipartFrom<UploadProductImagesPayload>,
+) -> HandlerResult {
+    let product = queries::get_product_by_id(&db, &product_id, None, None).await?;
+
+    if product.is_none() {
+        return Ok(ResponseBuilder::<u16>::success(None, None, None).into_response());
+    }
+
+    let product = product.unwrap();
+
+    for image in payload.files {
+        let upload = upload_product_image(
+            image.file,
+            &image.content_type,
+            &product_id,
+            &image.file_extension,
+        );
+
+        updates::add_image_to_product(
+            &db,
+            &product_id,
+            FileDocument::new(
+                true,
+                image.file_name,
+                upload.key.clone(),
+                image.size as u64,
+                image.content_type.clone(),
+                FileTypes::Image,
+            ),
+            None,
+        )
+        .await?;
+
+        upload.fire(&storage_client).await;
+    }
+
+    Ok(ResponseBuilder::success(Some(product), None, None).into_response())
 }

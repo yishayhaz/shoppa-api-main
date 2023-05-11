@@ -1,4 +1,8 @@
-use crate::{db::models::{self, EmbeddedDocument}, helpers::types::DBExtension, prelude::*};
+use crate::{
+    db::models::{self, EmbeddedDocument, FileDocument},
+    helpers::types::DBExtension,
+    prelude::*,
+};
 use bson::{doc, oid::ObjectId, Document};
 use mongodb::options::FindOneAndUpdateOptions;
 
@@ -38,7 +42,6 @@ pub async fn add_product_item(
     update_product(db, filters, update, option).await
 }
 
-
 pub async fn add_view_to_product(
     db: &DBExtension,
     product_id: &ObjectId,
@@ -51,6 +54,25 @@ pub async fn add_view_to_product(
     let update = doc! {
         "$inc": {
             "analytics.views": 1
+        }
+    };
+
+    update_product(db, filters, update, option).await
+}
+
+pub async fn add_image_to_product(
+    db: &DBExtension,
+    product_id: &ObjectId,
+    image: FileDocument,
+    option: Option<FindOneAndUpdateOptions>,
+) -> UpdateProductResult {
+    let filters = doc! {
+        "_id": product_id
+    };
+
+    let update = doc! {
+        "$push": {
+            "images": image.into_bson()?
         }
     };
 
