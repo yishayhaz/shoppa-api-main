@@ -11,6 +11,7 @@ pub struct ProductFields {
     pub variants: &'static str,
     pub items: &'static str,
     pub analytics: &'static str,
+    pub images: &'static str,
 }
 
 pub struct StoreFields {
@@ -57,6 +58,7 @@ pub const FIELDS: ProductFields = ProductFields {
     variants: "variants",
     items: "items",
     analytics: "analytics",
+    images: "images",
 };
 
 const CATEGORIES_FIELDS: CategoriesFields = CategoriesFields {

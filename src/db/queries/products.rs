@@ -159,10 +159,11 @@ pub async fn get_products_for_extarnel(
                 Product::fields().brand,
                 Product::fields().name,
                 Product::fields().keywords,
-                "analytics",
+                Product::fields().analytics,
                 Product::fields().categories,
                 Product::fields().created_at,
                 Product::fields().store,
+                Product::fields().images
             ],
             None,
         ),
