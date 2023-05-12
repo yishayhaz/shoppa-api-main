@@ -1,8 +1,9 @@
 use crate::{
-    helpers::extractors::{FileFieldstr, FromMultipart},
+    helpers::{extractors::{FileFieldstr, FromMultipart}, validators::image_file_field_validator, MAX_IMAGE_SIZE},
     prelude::{types::*, *},
 };
 use axum::{async_trait, extract::Multipart};
+use validator::Validate;
 // use bytes::Bytes;
 
 #[derive(Deserialize, Serialize, Debug, Clone, Validate)]
@@ -41,6 +42,7 @@ pub struct GetProductsCountQueryParams {
 
 #[derive(Debug, Clone, Validate)]
 pub struct UploadProductImagesPayload {
+    // #[validate(length(max = "MAX_IMAGE_SIZE"), custom = "image_file_field_validator")]
     pub files: Vec<FileFieldstr>,
 }
 

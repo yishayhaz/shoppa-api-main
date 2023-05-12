@@ -1,6 +1,7 @@
 use crate::helpers::{
     extractors::{FileFieldstr, FromMultipart},
     MAX_IMAGE_SIZE,
+    validators::image_file_field_validator
 };
 use crate::prelude::{types::*, *};
 use axum::{async_trait, extract::Multipart};
@@ -22,9 +23,9 @@ pub struct SearchStoresQueryParams {
 
 #[derive(Validate)]
 pub struct UpdateStorePayload {
-    #[validate(length(max = "MAX_IMAGE_SIZE"))]
+    #[validate(length(max = "MAX_IMAGE_SIZE"), custom = "image_file_field_validator")]
     pub logo: Option<FileFieldstr>,
-    #[validate(length(max = "MAX_IMAGE_SIZE"))]
+    #[validate(length(max = "MAX_IMAGE_SIZE"), custom = "image_file_field_validator")]
     pub banner: Option<FileFieldstr>,
 }
 

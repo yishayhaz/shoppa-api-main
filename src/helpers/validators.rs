@@ -1,4 +1,5 @@
 use super::types::error_code;
+use crate::helpers::extractors::FileFieldstr;
 use std::borrow::Cow;
 use validator::ValidationError;
 
@@ -67,6 +68,14 @@ pub fn valid_username(username: &str) -> bool {
     true
 }
 
+pub fn valid_image_content_type(content_type: &String) -> bool {
+    if !content_type.starts_with("image/") {
+        return false;
+    }
+
+    true
+}
+
 pub fn phone_number_validator(phone_number: &str) -> Result<(), ValidationError> {
     if !valid_phone_number(phone_number) {
         let mut error = ValidationError::new(error_code::INVALID_PHONE_NUMBER);
@@ -94,6 +103,17 @@ pub fn username_validator(username: &str) -> Result<(), ValidationError> {
         let mut error = ValidationError::new(error_code::INVALID_USERNAME);
 
         error.message = Some(Cow::from("Invalid username, must be between 5 and 64 characters long, contain at least two words, each word must be at least 2 characters long and contain only letters"));
+
+        return Err(error);
+    }
+    Ok(())
+}
+
+pub fn image_file_field_validator(file: &FileFieldstr) -> Result<(), ValidationError> {
+    if !valid_image_content_type(&file.content_type) {
+        let mut error = ValidationError::new(error_code::INVALID_IMAGE_CONTENT_TYPE);
+
+        error.message = Some(Cow::from("Invalid image content type, must be image/*"));
 
         return Err(error);
     }
