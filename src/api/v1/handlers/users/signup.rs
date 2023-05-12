@@ -1,7 +1,7 @@
 use super::types::UserRegisterPayload;
 use crate::{
     api::v1::middlewares::*,
-    db::{inserts, inserts::InsertDocumentErrors, queries, updates},
+    db::{inserts, queries, updates},
     helpers::{cookies::set_access_cookie, security},
     prelude::{handlers::*, *},
 };
@@ -50,15 +50,7 @@ pub async fn signup(
         }
     }
 
-    let user = match inserts::new_level_2_user(&db, payload.email, password, payload.name).await {
-        Ok(v) => v,
-        Err(e) => match e {
-            InsertDocumentErrors::UnknownError => {
-                return Ok(ResponseBuilder::<u16>::error("", None, None, None).into_response());
-            }
-            _ => return Ok(e.into_response()),
-        },
-    };
+    let user = inserts::new_level_2_user(&db, payload.email, password, payload.name).await?;
 
     set_access_cookie(&cookies, &user)?;
 

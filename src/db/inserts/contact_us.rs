@@ -1,7 +1,10 @@
 use super::prelude::*;
-use crate::db::models::{ContactUsForm, ContactUsReason};
+use crate::{
+    db::models::{ContactUsForm, ContactUsReason},
+    prelude::*,
+};
 
-type InsertContactUsFormResult = Result<ContactUsForm, InsertDocumentErrors>;
+type InsertContactUsFormResult = Result<ContactUsForm>;
 
 pub async fn new_contact_us_request(
     db: &DBExtension,
@@ -11,15 +14,16 @@ pub async fn new_contact_us_request(
 ) -> InsertContactUsFormResult {
     let mut contact_us = ContactUsForm::new(email, message, reason);
 
-    let res = match db.contact_us_form.insert_one(&contact_us, None).await {
-        Ok(v) => v,
-        Err(err) => return Err(extract_insert_document_error(*err.kind)),
-    };
+    let res = db
+        .contact_us_form
+        .insert_one(&contact_us, None)
+        .await
+        .map_err(|e| Error::DBError(("contact_us_form", e)))?;
 
     let id = match res.inserted_id.as_object_id() {
         Some(obi) => obi,
         None => {
-            return Err(InsertDocumentErrors::UnknownError);
+            return Err(Error::Static("TODO"));
         }
     };
 

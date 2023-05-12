@@ -1,4 +1,3 @@
-pub use super::{extract_insert_document_error, InsertDocumentErrors};
 pub use crate::{
     db::models::{DBModel, EmbeddedDocument},
     helpers::types::DBExtension,

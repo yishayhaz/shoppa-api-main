@@ -1,7 +1,7 @@
 use super::prelude::*;
-use crate::db::models::NewsLetterSubscriber;
+use crate::{db::models::NewsLetterSubscriber, prelude::*};
 
-type InsertContactUsFormResult = Result<NewsLetterSubscriber, InsertDocumentErrors>;
+type InsertContactUsFormResult = Result<NewsLetterSubscriber>;
 
 pub async fn new_news_letter_subscriber(
     db: &DBExtension,
@@ -9,19 +9,16 @@ pub async fn new_news_letter_subscriber(
 ) -> InsertContactUsFormResult {
     let mut news_letter_subscriber = NewsLetterSubscriber::new(email);
 
-    let res = match db
+    let res = db
         .news_letter_subscribers
         .insert_one(&news_letter_subscriber, None)
         .await
-    {
-        Ok(v) => v,
-        Err(err) => return Err(extract_insert_document_error(*err.kind)),
-    };
+        .map_err(|e| Error::DBError(("news_letter_subscribers", e)))?;
 
     let id = match res.inserted_id.as_object_id() {
         Some(obi) => obi,
         None => {
-            return Err(InsertDocumentErrors::UnknownError);
+            return Err(Error::Static("TODO"));
         }
     };
 

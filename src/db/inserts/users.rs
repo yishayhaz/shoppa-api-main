@@ -1,7 +1,7 @@
 use super::prelude::*;
-use crate::db::models::User;
+use crate::{db::models::User, prelude::*};
 
-type InsertUserResult = Result<User, InsertDocumentErrors>;
+type InsertUserResult = Result<User>;
 
 pub async fn new_level_2_user(
     db: &DBExtension,
@@ -11,15 +11,16 @@ pub async fn new_level_2_user(
 ) -> InsertUserResult {
     let mut user = User::new(Some(email), Some(password), Some(name), 2);
 
-    let res = match db.users.insert_one(&user, None).await {
-        Ok(v) => v,
-        Err(err) => return Err(extract_insert_document_error(*err.kind)),
-    };
+    let res = db
+        .users
+        .insert_one(&user, None)
+        .await
+        .map_err(|e| Error::DBError(("users", e)))?;
 
     let id = match res.inserted_id.as_object_id() {
         Some(obi) => obi,
         None => {
-            return Err(InsertDocumentErrors::UnknownError);
+            return Err(Error::Static("TODO"));
         }
     };
 

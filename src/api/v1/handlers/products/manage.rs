@@ -2,8 +2,7 @@ use super::types::{CreateProductPayload, UploadProductImagesPayload};
 use crate::{
     api::v1::middlewares::OnlyInDev,
     db::{
-        self, inserts,
-        inserts::InsertDocumentErrors,
+        inserts,
         models::{FileDocument, FileTypes},
         queries, updates,
     },
@@ -54,17 +53,9 @@ pub async fn create_new_product(
         inner_category.categories.get(0).unwrap(),
         payload.variants.unwrap_or(vec![]),
     )
-    .await;
+    .await?;
 
-    match product {
-        Ok(v) => Ok(ResponseBuilder::success(Some(v), None, None).into_response()),
-        Err(e) => match e {
-            InsertDocumentErrors::UnknownError => {
-                return Ok(ResponseBuilder::<u16>::error("", None, None, None).into_response());
-            }
-            _ => return Ok(e.into_response()),
-        },
-    }
+    Ok(ResponseBuilder::success(Some(product), None, None).into_response())
 }
 
 pub async fn add_view_to_product(

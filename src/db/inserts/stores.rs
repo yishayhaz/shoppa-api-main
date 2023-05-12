@@ -1,7 +1,7 @@
 use super::prelude::*;
-use crate::db::models::Store;
+use crate::{db::models::Store, prelude::*};
 
-type InsertStoreResult = Result<Store, InsertDocumentErrors>;
+type InsertStoreResult = Result<Store>;
 
 pub async fn new_store(
     db: &DBExtension,
@@ -9,34 +9,23 @@ pub async fn new_store(
     description: String,
     email: String,
     location: String,
-) -> InsertStoreResult{
+) -> InsertStoreResult {
+    let mut store = Store::new(name, description, email, location);
 
-
-    let mut store = Store::new(
-        name,
-        description,
-        email,
-        location
-    );
-
-    let res = match db
+    let res = db
         .stores
         .insert_one(&store, None)
         .await
-    {
-        Ok(v) => v,
-        Err(err) => return Err(extract_insert_document_error(*err.kind)),
-    };
+        .map_err(|e| Error::DBError(("stores", e)))?;
 
     let id = match res.inserted_id.as_object_id() {
         Some(obi) => obi,
         None => {
-            return Err(InsertDocumentErrors::UnknownError);
+            return Err(Error::Static("TODO"));
         }
     };
 
     store.update_id(id);
 
     Ok(store)
-
 }

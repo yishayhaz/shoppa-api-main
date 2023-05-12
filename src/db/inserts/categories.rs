@@ -1,9 +1,9 @@
 use super::prelude::*;
-use crate::db::models::{Categories, InnerCategories, InnerInnerCategories};
+use crate::{db::models::{Categories, InnerCategories, InnerInnerCategories}, prelude::*};
 
-type InsertCategoriesResult = Result<Categories, InsertDocumentErrors>;
-type InsertInnerCategoriesResult = Result<InnerCategories, InsertDocumentErrors>;
-type InsertInnerInnerCategoriesResult = Result<InnerInnerCategories, InsertDocumentErrors>;
+type InsertCategoriesResult = Result<Categories>;
+type InsertInnerCategoriesResult = Result<InnerCategories>;
+type InsertInnerInnerCategoriesResult = Result<InnerInnerCategories>;
 
 pub async fn new_root_catagorie(
     db: &DBExtension,
@@ -12,15 +12,14 @@ pub async fn new_root_catagorie(
 ) -> InsertCategoriesResult {
     let mut catagorie = Categories::new(name, vec![], variants_ids);
 
-    let res = match db.categories.insert_one(&catagorie, None).await {
-        Ok(v) => v,
-        Err(err) => return Err(extract_insert_document_error(*err.kind)),
-    };
+    let res = db.categories.insert_one(&catagorie, None).await.map_err(|e| {
+        Error::DBError(("categories", e))
+    })?;
 
     let id = match res.inserted_id.as_object_id() {
         Some(obi) => obi,
         None => {
-            return Err(InsertDocumentErrors::UnknownError);
+            return Err(Error::Static("TODO"));
         }
     };
 
@@ -39,11 +38,8 @@ pub async fn new_inner_catagorie(
 
     let catgories_fields = Categories::fields();
 
-    let inner_bson = match inner_catagorie.into_bson() {
-        Ok(v) => v,
-        Err(_) => return Err(InsertDocumentErrors::BsonConversionError),
-    };
-
+    let inner_bson = inner_catagorie.into_bson()?;
+    // TODO handle error
     let _ = db
         .categories
         .update_one(
@@ -71,11 +67,8 @@ pub async fn new_inner_inner_catagorie(
 
     let catgories_fields = Categories::fields();
 
-    let inner_bson = match inner_inner_catagorie.into_bson() {
-        Ok(v) => v,
-        Err(_) => return Err(InsertDocumentErrors::BsonConversionError),
-    };
-
+    let inner_bson = inner_inner_catagorie.into_bson()?;
+    // TODO handle error
     let _ = db
         .categories
         .update_one(
