@@ -6,7 +6,7 @@ use crate::{
         models::{FileDocument, FileTypes},
         queries, updates,
     },
-    helpers::extractors::MultipartFrom,
+    helpers::extractors::{MultipartFormWithValidation, MultipartFrom},
     prelude::{handlers::*, *},
     services::file_storage,
 };
@@ -46,7 +46,7 @@ pub async fn get_store_by_id(
 
 pub async fn get_stores_count(db: DBExtension, _: OnlyInDev) -> HandlerResult {
     let count = queries::get_stores_count(&db).await?;
-    
+
     Ok(ResponseBuilder::success(Some(count), None, None).into_response())
 }
 
@@ -55,7 +55,7 @@ pub async fn update_store(
     storage_client: StorgeClientExtension,
     _: OnlyInDev,
     Path(store_id): Path<ObjectId>,
-    MultipartFrom(payload): MultipartFrom<types::UpdateStorePayload>,
+    MultipartFormWithValidation(payload): MultipartFormWithValidation<types::UpdateStorePayload>,
 ) -> HandlerResult {
     let store = queries::get_store_by_id(&db, &store_id).await?;
 
@@ -77,8 +77,7 @@ pub async fn update_store(
             &store_id,
             &logo.file_extension,
         );
-        
-        
+
         logo_doc = Some(FileDocument::new(
             true,
             logo.file_name,
@@ -99,7 +98,6 @@ pub async fn update_store(
             &banner.file_extension,
         );
 
-        
         banner_doc = Some(FileDocument::new(
             true,
             banner.file_name,

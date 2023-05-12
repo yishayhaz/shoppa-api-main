@@ -9,7 +9,7 @@ use axum::{
 };
 use bytes::Bytes;
 use serde::de::DeserializeOwned;
-use validator::Validate;
+use validator::{HasLen, Validate};
 
 #[async_trait]
 pub trait FromMultipart: Sized + Send + Sync {
@@ -22,8 +22,10 @@ pub struct MultipartFormWithValidation<T: Validate + FromMultipart>(pub T);
 
 pub struct FormWithValidation<T: Validate>(pub T);
 
-#[derive(Debug, Clone)]
-pub struct FileField {
+// The str in the name is to allow the use of Validate(Length(min = 8)) on the file name
+// I need to open a ticket on github to allow any struct that impl HasLen to be used with Validate length
+#[derive(Debug, Clone, Validate)]
+pub struct FileFieldstr {
     pub file_name: String,
     pub content_type: String,
     pub file: Bytes,
@@ -31,7 +33,7 @@ pub struct FileField {
     pub size: usize,
 }
 
-impl FileField {
+impl FileFieldstr {
     pub fn new(file_name: String, content_type: String, file: Bytes) -> Self {
         let size = file.len();
         // TODO validate file extension
@@ -47,6 +49,12 @@ impl FileField {
             file_extension,
             size,
         }
+    }
+}
+
+impl HasLen for &FileFieldstr {
+    fn length(&self) -> u64 {
+        self.size as u64
     }
 }
 
@@ -126,4 +134,28 @@ where
 
         Ok(MultipartFormWithValidation(data))
     }
+}
+
+use serde::Serialize;
+
+impl Serialize for FileFieldstr {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::ser::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let mut state = serializer.serialize_struct("FileFieldstr", 5)?;
+        state.serialize_field("file_name", &self.file_name)?;
+        state.serialize_field("content_type", &self.content_type)?;
+        state.serialize_field("file_extension", &self.file_extension)?;
+        state.serialize_field("size", &self.size)?;
+        state.serialize_field("file", "file")?;
+        state.end()
+    }
+}
+
+#[derive(Validate, Serialize)]
+struct Test2 {
+    #[validate(length(min = 1))]
+    test: FileFieldstr,
 }

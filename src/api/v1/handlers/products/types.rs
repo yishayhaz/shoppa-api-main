@@ -1,5 +1,5 @@
 use crate::{
-    helpers::extractors::{FileField, FromMultipart},
+    helpers::extractors::{FileFieldstr, FromMultipart},
     prelude::{types::*, *},
 };
 use axum::{async_trait, extract::Multipart};
@@ -41,13 +41,13 @@ pub struct GetProductsCountQueryParams {
 
 #[derive(Debug, Clone, Validate)]
 pub struct UploadProductImagesPayload {
-    pub files: Vec<FileField>,
+    pub files: Vec<FileFieldstr>,
 }
 
 #[async_trait]
 impl FromMultipart for UploadProductImagesPayload {
     async fn from_multipart(mut multipart: Multipart) -> Result<Self> {
-        let mut files: Vec<FileField> = vec![];
+        let mut files: Vec<FileFieldstr> = vec![];
 
         // TODO improve
         while let Some(field) = multipart
@@ -62,7 +62,7 @@ impl FromMultipart for UploadProductImagesPayload {
                 let content_type = field.content_type().unwrap().to_string();
                 let data = field.bytes().await.unwrap();
 
-                files.push(FileField::new(file_name, content_type, data));
+                files.push(FileFieldstr::new(file_name, content_type, data));
             }
         }
         Ok(Self { files })

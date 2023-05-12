@@ -1,7 +1,9 @@
-use crate::helpers::extractors::{FileField, FromMultipart};
+use crate::helpers::{
+    extractors::{FileFieldstr, FromMultipart},
+    MAX_IMAGE_SIZE,
+};
 use crate::prelude::{types::*, *};
 use axum::{async_trait, extract::Multipart};
-use validator::HasLen;
 
 #[derive(Debug, Validate, Deserialize, Serialize)]
 pub struct CreateStorePayload {
@@ -20,16 +22,17 @@ pub struct SearchStoresQueryParams {
 
 #[derive(Validate)]
 pub struct UpdateStorePayload {
-    pub logo: Option<FileField>,
-    pub banner: Option<FileField>,
+    #[validate(length(max = "MAX_IMAGE_SIZE"))]
+    pub logo: Option<FileFieldstr>,
+    #[validate(length(max = "MAX_IMAGE_SIZE"))]
+    pub banner: Option<FileFieldstr>,
 }
-
 
 #[async_trait]
 impl FromMultipart for UpdateStorePayload {
     async fn from_multipart(mut multipart: Multipart) -> Result<Self> {
-        let mut logo: Option<FileField> = None;
-        let mut banner: Option<FileField> = None;
+        let mut logo: Option<FileFieldstr> = None;
+        let mut banner: Option<FileFieldstr> = None;
 
         let mut data_provided: bool = false;
 
@@ -63,7 +66,7 @@ impl FromMultipart for UpdateStorePayload {
                 }
 
                 if name == "logo" {
-                    logo = Some(FileField {
+                    logo = Some(FileFieldstr {
                         file_name,
                         content_type,
                         size: data.len(),
@@ -71,7 +74,7 @@ impl FromMultipart for UpdateStorePayload {
                         file_extension: file_ext,
                     });
                 } else {
-                    banner = Some(FileField {
+                    banner = Some(FileFieldstr {
                         file_name,
                         content_type,
                         size: data.len(),
