@@ -6,7 +6,7 @@ use crate::{
         models::{FileDocument, FileTypes},
         queries, updates,
     },
-    helpers::extractors::{MultipartFormWithValidation, MultipartFrom},
+    helpers::extractors::MultipartFormWithValidation,
     prelude::{handlers::*, *},
     services::file_storage,
 };

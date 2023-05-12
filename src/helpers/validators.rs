@@ -1,5 +1,4 @@
 use super::types::error_code;
-use crate::helpers::extractors::FileFieldstr;
 use std::borrow::Cow;
 use validator::ValidationError;
 
@@ -100,8 +99,3 @@ pub fn username_validator(username: &str) -> Result<(), ValidationError> {
     }
     Ok(())
 }
-
-// pub fn file_field_validator(value: &FileFieldstr, size: usize, type_: String) -> Result<(), ValidationError> {
-
-//     Ok(())
-// }

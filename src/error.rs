@@ -1,9 +1,13 @@
 use crate::helpers::types::ResponseBuilder;
-use axum::extract::{multipart::MultipartError, rejection::{FormRejection, JsonRejection}};
+use axum::extract::{
+    multipart::MultipartError,
+    rejection::{FormRejection, JsonRejection},
+};
 use axum::response::{IntoResponse, Response};
 use mongodb::error::{ErrorKind, WriteFailure};
 use validator::ValidationErrors;
 // Main Crate Error
+use std::error::Error as StdError;
 
 #[derive(Debug)]
 pub enum Error {
@@ -93,13 +97,16 @@ impl IntoResponse for Error {
             Self::StructValidation(e) => {
                 ResponseBuilder::validation_error(Some(e), None).into_response()
             }
-            Self::MultiPartFormError(e) => ResponseBuilder::error(
-                "",
-                Some(e.to_string().as_str()),
-                Some("MultiPartForm Error"),
-                Some(500),
-            )
-            .into_response(),
+            Self::MultiPartFormError(e) => {
+                let e = e.source().unwrap_or(&e);
+                return ResponseBuilder::error(
+                    "",
+                    Some(e.to_string().as_str()),
+                    Some("MultiPartForm Error"),
+                    Some(500),
+                )
+                .into_response();
+            }
             Self::FileUploadError(e) => ResponseBuilder::error(
                 "",
                 Some(e.to_string().as_str()),
@@ -135,14 +142,13 @@ impl IntoResponse for Error {
                     )
                     .into_response(),
                 }
-            },
+            }
             Self::JsonError(e) => {
                 match e {
-                    JsonRejection::BytesRejection(e) => ResponseBuilder::validation_error(
-                        Some(e.to_string()),
-                        Some("bytes error"),
-                    )
-                    .into_response(),
+                    JsonRejection::BytesRejection(e) => {
+                        ResponseBuilder::validation_error(Some(e.to_string()), Some("bytes error"))
+                            .into_response()
+                    }
                     JsonRejection::JsonSyntaxError(e) => ResponseBuilder::validation_error(
                         Some(e.to_string()),
                         Some("deserialize error"),
@@ -153,11 +159,10 @@ impl IntoResponse for Error {
                         Some("content type error"),
                     )
                     .into_response(),
-                    JsonRejection::JsonDataError(e) => ResponseBuilder::validation_error(
-                        Some(e.to_string()),
-                        Some("Invalid data"),
-                    )
-                    .into_response(),
+                    JsonRejection::JsonDataError(e) => {
+                        ResponseBuilder::validation_error(Some(e.to_string()), Some("Invalid data"))
+                            .into_response()
+                    }
                     _ => ResponseBuilder::error(
                         // TODO add error code here
                         "",
@@ -165,7 +170,7 @@ impl IntoResponse for Error {
                         Some("unknown error"),
                         Some(500),
                     )
-                    .into_response()
+                    .into_response(),
                 }
             }
         }
