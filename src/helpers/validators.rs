@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 use super::types::error_code;
 use validator::ValidationError;
+use crate::helpers::extractors::FileField;
 
 const MAX_USERNAME_LENGTH: usize = 64;
 // Two words, 2 letters each, 1 space in between
@@ -99,3 +100,8 @@ pub fn username_validator(username: &str) -> Result<(), ValidationError> {
     }
     Ok(())
 }
+
+// pub fn file_field_validator(value: &FileField, size: usize, type_: String) -> Result<(), ValidationError> {
+    
+//     Ok(())
+// }

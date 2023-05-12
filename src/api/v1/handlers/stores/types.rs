@@ -1,6 +1,7 @@
 use crate::helpers::extractors::{FileField, FromMultipart};
 use crate::prelude::{types::*, *};
 use axum::{async_trait, extract::Multipart};
+use validator::HasLen;
 
 #[derive(Debug, Validate, Deserialize, Serialize)]
 pub struct CreateStorePayload {
@@ -17,10 +18,12 @@ pub struct SearchStoresQueryParams {
     pub free_text: Option<String>,
 }
 
+#[derive(Validate)]
 pub struct UpdateStorePayload {
     pub logo: Option<FileField>,
     pub banner: Option<FileField>,
 }
+
 
 #[async_trait]
 impl FromMultipart for UpdateStorePayload {

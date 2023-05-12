@@ -1,5 +1,5 @@
 use crate::helpers::types::ResponseBuilder;
-use axum::extract::multipart::MultipartError;
+use axum::extract::{multipart::MultipartError, rejection::{FormRejection, JsonRejection}};
 use axum::response::{IntoResponse, Response};
 use mongodb::error::{ErrorKind, WriteFailure};
 use validator::ValidationErrors;
@@ -19,6 +19,8 @@ pub enum Error {
     Serilaztion,
     StructValidation(ValidationErrors),
     MultiPartFormError(MultipartError),
+    FormError(FormRejection),
+    JsonError(JsonRejection),
     FileUploadError(aws_sdk_s3::error::SdkError<aws_sdk_s3::operation::put_object::PutObjectError>),
 }
 
@@ -105,6 +107,67 @@ impl IntoResponse for Error {
                 Some(500),
             )
             .into_response(),
+            Self::FormError(e) => {
+                match e {
+                    FormRejection::BytesRejection(e) => {
+                        ResponseBuilder::validation_error(Some(e.to_string()), Some("bytes error"))
+                            .into_response()
+                    }
+                    FormRejection::InvalidFormContentType(e) => ResponseBuilder::validation_error(
+                        Some(e.to_string()),
+                        Some("content type error"),
+                    )
+                    .into_response(),
+                    FormRejection::FailedToDeserializeForm(e) => {
+                        ResponseBuilder::validation_error(Some(e.to_string()), Some("Invalid data"))
+                            .into_response()
+                    }
+                    FormRejection::FailedToDeserializeFormBody(e) => {
+                        ResponseBuilder::validation_error(Some(e.to_string()), Some("Invalid data"))
+                            .into_response()
+                    }
+                    _ => ResponseBuilder::error(
+                        // TODO add error code here
+                        "",
+                        Some(e.to_string()),
+                        Some("unknown error"),
+                        Some(500),
+                    )
+                    .into_response(),
+                }
+            },
+            Self::JsonError(e) => {
+                match e {
+                    JsonRejection::BytesRejection(e) => ResponseBuilder::validation_error(
+                        Some(e.to_string()),
+                        Some("bytes error"),
+                    )
+                    .into_response(),
+                    JsonRejection::JsonSyntaxError(e) => ResponseBuilder::validation_error(
+                        Some(e.to_string()),
+                        Some("deserialize error"),
+                    )
+                    .into_response(),
+                    JsonRejection::MissingJsonContentType(e) => ResponseBuilder::validation_error(
+                        Some(e.to_string()),
+                        Some("content type error"),
+                    )
+                    .into_response(),
+                    JsonRejection::JsonDataError(e) => ResponseBuilder::validation_error(
+                        Some(e.to_string()),
+                        Some("Invalid data"),
+                    )
+                    .into_response(),
+                    _ => ResponseBuilder::error(
+                        // TODO add error code here
+                        "",
+                        Some(e.to_string()),
+                        Some("unknown error"),
+                        Some(500),
+                    )
+                    .into_response()
+                }
+            }
         }
     }
 }
