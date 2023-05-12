@@ -1,5 +1,9 @@
 use crate::{
-    helpers::{extractors::{FileFieldstr, FromMultipart}, validators::image_file_field_validator, MAX_IMAGE_SIZE},
+    helpers::{
+        extractors::{FileFieldstr, FromMultipart},
+        validators::valid_image_content_type,
+        MAX_IMAGE_SIZE,
+    },
     prelude::{types::*, *},
 };
 use axum::{async_trait, extract::Multipart};
@@ -42,7 +46,7 @@ pub struct GetProductsCountQueryParams {
 
 #[derive(Debug, Clone, Validate)]
 pub struct UploadProductImagesPayload {
-    // #[validate(length(max = "MAX_IMAGE_SIZE"), custom = "image_file_field_validator")]
+    #[validate]
     pub files: Vec<FileFieldstr>,
 }
 
@@ -64,7 +68,17 @@ impl FromMultipart for UploadProductImagesPayload {
                 let content_type = field.content_type().unwrap().to_string();
                 let data = field.bytes().await.unwrap();
 
-                files.push(FileFieldstr::new(file_name, content_type, data));
+                let file = FileFieldstr::new(file_name, content_type, data);
+
+                if !valid_image_content_type(&file.content_type) {
+                    return Err(Error::Static("Invalid image content type"));
+                }
+
+                if file.size > MAX_IMAGE_SIZE {
+                    return Err(Error::Static("Image size is too big"));
+                }
+
+                files.push(file);
             }
         }
         Ok(Self { files })

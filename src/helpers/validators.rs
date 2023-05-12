@@ -8,15 +8,16 @@ const MAX_USERNAME_LENGTH: usize = 64;
 const MIN_USERNAME_LENGTH: usize = 5;
 
 pub fn valid_phone_number(phone_number: &str) -> bool {
+    // TODO in v2 add support for other countries
+    
     if phone_number.len() != 12 {
         return false;
     }
-    // TODO in v2 add support for other countries
     if !phone_number.starts_with("+9725") {
         return false;
     }
 
-    if !phone_number.chars().all(|c| c.is_digit(10)) {
+    if !phone_number.chars().skip(4).all(|c| c.is_digit(10)) {
         return false;
     }
 
