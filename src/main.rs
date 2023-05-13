@@ -10,6 +10,7 @@ use std::sync::Arc;
 use tower_cookies::CookieManagerLayer;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use validator::Validate;
 
 #[tokio::main]
 async fn main() {
@@ -23,7 +24,10 @@ async fn main() {
 
     dotenv().ok();
 
-    ENV_VARS.validate();
+    ENV_VARS
+        .validate()
+        .map_err(|e| panic!("ENV validation failed: \n{:?}", e))
+        .unwrap();
 
     let mongo_client = db::connect().await.unwrap();
 
