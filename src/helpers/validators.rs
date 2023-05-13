@@ -9,7 +9,7 @@ const MIN_USERNAME_LENGTH: usize = 5;
 
 pub fn valid_phone_number(phone_number: &str) -> bool {
     // TODO in v2 add support for other countries
-    
+
     if phone_number.len() != 12 {
         return false;
     }
@@ -118,5 +118,17 @@ pub fn image_file_field_validator(file: &FileFieldstr) -> Result<(), ValidationE
 
         return Err(error);
     }
+    Ok(())
+}
+
+pub fn number_string_validator(value: &String) -> Result<(), ValidationError> {
+    if !value.chars().all(|c| c.is_digit(10)) {
+        let mut error = ValidationError::new("number_string_validator");
+
+        error.message = Some(Cow::from("Invalid number string, must contain only digits"));
+
+        return Err(error);
+    }
+
     Ok(())
 }
