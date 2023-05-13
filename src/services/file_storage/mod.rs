@@ -1,9 +1,11 @@
+mod delete;
 mod upload;
 
 use crate::helpers::env::ENV_VARS;
 use aws_sdk_s3 as s3;
 
 pub type StorageClient = s3::Client;
+pub use delete::*;
 pub use upload::*;
 mod keys;
 

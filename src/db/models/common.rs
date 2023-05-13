@@ -7,6 +7,7 @@ pub struct FileDocument {
     pub public: bool,
     pub hidden: bool,
     pub file_name: String,
+    // Aka key in the s3
     pub path: String,
     pub size: u64,
     pub mime_type: String,

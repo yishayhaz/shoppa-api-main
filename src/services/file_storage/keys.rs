@@ -4,11 +4,11 @@ use strum_macros::{Display, EnumString};
 
 #[derive(Debug, Clone, Copy, Display, EnumString)]
 enum StorageFolders {
-    #[strum(to_string = "products/{id}/images/")]
+    #[strum(to_string = "products/{id}/images")]
     ProductsImages,
-    #[strum(to_string = "products/{id}/videos/")]
+    #[strum(to_string = "products/{id}/videos")]
     ProductsVideos,
-    #[strum(to_string = "stores/{id}/images/")]
+    #[strum(to_string = "stores/{id}/images")]
     StoresImages,
 }
 
@@ -19,7 +19,7 @@ pub fn generate_product_image_key(product_id: &ObjectId, file_type: &String) -> 
 
     let file_name = random::random_string(32);
 
-    format!("{}{}.{}", folder, file_name, file_type)
+    format!("{}/{}.{}", folder, file_name, file_type)
 }
 
 pub fn generate_store_logo_key(store_id: &ObjectId, file_type: &String) -> String {
@@ -27,9 +27,9 @@ pub fn generate_store_logo_key(store_id: &ObjectId, file_type: &String) -> Strin
 
     let folder = folder.replace("{id}", &store_id.to_string());
 
-    let file_name = "logo";
+    let file_name = format!("logo-{}", random::random_string(16));
 
-    format!("{}{}.{}", folder, file_name, file_type)
+    format!("{}/{}.{}", folder, file_name, file_type)
 }
 
 pub fn generate_store_banner_key(store_id: &ObjectId, file_type: &String) -> String {
@@ -37,7 +37,7 @@ pub fn generate_store_banner_key(store_id: &ObjectId, file_type: &String) -> Str
 
     let folder = folder.replace("{id}", &store_id.to_string());
 
-    let file_name = "banner";
+    let file_name = format!("banner-{}", random::random_string(16));
 
-    format!("{}{}.{}", folder, file_name, file_type)
+    format!("{}/{}.{}", folder, file_name, file_type)
 }

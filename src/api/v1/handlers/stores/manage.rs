@@ -66,10 +66,15 @@ pub async fn update_store(
         );
     }
 
+    let store = store.unwrap();
+
     let mut logo_doc: Option<FileDocument> = None;
     let mut banner_doc: Option<FileDocument> = None;
     // TODO in the future, first update the db with the new data using a transaction and then upload the files
     // TODO if the upload fails, rollback the transaction
+
+    let mut delete_files: Vec<String> = Vec::new();
+
     if let Some(logo) = payload.logo {
         let upload = file_storage::upload_store_logo(
             logo.file,
@@ -111,6 +116,20 @@ pub async fn update_store(
     }
 
     updates::update_store(&db, &store_id, logo_doc, banner_doc, None).await?;
+
+    if let Some(logo) = store.logo {
+        delete_files.push(logo.path);
+    }
+
+    if let Some(banner) = store.banner {
+        delete_files.push(banner.path);
+    }
+
+    if delete_files.len() > 0 {
+        tokio::spawn(async move {
+            file_storage::delete_files(delete_files, &storage_client).await;
+        });
+    }
 
     Ok(ResponseBuilder::<u16>::success(None, None, None).into_response())
 }
