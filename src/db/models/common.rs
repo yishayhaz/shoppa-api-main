@@ -1,3 +1,5 @@
+use std::path;
+
 use crate::prelude::{db_models::*, *};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -137,3 +139,55 @@ impl FileDocument {
         }
     }
 }
+
+pub struct FileDocumentFields {
+    pub id: &'static str,
+    pub public: &'static str,
+    pub hidden: &'static str,
+    pub file_name: &'static str,
+    pub path: &'static str,
+    pub size: &'static str,
+    pub mime_type: &'static str,
+    pub file_type: &'static str,
+    pub created_at: &'static str,
+    pub updated_at: &'static str,
+}
+
+pub const FILE_DOCUMENT_FIELDS : FileDocumentFields = FileDocumentFields {
+    id: "_id",
+    public: "public",
+    hidden: "hidden",
+    file_name: "file_name",
+    path: "path",
+    size: "size",
+    mime_type: "mime_type",
+    file_type: "file_type",
+    created_at: "created_at",
+    updated_at: "updated_at",
+};
+
+// macro_rules! concat_statistic {
+//     ($($x:expr),*) => {
+//         concat!($($x,)*)
+//     };
+// }
+
+// impl FileDocumentFields {
+//     pub fn new_full_field(
+//         parent_field: &'static str,
+//     ) -> FileDocumentFields {
+
+//         Self {
+//             id: concat_statistic!("", ".", FILE_DOCUMENT_FIELDS.id),
+//             public: format!("{}.{}", parent_field, FILE_DOCUMENT_FIELDS.public).as_str(),
+//             hidden: format!("{}.{}", parent_field, FILE_DOCUMENT_FIELDS.hidden).as_str(),
+//             file_name: format!("{}.{}", parent_field, FILE_DOCUMENT_FIELDS.file_name).as_str(),
+//             path: format!("{}.{}", parent_field, FILE_DOCUMENT_FIELDS.path).as_str(),
+//             size: format!("{}.{}", parent_field, FILE_DOCUMENT_FIELDS.size).as_str(),
+//             mime_type: format!("{}.{}", parent_field, FILE_DOCUMENT_FIELDS.mime_type).as_str(),
+//             file_type: format!("{}.{}", parent_field, FILE_DOCUMENT_FIELDS.file_type).as_str(),
+//             created_at: format!("{}.{}", parent_field, FILE_DOCUMENT_FIELDS.created_at).as_str(),
+//             updated_at: format!("{}.{}", parent_field, FILE_DOCUMENT_FIELDS.updated_at).as_str(),
+//         }
+//     }
+// }
