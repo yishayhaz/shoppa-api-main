@@ -27,6 +27,8 @@ pub struct Store {
     pub banner: Option<FileDocument>,
     pub logo: Option<FileDocument>,
     pub analytics: StoreAnalytics,
+    #[validate]
+    pub legal_information: StoreLegalInformation,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Validate)]
@@ -50,8 +52,6 @@ pub struct StoreLocation {
     pub street_number: String,
     #[validate(length(min = 2, max = 12), custom = "number_string_validator")]
     pub phone: String,
-    #[validate]
-    pub legal_information: StoreLegalInformation,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
@@ -72,18 +72,18 @@ pub struct StoreOrdersStats {
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub struct StoreRating {
-    pub voters: u64,
+    pub votes: u64,
     pub average: f64,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Validate)]
 pub struct StoreLegalInformation {
     pub legal_id: String,
     pub business_type: StoreBusinessType,
     pub name: String,
 }
 
-// #[derive(Deserialize, Debug, Clone, PartialEq, EnumString)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, EnumString)]
 pub enum StoreBusinessType {
     ExemptDealer, // עוסק פטור
     AuthorizedDealer, // עוסק מורשה
@@ -117,7 +117,7 @@ impl Default for StoreOrdersStats {
 impl Default for StoreRating {
     fn default() -> Self {
         Self {
-            voters: 0,
+            votes: 0,
             average: 0.0,
         }
     }
@@ -153,17 +153,25 @@ impl Store {
             id: None,
             created_at: Utc::now(),
             updated_at: Utc::now(),
+
             name,
+            slogan: None,
             description,
+
             banner: None,
             logo: None,
-            slogan: None,
+
+            locations: Vec::new(),
+            legal_information: StoreLegalInformation {
+                legal_id: String::new(),
+                business_type: StoreBusinessType::Ltd,
+                name: String::new(),
+            },
             contact: StoreContact {
                 email,
                 tel: String::new(),
             },
             analytics: StoreAnalytics::default(),
-            locations: Vec::new(),
         }
     }
 
