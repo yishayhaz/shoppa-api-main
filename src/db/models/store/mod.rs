@@ -49,8 +49,9 @@ pub struct StoreLocation {
     #[validate(length(min = 2, max = 85))]
     pub street_number: String,
     #[validate(length(min = 2, max = 12), custom = "number_string_validator")]
-    pub legal_id: String,
     pub phone: String,
+    #[validate]
+    pub legal_information: StoreLegalInformation,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
@@ -73,6 +74,22 @@ pub struct StoreOrdersStats {
 pub struct StoreRating {
     pub voters: u64,
     pub average: f64,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+pub struct StoreLegalInformation {
+    pub legal_id: String,
+    pub business_type: StoreBusinessType,
+    pub name: String,
+}
+
+// #[derive(Deserialize, Debug, Clone, PartialEq, EnumString)]
+pub enum StoreBusinessType {
+    ExemptDealer, // עוסק פטור
+    AuthorizedDealer, // עוסק מורשה
+    Ltd, // חברה בע"מ
+    Public, // חברה ציבורית
+    NonProfit, // מלכ"ר - עמותה
 }
 
 impl Default for StoreAnalytics {
