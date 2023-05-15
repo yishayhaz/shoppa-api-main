@@ -1,5 +1,3 @@
-use std::path;
-
 use crate::prelude::{db_models::*, *};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -21,7 +19,7 @@ pub struct FileDocument {
 }
 
 #[derive(Deserialize, Debug, Clone, Serialize)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
 pub enum FileTypes {
     Image,
     Video,
@@ -166,10 +164,8 @@ pub const FILE_DOCUMENT_FIELDS : FileDocumentFields = FileDocumentFields {
     updated_at: "updated_at",
 };
 
-// macro_rules! concat_statistic {
-//     ($($x:expr),*) => {
-//         concat!($($x,)*)
-//     };
+// fn string_to_static_str(s: String) -> &'static str {
+//     Box::leak(s.into_boxed_str())
 // }
 
 // impl FileDocumentFields {
@@ -178,7 +174,7 @@ pub const FILE_DOCUMENT_FIELDS : FileDocumentFields = FileDocumentFields {
 //     ) -> FileDocumentFields {
 
 //         Self {
-//             id: concat_statistic!("", ".", FILE_DOCUMENT_FIELDS.id),
+//             id: string_to_static_str(format!("{}.{}", parent_field, FILE_DOCUMENT_FIELDS.id)),
 //             public: format!("{}.{}", parent_field, FILE_DOCUMENT_FIELDS.public).as_str(),
 //             hidden: format!("{}.{}", parent_field, FILE_DOCUMENT_FIELDS.hidden).as_str(),
 //             file_name: format!("{}.{}", parent_field, FILE_DOCUMENT_FIELDS.file_name).as_str(),

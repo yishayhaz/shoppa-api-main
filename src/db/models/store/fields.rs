@@ -28,14 +28,12 @@ pub struct StoreLocationFields {
     pub phone: &'static str,
 }
 
-
 pub struct StoreAnalyticsFields {
     pub views: &'static str,
     pub sales: &'static str,
     pub rating: &'static str,
     pub orders: &'static str,
 }
-
 
 pub struct StoreOrdersStatsFields {
     pub pending: &'static str,

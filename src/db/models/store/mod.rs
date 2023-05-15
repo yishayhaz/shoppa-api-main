@@ -84,6 +84,7 @@ pub struct StoreLegalInformation {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, EnumString)]
+#[serde(rename_all = "snake_case")]
 pub enum StoreBusinessType {
     ExemptDealer, // עוסק פטור
     AuthorizedDealer, // עוסק מורשה

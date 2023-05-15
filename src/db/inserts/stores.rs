@@ -1,16 +1,11 @@
 use super::prelude::*;
 use crate::{db::models::Store, prelude::*};
 
-type InsertStoreResult = Result<Store>;
-
-pub async fn new_store(
-    db: &DBExtension,
-    name: String,
-    description: String,
-    email: String,
-    location: String,
-) -> InsertStoreResult {
-    let mut store = Store::new(name, description, email, location);
+pub async fn new_store<T>(db: &DBExtension, store: T) -> Result<Store>
+where
+    T: Into<Store>,
+{
+    let mut store = store.into();
 
     let res = db
         .stores
@@ -28,4 +23,11 @@ pub async fn new_store(
     store.update_id(id);
 
     Ok(store)
+}
+
+pub async fn try_new_store<T>(db: &DBExtension, store: T) -> Result<Store>
+where
+    T: TryInto<Store>,
+{
+    todo!()
 }
