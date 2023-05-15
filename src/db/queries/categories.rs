@@ -9,13 +9,13 @@ async fn get_category(
     filter: Document,
     option: Option<FindOneOptions>,
 ) -> GetCategorieResult {
-    let categorie = db
+    let category = db
         .categories
         .find_one(filter, option)
         .await
         .map_err(|e| Error::DBError(("category", e)))?;
 
-    Ok(categorie)
+    Ok(category)
 }
 
 pub async fn get_category_hierarchy_for_subsubcategory(
@@ -115,4 +115,9 @@ pub async fn get_categories_for_extarnel(
         .map_err(|e| Error::DBError(("category", e)))?;
 
     Ok(cursor.consume().await?)
+}
+
+
+pub async fn get_category_by_ids(db: &DBExtension, ids: Vec<ObjectId>) -> Result<Option<models::Categories>>  {
+    0
 }

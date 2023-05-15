@@ -1,4 +1,5 @@
 use crate::{db::queries, prelude::{handlers::*, *}};
+use super::types;
 
 pub async fn get_root_categories(db: DBExtension) -> HandlerResult {
     let categories = queries::get_categories_for_extarnel(&db, None, None).await?;
@@ -24,3 +25,13 @@ pub async fn get_inner_inner_categories(
 
     Ok(ResponseBuilder::success(Some(categories), None, None).into_response())
 }
+
+pub async fn get_category_info(
+    db: DBExtension,
+    ids: Json<types::GetCategoryInfo>,
+) -> HandlerResult {
+    let category = queries::get_category_by_ids(&db, ids.category_ids).await?;
+
+    Ok(ResponseBuilder::success(Some(category), None, None).into_response())
+}
+

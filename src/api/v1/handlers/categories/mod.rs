@@ -20,4 +20,10 @@ pub fn router() -> Router {
             "/:cat_oid/:cat_oid",
             routing::get(get::get_inner_inner_categories),
         )
+        .route("/info", routing::get(get::get_category_info))
+        .route("/edit", routing::get(get::get_inner_categories))
+        .route(
+            "/delete",
+            routing::delete(get::get_inner_inner_categories),
+        )
 }
