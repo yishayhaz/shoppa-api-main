@@ -28,7 +28,8 @@ pub async fn get_inner_inner_categories(
 
 pub async fn get_category_info(
     db: DBExtension,
-    payload: Json<types::GetCategoryInfo>,
+    // TODO: read ids from params
+    Path(payload): Path<types::GetCategoryInfo>,
 ) -> HandlerResult {
     let category = queries::get_category_by_ids(&db, &payload.category_ids).await?;
 

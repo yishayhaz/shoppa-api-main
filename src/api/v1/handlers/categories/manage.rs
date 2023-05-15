@@ -97,7 +97,7 @@ pub async fn update_category_by_ids(
 pub async fn delete_category_by_ids(
     db: DBExtension,
     _: OnlyInDev,
-    // read ids from params
+    // TODO: read ids from params
     Path(payload): Path<DeleteCategory>,
 ) -> HandlerResult {
     let _ = queries::delete_category_by_ids(&db, &payload.category_ids).await?;
