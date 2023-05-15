@@ -28,9 +28,9 @@ pub async fn get_inner_inner_categories(
 
 pub async fn get_category_info(
     db: DBExtension,
-    ids: Json<types::GetCategoryInfo>,
+    payload: Json<types::GetCategoryInfo>,
 ) -> HandlerResult {
-    let category = queries::get_category_by_ids(&db, ids.category_ids).await?;
+    let category = queries::get_category_by_ids(&db, &payload.category_ids).await?;
 
     Ok(ResponseBuilder::success(Some(category), None, None).into_response())
 }

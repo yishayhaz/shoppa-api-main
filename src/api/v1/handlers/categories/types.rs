@@ -20,11 +20,18 @@ pub struct CreateInnerInnerCatgoriePayload{
 }
 
 #[derive(Deserialize)]
-pub struct GetCategoryInfo{
+pub struct GetCategoryInfo {
     pub category_ids: Vec<ObjectId>
 }
 
 #[derive(Deserialize)]
-pub struct UpdateCategoryInfo{
+pub struct DeleteCategory {
     pub category_ids: Vec<ObjectId>
+}
+
+#[derive(Deserialize)]
+pub struct UpdateCategoryInfo {
+    pub category_ids: Vec<ObjectId>,
+    pub name: Option<String>,
+    pub variants: Option<Vec<ObjectId>>,
 }

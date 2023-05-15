@@ -1,5 +1,7 @@
+use argon2::Params;
+
 use super::types::{
-    CreateInnerCatgoriePayload, CreateInnerInnerCatgoriePayload, CreateRootCatgoriePayload,
+    CreateInnerCatgoriePayload, CreateInnerInnerCatgoriePayload, CreateRootCatgoriePayload, DeleteCategory, UpdateCategoryInfo
 };
 use crate::{
     api::v1::middlewares::*,
@@ -78,6 +80,27 @@ pub async fn create_new_inner_inner_catagorie(
         payload.variants,
     )
     .await;
+
+    Ok(().into_response())
+}
+
+pub async fn update_category_by_ids(
+    db: DBExtension,
+    _: OnlyInDev,
+    payload: Json<UpdateCategoryInfo>,
+) -> HandlerResult {
+    let _ = queries::update_category_by_ids(&db, &payload.category_ids, &payload.name, &payload.variants).await?;
+
+    Ok(().into_response())
+}
+
+pub async fn delete_category_by_ids(
+    db: DBExtension,
+    _: OnlyInDev,
+    // read ids from params
+    Path(payload): Path<DeleteCategory>,
+) -> HandlerResult {
+    let _ = queries::delete_category_by_ids(&db, &payload.category_ids).await?;
 
     Ok(().into_response())
 }

@@ -21,9 +21,9 @@ pub fn router() -> Router {
             routing::get(get::get_inner_inner_categories),
         )
         .route("/info", routing::get(get::get_category_info))
-        .route("/edit", routing::get(get::get_inner_categories))
+        .route("/edit", routing::put(manage::update_category_by_ids))
         .route(
             "/delete",
-            routing::delete(get::get_inner_inner_categories),
+            routing::delete(manage::delete_category_by_ids),
         )
 }
