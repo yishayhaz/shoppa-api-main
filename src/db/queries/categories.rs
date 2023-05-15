@@ -9,13 +9,13 @@ async fn get_category(
     filter: Document,
     option: Option<FindOneOptions>,
 ) -> GetCategorieResult {
-    let categorie = db
+    let category = db
         .categories
         .find_one(filter, option)
         .await
         .map_err(|e| Error::DBError(("category", e)))?;
 
-    Ok(categorie)
+    Ok(category)
 }
 
 pub async fn get_category_hierarchy_for_subsubcategory(
@@ -115,4 +115,25 @@ pub async fn get_categories_for_extarnel(
         .map_err(|e| Error::DBError(("category", e)))?;
 
     Ok(cursor.consume().await?)
+}
+
+
+pub async fn get_category_by_ids(db: &DBExtension, ids: &Vec<ObjectId>) -> Result<Option<models::Categories>>  {
+    // return name and variants
+    // for the route it will be best if you populate the variants
+    0
+}
+
+pub async fn update_category_by_ids(db: &DBExtension, ids: &Vec<ObjectId>, name: &Option<String>, variants: &Option<Vec<ObjectId>>) -> Result<Option<models::Categories>> {
+    // Requirements:
+    // 1. update name always
+    // 2. when updating variants: always add, remove only when no products are using it. (we don't care if the product has another category that has the variant, just don't delete)
+    0
+}
+
+pub async fn delete_category_by_ids(db: &DBExtension, ids: &Vec<ObjectId>) -> Result<Option<models::Categories>> {
+    // Requirements:
+    // 1. only when no children
+    // 2. and no products are using it
+    0
 }
