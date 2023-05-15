@@ -176,3 +176,15 @@ impl IntoResponse for Error {
         }
     }
 }
+
+impl From<argon2::password_hash::Error> for Error {
+    fn from(e: argon2::password_hash::Error) -> Self {
+        Self::HashError(e)
+    }
+}
+
+impl From<ValidationErrors> for Error {
+    fn from(e: ValidationErrors) -> Self {
+        Self::StructValidation(e)
+    }
+}

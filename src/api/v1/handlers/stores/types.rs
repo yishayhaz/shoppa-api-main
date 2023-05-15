@@ -1,24 +1,42 @@
-use crate::helpers::{
-    extractors::{FileFieldstr, FromMultipart},
-    MAX_IMAGE_SIZE,
-    validators::image_file_field_validator
-};
 use crate::prelude::{types::*, *};
+use crate::{
+    db::models::{Store, StoreBusinessType},
+    helpers::{
+        extractors::{FileFieldstr, FromMultipart},
+        validators::{image_file_field_validator, number_string_validator, phone_number_validator},
+        MAX_IMAGE_SIZE,
+    },
+};
 use axum::{async_trait, extract::Multipart};
-
-#[derive(Debug, Validate, Deserialize, Serialize)]
-pub struct CreateStorePayload {
-    #[validate(email)]
-    pub email: String,
-    pub name: String,
-    pub description: String,
-    pub location: String,
-}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SearchStoresQueryParams {
     #[serde(default, deserialize_with = "empty_string_as_none")]
     pub free_text: Option<String>,
+}
+
+#[derive(Debug, Validate, Deserialize, Serialize)]
+pub struct CreateStorePayload {
+    #[validate(length(min = 3, max = 60))]
+    pub name: String, // store name
+    #[validate(length(min = 8, max = 40))]
+    pub slogan: Option<String>,
+    #[validate(length(min = 20, max = 160))]
+    pub description: String,
+    #[validate(email)]
+    pub contact_email: String,
+    #[validate(custom = "phone_number_validator")]
+    pub contact_phone: String,
+    #[validate(custom = "number_string_validator")]
+    pub legal_id: String,
+    pub legal_name: String,
+    pub business_type: StoreBusinessType,
+}
+
+
+#[derive(Debug, Validate, Deserialize, Serialize)]
+pub struct StoreLocation {
+
 }
 
 #[derive(Validate)]
@@ -93,5 +111,20 @@ impl FromMultipart for UpdateStorePayload {
         }
 
         Ok(Self { logo, banner })
+    }
+}
+
+impl Into<Store> for CreateStorePayload {
+    fn into(self) -> Store {
+        Store::new(
+            self.name,
+            self.description,
+            self.contact_email,
+            self.contact_phone,
+            self.slogan,
+            self.legal_id,
+            self.business_type,
+            self.legal_name,
+        )
     }
 }

@@ -1,11 +1,14 @@
 use super::prelude::*;
 use crate::{db::models::Store, prelude::*};
+use validator::Validate;
 
 pub async fn new_store<T>(db: &DBExtension, store: T) -> Result<Store>
 where
     T: Into<Store>,
 {
-    let mut store = store.into();
+    let mut store: Store = store.into();
+
+    store.validate()?;
 
     let res = db
         .stores
@@ -28,6 +31,9 @@ where
 pub async fn try_new_store<T>(db: &DBExtension, store: T) -> Result<Store>
 where
     T: TryInto<Store>,
+    T::Error: Into<Error>,
 {
-    todo!()
+    let store = store.try_into().map_err(|e| e.into())?;
+
+    new_store(db, store).await
 }

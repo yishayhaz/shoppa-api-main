@@ -14,7 +14,7 @@ pub use contact_us::{ContactUsForm, ContactUsReason, ContactFormStatus};
 pub use news_letter::NewsLetterSubscriber;
 pub use product::{Product, ProductItem, ItemVariants, ProductSortBy};
 pub use sites_visite::SiteVisit;
-pub use store::Store;
+pub use store::{Store, StoreBusinessType, StoreLocation};
 pub use user::{Cart, Genders, User};
 pub use variants::{Variants, VariantValue, VariantType};
 pub use common::RefrenceField;

@@ -3,7 +3,7 @@ use super::{
 };
 use crate::prelude::{db_models::*, *};
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Validate)]
 pub struct NewsLetterSubscriber {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     id: Option<ObjectId>,
@@ -11,7 +11,7 @@ pub struct NewsLetterSubscriber {
     created_at: DateTime<Utc>,
     #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
     updated_at: DateTime<Utc>,
-
+    #[validate(email)]
     pub email: String,
 }
 

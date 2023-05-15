@@ -36,11 +36,13 @@ pub struct StoreContact {
     #[validate(email)]
     pub email: String,
     #[validate(custom = "phone_number_validator")]
-    pub tel: String,
+    pub phone: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Validate)]
 pub struct StoreLocation {
+    #[serde(rename = "_id")]
+    id: ObjectId,
     #[validate(length(max = 100))]
     pub free_text: Option<String>,
     // 85 is the max length of a city name in the world
@@ -86,11 +88,11 @@ pub struct StoreLegalInformation {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, EnumString)]
 #[serde(rename_all = "snake_case")]
 pub enum StoreBusinessType {
-    ExemptDealer, // עוסק פטור
+    ExemptDealer,     // עוסק פטור
     AuthorizedDealer, // עוסק מורשה
-    Ltd, // חברה בע"מ
-    Public, // חברה ציבורית
-    NonProfit, // מלכ"ר - עמותה
+    Ltd,              // חברה בע"מ
+    Public,           // חברה ציבורית
+    NonProfit,        // מלכ"ר - עמותה
 }
 
 impl Default for StoreAnalytics {
@@ -148,15 +150,43 @@ impl DBModel for Store {
     db_model!(Store);
 }
 
+impl StoreLocation {
+    pub fn new(
+        city: String,
+        street: String,
+        street_number: String,
+        phone: String,
+        free_text: Option<String>,
+    ) -> Self {
+        Self {
+            id: ObjectId::new(),
+            city,
+            street,
+            street_number,
+            phone,
+            free_text,
+        }
+    }
+}
+
 impl Store {
-    pub fn new(name: String, description: String, email: String, location: String) -> Self {
+    pub fn new(
+        store_name: String,
+        description: String,
+        contact_email: String,
+        contact_phone: String,
+        slogan: Option<String>,
+        legal_id: String,
+        business_type: StoreBusinessType,
+        legal_name: String,
+    ) -> Self {
         Self {
             id: None,
             created_at: Utc::now(),
             updated_at: Utc::now(),
 
-            name,
-            slogan: None,
+            name: store_name,
+            slogan,
             description,
 
             banner: None,
@@ -164,13 +194,13 @@ impl Store {
 
             locations: Vec::new(),
             legal_information: StoreLegalInformation {
-                legal_id: String::new(),
-                business_type: StoreBusinessType::Ltd,
-                name: String::new(),
+                legal_id,
+                business_type,
+                name: legal_name,
             },
             contact: StoreContact {
-                email,
-                tel: String::new(),
+                email: contact_email,
+                phone: contact_phone,
             },
             analytics: StoreAnalytics::default(),
         }

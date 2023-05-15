@@ -16,16 +16,9 @@ pub async fn create_new_store(
     _: OnlyInDev,
     JsonWithValidation(payload): JsonWithValidation<types::CreateStorePayload>,
 ) -> HandlerResult {
-    let _ = inserts::new_store(
-        &db,
-        payload.name,
-        payload.description,
-        payload.email,
-        payload.location,
-    )
-    .await;
+    let store = inserts::new_store(&db, payload).await?;
 
-    Ok(ResponseBuilder::success(Some(""), None, None).into_response())
+    Ok(ResponseBuilder::success(Some(store), None, None).into_response())
 }
 
 pub async fn get_stores(db: DBExtension, _: OnlyInDev) -> HandlerResult {

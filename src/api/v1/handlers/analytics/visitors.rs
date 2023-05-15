@@ -23,7 +23,7 @@ pub async fn add_new_visitor_to_counter(
                 true,
             );
 
-            let _ = inserts::new_site_visit(&db, ip.to_string()).await;
+            let _ = inserts::new_site_visit_from_ip(&db, ip.to_string()).await;
 
             cookies.add(cookie);
         }
