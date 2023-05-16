@@ -126,3 +126,14 @@ pub async fn update_store(
 
     Ok(ResponseBuilder::<u16>::success(None, None, None).into_response())
 }
+
+pub async fn update_store_locations(
+    db: DBExtension,
+    _: OnlyInDev,
+    Path(store_id): Path<ObjectId>,
+    JsonWithValidation(payload): JsonWithValidation<types::StoreLocationPayload>,
+) -> HandlerResult {
+    let _ = updates::update_store_locations(&db, &store_id, &payload.locations).await?;
+
+    Ok(ResponseBuilder::<u16>::success(None, None, None).into_response())
+}

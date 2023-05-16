@@ -1,5 +1,5 @@
 use crate::{
-    db::models::{self, EmbeddedDocument, Store},
+    db::models::{self, EmbeddedDocument, Store, StoreLocation},
     helpers::types::DBExtension,
     prelude::*,
 };
@@ -49,4 +49,24 @@ pub async fn update_store(
     };
 
     private_update_store(db, filters, update, option).await
+}
+
+pub async fn update_store_locations(
+    db: &DBExtension,
+    store_id: &ObjectId,
+    locations: &Vec<StoreLocation>,
+) -> UpdateStoreResult {
+    todo!();
+    // let filters = doc! {
+    //     "_id": store_id
+    // };
+    
+    // let update = doc! {
+    //     "$set": {
+    //         TODO: omer fix it
+    //         Store::fields().locations: locations
+    //     }
+    // };
+
+    // private_update_store(db, filters, update, None).await
 }

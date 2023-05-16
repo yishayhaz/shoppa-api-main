@@ -23,3 +23,22 @@ impl Into<VariantValue> for CreateVariantsValues {
         VariantValue::new(self.value, self.label)
     }
 }
+
+#[derive(Deserialize, Serialize, Debug, Clone, Validate)]
+pub struct UpdateVariantBasicInfoPayload {
+    pub name: Option<String>,
+    #[serde(rename = "type")]
+    pub type_: Option<VariantType>,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, Validate)]
+pub struct CreateVariantValuePayload {
+    pub value: String,
+    pub label: String,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, Validate)]
+pub struct UpdateVariantValuePayload {
+    pub value: Option<String>,
+    pub label: Option<String>
+}

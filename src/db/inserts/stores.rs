@@ -17,7 +17,7 @@ where
         .map_err(|e| Error::DBError(("stores", e)))?;
 
     let id = match res.inserted_id.as_object_id() {
-        Some(obi) => obi,
+        Some(obj) => obj,
         None => {
             return Err(Error::Static("TODO"));
         }
@@ -26,14 +26,4 @@ where
     store.update_id(id);
 
     Ok(store)
-}
-
-pub async fn try_new_store<T>(db: &DBExtension, store: T) -> Result<Store>
-where
-    T: TryInto<Store>,
-    T::Error: Into<Error>,
-{
-    let store = store.try_into().map_err(|e| e.into())?;
-
-    new_store(db, store).await
 }

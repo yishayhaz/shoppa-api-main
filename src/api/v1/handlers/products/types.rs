@@ -17,7 +17,6 @@ pub struct CreateProductPayload {
     // 3 categories must be provided
     #[validate(length(min = 3, max = 3))]
     pub categories: Vec<ObjectId>,
-
     pub variants: Option<Vec<ObjectId>>,
     pub store: ObjectId,
     pub keywords: Option<Vec<String>>,

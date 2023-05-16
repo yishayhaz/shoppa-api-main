@@ -10,9 +10,9 @@ pub async fn new_root_catagorie(
     name: String,
     variants_ids: Option<Vec<ObjectId>>,
 ) -> InsertCategoriesResult {
-    let mut catagorie = Categories::new(name, vec![], variants_ids);
+    let mut category = Categories::new(name, vec![], variants_ids);
 
-    let res = db.categories.insert_one(&catagorie, None).await.map_err(|e| {
+    let res = db.categories.insert_one(&category, None).await.map_err(|e| {
         Error::DBError(("categories", e))
     })?;
 
@@ -23,9 +23,9 @@ pub async fn new_root_catagorie(
         }
     };
 
-    catagorie.update_id(id);
+    category.update_id(id);
 
-    Ok(catagorie)
+    Ok(category)
 }
 
 pub async fn new_inner_catagorie(

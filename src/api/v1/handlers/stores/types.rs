@@ -1,6 +1,6 @@
 use crate::prelude::{types::*, *};
 use crate::{
-    db::models::{Store, StoreBusinessType},
+    db::models::{Store, StoreBusinessType, StoreLocation},
     helpers::{
         extractors::{FileFieldstr, FromMultipart},
         validators::{image_file_field_validator, number_string_validator, phone_number_validator},
@@ -34,7 +34,9 @@ pub struct CreateStorePayload {
 }
 
 #[derive(Debug, Validate, Deserialize, Serialize)]
-pub struct StoreLocation {}
+pub struct StoreLocationPayload {
+    pub locations: Vec<StoreLocation>,
+}
 
 #[derive(Validate)]
 pub struct UpdateStorePayload {

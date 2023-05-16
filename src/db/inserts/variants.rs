@@ -5,6 +5,7 @@ use crate::{
 };
 
 type InsertVariantResult = Result<Variants>;
+type InsertVariantValueResult = Result<VariantValue>;
 
 pub async fn new_variant(
     db: &DBExtension,
@@ -33,3 +34,11 @@ pub async fn new_variant(
 
     Ok(variant)
 }
+
+pub async fn add_variant_value(db: &DBExtension,
+    variant_id: &ObjectId,
+    label: &String,
+    value: &String,
+  ) -> InsertVariantValueResult {
+    todo!("add_variant_value");
+  }

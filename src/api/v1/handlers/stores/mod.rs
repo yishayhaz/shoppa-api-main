@@ -7,6 +7,7 @@ mod types;
 pub fn router() -> Router {
     Router::new()
         .route("/:store_oid", routing::patch(manage::update_store))
+        .route("/:store_oid/locations", routing::put(manage::update_store_locations))
         .layer(DefaultBodyLimit::max(MAX_IMAGE_SIZE * 2 + 1024))
         .route("/:store_oid", routing::get(manage::get_store_by_id))
         .route("/count", routing::get(manage::get_stores_count))
