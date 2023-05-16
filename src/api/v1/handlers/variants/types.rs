@@ -1,4 +1,4 @@
-use crate::{prelude::types::*, db::models::{VariantType, VariantValue}};
+use crate::{prelude::types::*, db::models::{VariantType, VariantValue}, helpers::parser::deserialize_query_array};
 
 
 #[derive(Deserialize, Serialize, Debug, Clone, Validate)]
@@ -45,5 +45,6 @@ pub struct UpdateVariantValuePayload {
 
 #[derive(Deserialize, Serialize, Debug, Clone, Validate)]
 pub struct GetVariantsByIdsQuery {
+    #[serde(deserialize_with = "deserialize_query_array")]
     pub variants_ids: Vec<ObjectId>,
 }
