@@ -42,3 +42,8 @@ pub struct UpdateVariantValuePayload {
     pub value: Option<String>,
     pub label: Option<String>
 }
+
+#[derive(Deserialize, Serialize, Debug, Clone, Validate)]
+pub struct GetVariantsByIdsQuery {
+    pub variants_ids: Vec<ObjectId>,
+}
