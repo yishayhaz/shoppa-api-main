@@ -1,6 +1,6 @@
 use serde::{de, Deserialize, Deserializer};
-use std::{fmt, str::FromStr};
 use serde_json;
+use std::{fmt, str::FromStr};
 
 pub fn empty_string_as_none<'de, D, T>(de: D) -> Result<Option<T>, D::Error>
 where
@@ -21,13 +21,15 @@ where
     T: Deserialize<'de> + FromStr,
     T::Err: fmt::Display,
 {
+    let s = String::deserialize(deserializer)?;
 
-    // let s = deserializer.deserialize_str(visitor)
+    let v: Vec<String> = serde_json::from_str(&s).map_err(de::Error::custom)?;
 
-    // let v: Vec<T> = serde_json::from_str(s.as_str()).map_err(de::Error::custom)?;
+    let mut result = Vec::with_capacity(v.len());
 
-    // Ok(v)
-    Ok(vec![])
+    for s in v {
+        result.push(T::from_str(&s).map_err(|e| de::Error::custom(format!("{}: {}", e, s)))?);
+    }
+
+    Ok(result)
 }
-
-// #[serde(default, deserialize_with = "empty_string_as_none")]
