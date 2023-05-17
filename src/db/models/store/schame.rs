@@ -1,7 +1,7 @@
 use super::fields;
 use bson;
 use bson::Document;
-
+use serde::{Deserialize, Serialize};
 // {
 //     validator: {
 //        $jsonSchema: {
@@ -21,10 +21,10 @@ use bson::Document;
 //        }
 //     }
 //  }
-
+#[derive(Debug, Serialize, Deserialize)]
 struct MongoSchame {
     additional_properties: bool,
-    bson_type: Vec<BsonType>,
+    bson_type: Option<Vec<BsonType>>,
     description: Option<&'static str>,
     enum_: Option<Vec<&'static str>>,
     maximum: Option<i64>,
@@ -37,10 +37,11 @@ struct MongoSchame {
     properties: Option<Document>,
     required: Option<Vec<&'static str>>,
     title: Option<&'static str>,
-    unique_items: bool,
+    unique_items: Option<bool>,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 enum BsonType {
     Double,
     String,
@@ -213,11 +214,43 @@ impl MongoSchameBuilder {
         self
     }
 
-    // pub fn build(self) -> MongoSchame {
-    //     MongoSchame {
-    //         bson_type: self.bson_type.unwrap(),
-    //         required: self.required,
-    //         properties: self.properties.into_iter().collect(),
-    //     }
-    // }
+    pub fn build(self) -> MongoSchame {
+        // add validation in the future
+
+        MongoSchame {
+            // default value in mongo is true
+            additional_properties: self.additional_properties.unwrap_or(true),
+            bson_type: if self.bson_type.is_empty() {
+                None
+            } else {
+                Some(self.bson_type)
+            },
+            description: self.description,
+            enum_: if self.enum_.is_empty() {
+                None
+            } else {
+                Some(self.enum_)
+            },
+            maximum: self.maximum,
+            max_items: self.max_items,
+            max_length: self.max_length,
+            minimum: self.minimum,
+            min_items: self.min_items,
+            min_length: self.min_length,
+            pattern: self.pattern,
+            properties: if self.properties.is_empty() {
+                None
+            } else {
+                let mut properties = Document::new();
+
+                for (key, value) in self.properties {
+                    properties.insert(key, bson::to_bson(&value).unwrap());
+                }
+                Some(properties)
+            },
+            required: Some(self.required),
+            title: self.title,
+            unique_items: self.unique_items,
+        }
+    }
 }
