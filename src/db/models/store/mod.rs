@@ -1,5 +1,7 @@
 use super::common::{db_model, DBModel, FileDocument};
 mod fields;
+mod schame;
+
 use crate::{
     helpers::validators::{number_string_validator, phone_number_validator},
     prelude::{db_models::*, *},
