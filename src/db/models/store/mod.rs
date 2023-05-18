@@ -6,6 +6,7 @@ use crate::{
     helpers::validators::{number_string_validator, phone_number_validator},
     prelude::{db_models::*, *},
 };
+use bson::Document;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Validate)]
 pub struct Store {
@@ -147,6 +148,10 @@ impl DBModel for Store {
             .build();
 
         vec![uniqe_index]
+    }
+
+    fn collection_validator() -> Option<Document> {
+        None
     }
 
     db_model!(Store);

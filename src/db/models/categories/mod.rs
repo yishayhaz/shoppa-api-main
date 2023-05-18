@@ -5,6 +5,7 @@ use super::{
     Variants,
 };
 use crate::prelude::{db_models::*, *};
+use bson::Document;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Categories {
@@ -55,6 +56,10 @@ impl DBModel for Categories {
     fn get_indexes() -> Vec<IndexModel> {
         // TODO make name unique
         vec![]
+    }
+
+    fn collection_validator() -> Option<Document> {
+        None
     }
 
     db_model!(Categories);

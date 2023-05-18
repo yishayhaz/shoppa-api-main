@@ -1,16 +1,15 @@
-use super::{
-    common::{db_model, DBModel}
-};
+use super::common::{db_model, DBModel};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use strum_macros::EnumString;
 mod fields;
 use crate::prelude::{db_models::*, *};
+use bson::Document;
 
 #[derive(Debug, Deserialize, Serialize, Clone, EnumString)]
 pub enum ContactFormStatus {
-    #[strum(serialize="Pending")]
+    #[strum(serialize = "Pending")]
     Pending,
-    #[strum(serialize="Done")]
+    #[strum(serialize = "Done")]
     Done,
 }
 
@@ -46,6 +45,10 @@ impl DBModel for ContactUsForm {
         vec![]
     }
 
+    fn collection_validator() -> Option<Document> {
+        None
+    }
+
     db_model!(ContactUsForm);
 }
 
@@ -71,7 +74,7 @@ impl Into<Bson> for ContactFormStatus {
     fn into(self) -> Bson {
         match self {
             Self::Done => Bson::String(String::from("Done")),
-            Self::Pending => Bson::String(String::from("Pending"))
+            Self::Pending => Bson::String(String::from("Pending")),
         }
     }
 }

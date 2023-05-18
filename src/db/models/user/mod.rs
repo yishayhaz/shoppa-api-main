@@ -6,6 +6,7 @@ use super::{
 };
 use serde_json::{json, Value};
 use crate::prelude::{db_models::*, *};
+use bson::Document;
 
 #[serde_with::serde_as]
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -76,6 +77,10 @@ impl DBModel for User {
 
     fn get_indexes() -> Vec<IndexModel> {
         vec![]
+    }
+
+    fn collection_validator() -> Option<Document> {
+        None
     }
 
     db_model!(User);
