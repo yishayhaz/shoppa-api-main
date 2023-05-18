@@ -34,7 +34,7 @@ async fn main() {
     let file_storge_client = Arc::new(file_storage::connect().await);
 
     let db_collections = Arc::new(db::DBCollections::new(mongo_client, &ENV_VARS.DB_NAME));
-
+    // db_collections.create_schames().await;
     // db_collections.create_indexes().await;
 
     let app = Router::new()

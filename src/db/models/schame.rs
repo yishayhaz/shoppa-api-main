@@ -1,28 +1,40 @@
-use std::vec;
-
-use super::common::{FileTypes, FILE_DOCUMENT_FIELDS};
-use bson;
-use bson::Document;
+use super::common::{FILE_DOCUMENT_FIELDS};
+use bson::{Document, Bson};
 use serde::{Deserialize, Serialize};
-use strum::IntoEnumIterator;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MongoSchame {
     additional_properties: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
     bson_type: Option<Vec<BsonType>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     description: Option<&'static str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     enum_: Option<Vec<&'static str>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     maximum: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     max_items: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     max_length: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     minimum: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     min_items: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     min_length: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pattern: Option<&'static str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     properties: Option<Document>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     required: Option<Vec<&'static str>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     title: Option<&'static str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     unique_items: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     items: Option<Box<MongoSchame>>,
 }
 
@@ -32,17 +44,22 @@ pub enum BsonType {
     Double,
     String,
     Array,
+    #[serde(rename = "object")]
     Document,
+    #[serde(rename = "bool")]
     Boolean,
     Null,
     RegularExpression,
     JavaScriptCode,
     JavaScriptCodeWithScope,
+    #[serde(rename = "int")]
     Int32,
+    #[serde(rename = "long")]
     Int64,
     Timestamp,
     Binary,
     ObjectId,
+    #[serde(rename = "date")]
     DateTime,
     Decimal128,
     MaxKey,
@@ -297,7 +314,11 @@ impl MongoSchameBuilder {
                 }
                 Some(properties)
             },
-            required: Some(self.required),
+            required: if self.required.is_empty() {
+                None
+            } else {
+                Some(self.required)
+            },
             title: self.title,
             unique_items: self.unique_items,
             items: self.items.map(|item| Box::new(item)),
@@ -315,6 +336,7 @@ fn file_field_schema(allow_null: bool) -> MongoSchame {
     MongoSchame::builder()
         .add_many_bson_type(bson_types)
         .add_defaults_to_schame()
+        .additional_properties(false)
         .add_property((
             FILE_DOCUMENT_FIELDS.public,
             MongoSchame::builder().bson_type(BsonType::Boolean).build(),
@@ -351,4 +373,10 @@ fn file_field_schema(allow_null: bool) -> MongoSchame {
         ))
         .require_all_properties()
         .build()
+}
+
+impl From<MongoSchame> for Bson {
+    fn from(schame: MongoSchame) -> Self {
+        bson::to_bson(&schame).expect("failed to convert schame to bson")
+    }
 }

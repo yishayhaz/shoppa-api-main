@@ -174,8 +174,9 @@ impl DBModel for Store {
     fn collection_validator() -> Option<Document> {
         let builder = MongoSchame::builder();
 
-        builder
+        let s = builder
             .bson_type(BsonType::Document)
+            .additional_properties(false)
             .add_defaults_to_schame()
             // name
             .add_property((
@@ -237,6 +238,7 @@ impl DBModel for Store {
                     .items(
                         MongoSchame::builder()
                             .add_bson_type(BsonType::Document)
+                            .additional_properties(false)
                             // id
                             .add_property((
                                 Self::fields().locations(false).id,
@@ -302,6 +304,7 @@ impl DBModel for Store {
                 Self::fields().analytics,
                 MongoSchame::builder()
                     .bson_type(BsonType::Document)
+                    .additional_properties(false)
                     // views
                     .add_property((
                         Self::fields().analytics(false).views,
@@ -382,6 +385,7 @@ impl DBModel for Store {
                             .require_all_properties()
                             .build(),
                     ))
+                    .require_all_properties()
                     .build(),
             ))
             // legal_information
@@ -389,6 +393,7 @@ impl DBModel for Store {
                 Self::fields().legal_information,
                 MongoSchame::builder()
                     .bson_type(BsonType::Document)
+                    .additional_properties(false)
                     // legal_id
                     .add_property((
                         Self::fields().legal_information(false).legal_id,
@@ -415,12 +420,12 @@ impl DBModel for Store {
                     ))
                     .require_all_properties()
                     .build(),
-            ));
+            ))
+            .build();
 
-        // pub analytics: StoreAnalytics,
-        // #[validate]
-        // pub legal_information: StoreLegalInformation,
-        None
+        Some(doc! {
+            "$jsonSchema": s
+         })
     }
 
     db_model!(Store);

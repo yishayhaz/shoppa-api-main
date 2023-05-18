@@ -31,6 +31,7 @@ pub async fn connect() -> Result<Client, Error> {
 }
 
 pub struct DBCollections {
+    pub db: mongodb::Database,
     pub users: Collection<models::User>,
     pub stores: Collection<models::Store>,
     pub products: Collection<models::Product>,
@@ -56,6 +57,7 @@ impl DBCollections {
         let categories = db.collection(models::Categories::get_collection_name());
 
         Self {
+            db,
             users,
             stores,
             products,
@@ -76,6 +78,10 @@ impl DBCollections {
         Self::create_index(&self.site_visits).await;
         Self::create_index(&self.variants).await;
         Self::create_index(&self.categories).await;
+    }
+
+    pub async fn create_schames(&self) {
+        self.create_schame::<models::Store>().await;
     }
 
     async fn create_index<Model>(collection: &Collection<Model>)
@@ -145,6 +151,19 @@ impl DBCollections {
             println!("Created indexes for {}", Model::get_collection_name());
         }
     }
+
+    async fn create_schame<Model>(&self)
+    where
+        Model: DBModel,
+    {
+        if let Some(validator) = Model::collection_validator() {
+            self.db
+                .run_command(doc! {"collMod": Model::get_collection_name(), "validator": validator}, None)
+                .await
+                .expect(format!("Faild to create {} schame", Model::get_collection_name()).as_str());
+        }
+    }
+
 }
 
 pub struct Pagination {
