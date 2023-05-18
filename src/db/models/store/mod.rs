@@ -397,7 +397,16 @@ impl DBModel for Store {
                     // business_type
                     .add_property((
                         Self::fields().legal_information(false).business_type,
-                        MongoSchame::builder().bson_type(BsonType::String).build(),
+                        MongoSchame::builder()
+                            .bson_type(BsonType::String)
+                            .enum_(vec![
+                                "authorized_dealer",
+                                "exempt_dealer",
+                                "ltd",
+                                "non_profit",
+                                "public",
+                            ])
+                            .build(),
                     ))
                     // name
                     .add_property((
