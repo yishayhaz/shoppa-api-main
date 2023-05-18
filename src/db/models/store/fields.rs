@@ -12,14 +12,16 @@ pub struct StoreFields {
     pub banner: &'static str,
     pub logo: &'static str,
     pub analytics: &'static str,
+    pub legal_information: &'static str,
 }
 
 pub struct StoreContactFields {
     pub email: &'static str,
-    pub tel: &'static str,
+    pub phone: &'static str,
 }
 
 pub struct StoreLocationFields {
+    pub id: &'static str,
     pub free_text: &'static str,
     pub city: &'static str,
     pub street: &'static str,
@@ -42,6 +44,17 @@ pub struct StoreOrdersStatsFields {
     pub arrived: &'static str,
 }
 
+pub struct StoreRatingFields {
+    pub votes: &'static str,
+    pub average: &'static str,
+}
+
+
+pub struct StoreLegalInformation {
+    pub legal_id: &'static str,
+    pub business_type: &'static str,
+    pub name: &'static str,
+}
 
 pub const FIELDS: StoreFields = StoreFields {
     id: "_id",
@@ -55,16 +68,18 @@ pub const FIELDS: StoreFields = StoreFields {
     contact: "contact",
     locations: "locations",
     analytics: "analytics",
+    legal_information: "legal_information",
 };
 
 
 pub const STORE_CONTACT_FIELDS: StoreContactFields = StoreContactFields {
     email: "email",
-    tel: "tel",
+    phone: "phone",
 };
 
 
 pub const STORE_LOCATION_FIELDS: StoreLocationFields = StoreLocationFields {
+    id: "_id",
     free_text: "free_text",
     city: "city",
     street: "street",
@@ -87,7 +102,17 @@ pub const STORE_ORDERS_STATS_FIELDS: StoreOrdersStatsFields = StoreOrdersStatsFi
     arrived: "arrived",
 };
 
+pub const STORE_RATING_FIELDS: StoreRatingFields = StoreRatingFields {
+    votes: "votes",
+    average: "average",
+};
 
+
+pub const STORE_LEGAL_INFORMATION_FIELDS: StoreLegalInformation = StoreLegalInformation {
+    legal_id: "legal_id",
+    business_type: "business_type",
+    name: "name",
+};
 
 impl StoreFields {
     pub fn contact(&self, full_path: bool) -> &'static StoreContactFields {
@@ -106,8 +131,20 @@ impl StoreFields {
         &FILE_DOCUMENT_FIELDS
     }
 
+    pub fn legal_information(&self, full_path: bool) -> &'static StoreLegalInformation {
+        &STORE_LEGAL_INFORMATION_FIELDS
+    }
 }
 
+
+impl StoreAnalyticsFields {
+    pub fn orders(&self, full_path: bool) -> &'static StoreOrdersStatsFields {
+        &STORE_ORDERS_STATS_FIELDS
+    }
+    pub fn rating(&self, full_path: bool) -> &'static StoreRatingFields {
+        &STORE_RATING_FIELDS
+    }
+}
 
 
 

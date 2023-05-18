@@ -1,5 +1,5 @@
 use crate::prelude::{db_models::*, *};
-use bson::Document;
+use bson::{doc, Bson, Document};
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct FileDocument {
     #[serde(rename = "_id")]
@@ -152,7 +152,7 @@ pub struct FileDocumentFields {
     pub updated_at: &'static str,
 }
 
-pub const FILE_DOCUMENT_FIELDS: FileDocumentFields = FileDocumentFields {
+pub const FILE_DOCUMENT_FIELDS : FileDocumentFields = FileDocumentFields {
     id: "_id",
     public: "public",
     hidden: "hidden",

@@ -1,6 +1,9 @@
-use super::common::{db_model, DBModel, FileDocument};
+use super::{
+    common::{db_model, DBModel, FileDocument},
+    constans,
+    schame::{BsonType, MongoSchame},
+};
 mod fields;
-mod schame;
 
 use crate::{
     helpers::validators::{number_string_validator, phone_number_validator},
@@ -17,11 +20,20 @@ pub struct Store {
     #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
     updated_at: DateTime<Utc>,
 
-    #[validate(length(min = 3, max = 60))]
+    #[validate(length(
+        min = "constans::STORE_NAME_MIN_LENGTH",
+        max = "constans::STORE_NAME_MAX_LENGTH"
+    ))]
     pub name: String,
-    #[validate(length(min = 20, max = 160))]
+    #[validate(length(
+        min = "constans::STORE_DESCRIPTION_MIN_LENGTH",
+        max = "constans::STORE_DESCRIPTION_MAX_LENGTH"
+    ))]
     pub description: String,
-    #[validate(length(min = 8, max = 40))]
+    #[validate(length(
+        min = "constans::STORE_SLOGAN_MIN_LENGTH",
+        max = "constans::STORE_SLOGAN_MAX_LENGTH"
+    ))]
     pub slogan: Option<String>,
     #[validate]
     pub contact: StoreContact,
@@ -46,16 +58,25 @@ pub struct StoreContact {
 pub struct StoreLocation {
     #[serde(rename = "_id")]
     id: ObjectId,
-    #[validate(length(max = 100))]
+    #[validate(length(max = "constans::LOCATION_FREE_TEXT_MAX_LENGTH"))]
     pub free_text: Option<String>,
     // 85 is the max length of a city name in the world
-    #[validate(length(min = 2, max = 85))]
+    #[validate(length(
+        min = "constans::CITY_NAME_MIN_LENGTH",
+        max = "constans::CITY_NAME_MAX_LENGTH"
+    ))]
     pub city: String,
-    #[validate(length(min = 2, max = 85))]
+    #[validate(length(
+        min = "constans::STREET_NAME_MIN_LENGTH",
+        max = "constans::STREET_NAME_MAX_LENGTH"
+    ))]
     pub street: String,
-    #[validate(length(min = 2, max = 85))]
+    #[validate(length(
+        min = "constans::STREET_NUMBER_MIN_LENGTH",
+        max = "constans::STREET_NUMBER_MAX_LENGTH"
+    ))]
     pub street_number: String,
-    #[validate(length(min = 2, max = 12), custom = "number_string_validator")]
+    #[validate(custom = "number_string_validator")]
     pub phone: String,
 }
 
@@ -151,6 +172,245 @@ impl DBModel for Store {
     }
 
     fn collection_validator() -> Option<Document> {
+        let builder = MongoSchame::builder();
+
+        builder
+            .bson_type(BsonType::Document)
+            .add_defaults_to_schame()
+            // name
+            .add_property((
+                Self::fields().name,
+                MongoSchame::builder()
+                    .bson_type(BsonType::String)
+                    .min_length(constans::STORE_NAME_MIN_LENGTH)
+                    .max_length(constans::STORE_NAME_MAX_LENGTH)
+                    .build(),
+            ))
+            // description
+            .add_property((
+                Self::fields().description,
+                MongoSchame::builder()
+                    .bson_type(BsonType::String)
+                    .min_length(constans::STORE_DESCRIPTION_MIN_LENGTH)
+                    .max_length(constans::STORE_DESCRIPTION_MAX_LENGTH)
+                    .build(),
+            ))
+            // slogan
+            .add_property((
+                Self::fields().slogan,
+                MongoSchame::builder()
+                    .add_bson_type(BsonType::String)
+                    .add_bson_type(BsonType::Null)
+                    .min_length(constans::STORE_SLOGAN_MIN_LENGTH)
+                    .max_length(constans::STORE_SLOGAN_MAX_LENGTH)
+                    .build(),
+            ))
+            // contact
+            .add_property((
+                Self::fields().contact,
+                MongoSchame::builder()
+                    .bson_type(BsonType::Document)
+                    // email
+                    .add_property((
+                        Self::fields().contact(false).email,
+                        MongoSchame::builder()
+                            .bson_type(BsonType::String)
+                            .pattern(constans::EMAIL_REGEX)
+                            .build(),
+                    ))
+                    // phone
+                    .add_property((
+                        Self::fields().contact(false).phone,
+                        MongoSchame::builder()
+                            .bson_type(BsonType::String)
+                            .pattern(constans::PHONE_REGEX)
+                            .build(),
+                    ))
+                    .require_all_properties()
+                    .build(),
+            ))
+            // locations
+            .add_property((
+                Self::fields().locations,
+                MongoSchame::builder()
+                    .bson_type(BsonType::Array)
+                    .items(
+                        MongoSchame::builder()
+                            .add_bson_type(BsonType::Document)
+                            // id
+                            .add_property((
+                                Self::fields().locations(false).id,
+                                MongoSchame::builder()
+                                    .add_bson_type(BsonType::ObjectId)
+                                    .build(),
+                            ))
+                            // free_text
+                            .add_property((
+                                Self::fields().locations(false).free_text,
+                                MongoSchame::builder()
+                                    .add_bson_type(BsonType::String)
+                                    .add_bson_type(BsonType::Null)
+                                    .max_length(constans::LOCATION_FREE_TEXT_MAX_LENGTH)
+                                    .build(),
+                            ))
+                            // city
+                            .add_property((
+                                Self::fields().locations(false).city,
+                                MongoSchame::builder()
+                                    .add_bson_type(BsonType::String)
+                                    .min_length(constans::CITY_NAME_MIN_LENGTH)
+                                    .max_length(constans::CITY_NAME_MAX_LENGTH)
+                                    .build(),
+                            ))
+                            // street
+                            .add_property((
+                                Self::fields().locations(false).street,
+                                MongoSchame::builder()
+                                    .add_bson_type(BsonType::String)
+                                    .min_length(constans::STREET_NAME_MIN_LENGTH)
+                                    .max_length(constans::STREET_NAME_MAX_LENGTH)
+                                    .build(),
+                            ))
+                            // street_number
+                            .add_property((
+                                Self::fields().locations(false).street_number,
+                                MongoSchame::builder()
+                                    .add_bson_type(BsonType::String)
+                                    .min_length(constans::STREET_NUMBER_MIN_LENGTH)
+                                    .max_length(constans::STREET_NUMBER_MAX_LENGTH)
+                                    .build(),
+                            ))
+                            // phone
+                            .add_property((
+                                Self::fields().locations(false).phone,
+                                MongoSchame::builder()
+                                    .add_bson_type(BsonType::String)
+                                    .pattern(constans::NUMBER_STRING_REGEX)
+                                    .build(),
+                            ))
+                            .require_all_properties()
+                            .build(),
+                    )
+                    .build(),
+            ))
+            // banner
+            .file_properties(Self::fields().banner, true)
+            // logo
+            .file_properties(Self::fields().logo, true)
+            // analytics
+            .add_property((
+                Self::fields().analytics,
+                MongoSchame::builder()
+                    .bson_type(BsonType::Document)
+                    // views
+                    .add_property((
+                        Self::fields().analytics(false).views,
+                        MongoSchame::builder()
+                            .bson_type(BsonType::Int64)
+                            .minimum(0)
+                            .build(),
+                    ))
+                    // sales
+                    .add_property((
+                        Self::fields().analytics(false).sales,
+                        MongoSchame::builder()
+                            .bson_type(BsonType::Double)
+                            .minimum(0)
+                            .build(),
+                    ))
+                    // rating
+                    .add_property((
+                        Self::fields().analytics(false).rating,
+                        MongoSchame::builder()
+                            .bson_type(BsonType::Document)
+                            // votes
+                            .add_property((
+                                Self::fields().analytics(false).rating(false).votes,
+                                MongoSchame::builder()
+                                    .bson_type(BsonType::Int64)
+                                    .minimum(0)
+                                    .build(),
+                            ))
+                            // average
+                            .add_property((
+                                Self::fields().analytics(false).rating(false).average,
+                                MongoSchame::builder()
+                                    .bson_type(BsonType::Double)
+                                    .minimum(0)
+                                    .build(),
+                            ))
+                            .require_all_properties()
+                            .build(),
+                    ))
+                    // orders
+                    .add_property((
+                        Self::fields().analytics(false).orders,
+                        MongoSchame::builder()
+                            .bson_type(BsonType::Document)
+                            // pending
+                            .add_property((
+                                Self::fields().analytics(false).orders(false).pending,
+                                MongoSchame::builder()
+                                    .bson_type(BsonType::Int64)
+                                    .minimum(0)
+                                    .build(),
+                            ))
+                            // in_progress
+                            .add_property((
+                                Self::fields().analytics(false).orders(false).in_progress,
+                                MongoSchame::builder()
+                                    .bson_type(BsonType::Int64)
+                                    .minimum(0)
+                                    .build(),
+                            ))
+                            // failed
+                            .add_property((
+                                Self::fields().analytics(false).orders(false).failed,
+                                MongoSchame::builder()
+                                    .bson_type(BsonType::Int64)
+                                    .minimum(0)
+                                    .build(),
+                            ))
+                            // arrived
+                            .add_property((
+                                Self::fields().analytics(false).orders(false).arrived,
+                                MongoSchame::builder()
+                                    .bson_type(BsonType::Int64)
+                                    .minimum(0)
+                                    .build(),
+                            ))
+                            .require_all_properties()
+                            .build(),
+                    ))
+                    .build(),
+            ))
+            // legal_information
+            .add_property((
+                Self::fields().legal_information,
+                MongoSchame::builder()
+                    .bson_type(BsonType::Document)
+                    // legal_id
+                    .add_property((
+                        Self::fields().legal_information(false).legal_id,
+                        MongoSchame::builder().bson_type(BsonType::String).build(),
+                    ))
+                    // business_type
+                    .add_property((
+                        Self::fields().legal_information(false).business_type,
+                        MongoSchame::builder().bson_type(BsonType::String).build(),
+                    ))
+                    // name
+                    .add_property((
+                        Self::fields().legal_information(false).name,
+                        MongoSchame::builder().bson_type(BsonType::String).build(),
+                    ))
+                    .require_all_properties()
+                    .build(),
+            ));
+
+        // pub analytics: StoreAnalytics,
+        // #[validate]
+        // pub legal_information: StoreLegalInformation,
         None
     }
 

@@ -1,25 +1,11 @@
+use std::vec;
+
+use super::common::{FileTypes, FILE_DOCUMENT_FIELDS};
 use bson;
 use bson::Document;
 use serde::{Deserialize, Serialize};
-// {
-//     validator: {
-//        $jsonSchema: {
-//           bsonType: "object",
-//           required: [ "username", "password" ],
-//           properties: {
-//              username: {
-//                 bsonType: "string",
-//                 description: "must be a string and is required"
-//              },
-//              password: {
-//                 bsonType: "string",
-//                 minLength: 8,
-//                 description: "must be a string at least 8 characters long, and is required"
-//              }
-//           }
-//        }
-//     }
-//  }
+use strum::IntoEnumIterator;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MongoSchame {
     additional_properties: bool,
@@ -27,16 +13,17 @@ pub struct MongoSchame {
     description: Option<&'static str>,
     enum_: Option<Vec<&'static str>>,
     maximum: Option<i64>,
-    max_items: Option<i64>,
-    max_length: Option<i64>,
+    max_items: Option<usize>,
+    max_length: Option<usize>,
     minimum: Option<i64>,
-    min_items: Option<i64>,
-    min_length: Option<i64>,
+    min_items: Option<usize>,
+    min_length: Option<usize>,
     pattern: Option<&'static str>,
     properties: Option<Document>,
     required: Option<Vec<&'static str>>,
     title: Option<&'static str>,
     unique_items: Option<bool>,
+    items: Option<Box<MongoSchame>>,
 }
 
 #[derive(PartialEq, Debug, Serialize, Deserialize)]
@@ -68,16 +55,17 @@ pub struct MongoSchameBuilder {
     description: Option<&'static str>,
     enum_: Vec<&'static str>,
     maximum: Option<i64>,
-    max_items: Option<i64>,
-    max_length: Option<i64>,
+    max_items: Option<usize>,
+    max_length: Option<usize>,
     minimum: Option<i64>,
-    min_items: Option<i64>,
-    min_length: Option<i64>,
+    min_items: Option<usize>,
+    min_length: Option<usize>,
     pattern: Option<&'static str>,
     properties: Vec<(&'static str, MongoSchame)>,
     required: Vec<&'static str>,
     title: Option<&'static str>,
     unique_items: Option<bool>,
+    items: Option<MongoSchame>,
 }
 
 impl MongoSchame {
@@ -104,6 +92,7 @@ impl MongoSchameBuilder {
             pattern: None,
             title: None,
             unique_items: None,
+            items: None,
         }
     }
 
@@ -197,12 +186,12 @@ impl MongoSchameBuilder {
         self
     }
 
-    pub fn max_items(mut self, max_items: i64) -> Self {
+    pub fn max_items(mut self, max_items: usize) -> Self {
         self.max_items = Some(max_items);
         self
     }
 
-    pub fn max_length(mut self, max_length: i64) -> Self {
+    pub fn max_length(mut self, max_length: usize) -> Self {
         self.max_length = Some(max_length);
         self
     }
@@ -212,12 +201,12 @@ impl MongoSchameBuilder {
         self
     }
 
-    pub fn min_items(mut self, min_items: i64) -> Self {
+    pub fn min_items(mut self, min_items: usize) -> Self {
         self.min_items = Some(min_items);
         self
     }
 
-    pub fn min_length(mut self, min_length: i64) -> Self {
+    pub fn min_length(mut self, min_length: usize) -> Self {
         self.min_length = Some(min_length);
         self
     }
@@ -262,6 +251,15 @@ impl MongoSchameBuilder {
         self
     }
 
+    pub fn file_properties(self, field: &'static str, allow_null: bool) -> Self {
+        self.add_property((field, file_field_schema(allow_null)))
+    }
+
+    pub fn items(mut self, items: MongoSchame) -> Self {
+        self.items = Some(items);
+        self
+    }
+
     pub fn build(self) -> MongoSchame {
         // add validation in the future
 
@@ -302,6 +300,55 @@ impl MongoSchameBuilder {
             required: Some(self.required),
             title: self.title,
             unique_items: self.unique_items,
+            items: self.items.map(|item| Box::new(item)),
         }
     }
+}
+
+fn file_field_schema(allow_null: bool) -> MongoSchame {
+    let mut bson_types = vec![BsonType::Document];
+
+    if allow_null {
+        bson_types.push(BsonType::Null);
+    }
+
+    MongoSchame::builder()
+        .add_many_bson_type(bson_types)
+        .add_defaults_to_schame()
+        .add_property((
+            FILE_DOCUMENT_FIELDS.public,
+            MongoSchame::builder().bson_type(BsonType::Boolean).build(),
+        ))
+        .add_property((
+            FILE_DOCUMENT_FIELDS.hidden,
+            MongoSchame::builder().bson_type(BsonType::Boolean).build(),
+        ))
+        .add_property((
+            FILE_DOCUMENT_FIELDS.file_name,
+            MongoSchame::builder().bson_type(BsonType::String).build(),
+        ))
+        .add_property((
+            FILE_DOCUMENT_FIELDS.path,
+            MongoSchame::builder().bson_type(BsonType::String).build(),
+        ))
+        .add_property((
+            FILE_DOCUMENT_FIELDS.size,
+            MongoSchame::builder()
+                .bson_type(BsonType::Int64)
+                .minimum(0)
+                .build(),
+        ))
+        .add_property((
+            FILE_DOCUMENT_FIELDS.mime_type,
+            MongoSchame::builder().bson_type(BsonType::String).build(),
+        ))
+        .add_property((
+            FILE_DOCUMENT_FIELDS.file_type,
+            MongoSchame::builder()
+                .bson_type(BsonType::String)
+                .enum_(vec!["image", "video", "audio", "document"])
+                .build(),
+        ))
+        .require_all_properties()
+        .build()
 }
