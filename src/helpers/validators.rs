@@ -10,10 +10,10 @@ const MIN_USERNAME_LENGTH: usize = 5;
 pub fn valid_phone_number(phone_number: &str) -> bool {
     // TODO in v2 add support for other countries
 
-    if phone_number.len() != 12 {
+    if phone_number.len() < 11 || phone_number.len() > 13 {
         return false;
     }
-    if !phone_number.starts_with("+9725") {
+    if !phone_number.starts_with("+972") {
         return false;
     }
 
