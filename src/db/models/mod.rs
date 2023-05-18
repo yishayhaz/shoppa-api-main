@@ -9,6 +9,7 @@ mod store;
 mod user;
 mod variants;
 
+pub mod constans;
 pub use categories::{Categories, InnerCategories, InnerInnerCategories};
 pub use common::RefrenceField;
 pub use common::{DBModel, EmbeddedDocument, FileDocument, FileTypes};

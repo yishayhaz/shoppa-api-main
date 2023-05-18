@@ -5,6 +5,7 @@ use super::{
     Categories, InnerCategories, InnerInnerCategories, Store, Variants,
 };
 use crate::prelude::{db_models::*, *};
+use bson::Document;
 
 // product model
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -115,6 +116,10 @@ impl DBModel for Product {
             .build();
 
         vec![uniqe_index]
+    }
+    
+    fn collection_validator() -> Option<Document> {
+        None
     }
 
     db_model!(Product);

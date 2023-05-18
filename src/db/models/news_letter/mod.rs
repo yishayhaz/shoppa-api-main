@@ -2,6 +2,7 @@ use super::{
     common::{db_model, DBModel},
 };
 use crate::prelude::{db_models::*, *};
+use bson::Document;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Validate)]
 pub struct NewsLetterSubscriber {
@@ -33,6 +34,10 @@ impl DBModel for NewsLetterSubscriber {
             .build();
 
         vec![index1]
+    }
+
+    fn collection_validator() -> Option<Document> {
+        None
     }
 
     db_model!(NewsLetterSubscriber);

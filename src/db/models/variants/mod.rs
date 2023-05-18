@@ -5,6 +5,7 @@ use super::{
 };
 use crate::prelude::{db_models::*, *};
 use strum_macros::{EnumString, Display};
+use bson::Document;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Variants {
@@ -68,6 +69,10 @@ impl DBModel for Variants {
             .build();
 
         vec![unique_variant_name]
+    }
+
+    fn collection_validator() -> Option<Document> {
+        None
     }
 
     db_model!(Categories);

@@ -1,5 +1,5 @@
 use crate::prelude::{db_models::*, *};
-
+use bson::Document;
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct FileDocument {
     #[serde(rename = "_id")]
@@ -35,6 +35,7 @@ pub trait DBModel: Serialize + Clone {
     fn updated_at(&self) -> DateTime<Utc>;
     fn id(&self) -> Result<&ObjectId>;
     fn update_id(&mut self, id: ObjectId) -> ();
+    fn collection_validator() -> Option<Document>;
 }
 
 pub trait EmbeddedDocument: Serialize + Clone {
@@ -151,7 +152,7 @@ pub struct FileDocumentFields {
     pub updated_at: &'static str,
 }
 
-pub const FILE_DOCUMENT_FIELDS : FileDocumentFields = FileDocumentFields {
+pub const FILE_DOCUMENT_FIELDS: FileDocumentFields = FileDocumentFields {
     id: "_id",
     public: "public",
     hidden: "hidden",
