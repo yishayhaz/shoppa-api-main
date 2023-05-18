@@ -51,10 +51,10 @@ pub async fn update_store(
     private_update_store(db, filters, update, option).await
 }
 
-pub async fn update_store_locations(
+pub async fn update_store_location(
     db: &DBExtension,
     store_id: &ObjectId,
-    locations: &Vec<StoreLocation>,
+    location: &StoreLocation,
 ) -> UpdateStoreResult {
     todo!();
     // let filters = doc! {
@@ -69,4 +69,24 @@ pub async fn update_store_locations(
     // };
 
     // private_update_store(db, filters, update, None).await
+}
+
+pub async fn delete_store_location(
+    db: &DBExtension,
+    store_id: &ObjectId,
+    location_id: &ObjectId,
+) -> UpdateStoreResult {
+    let filters = doc! {
+        "_id": store_id
+    };
+
+    let update = doc! {
+        "$pull": {
+            Store::fields().locations: {
+                "_id": location_id
+            }
+        }
+    };
+
+    private_update_store(db, filters, update, None).await
 }

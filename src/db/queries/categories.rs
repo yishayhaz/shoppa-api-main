@@ -137,13 +137,3 @@ pub async fn update_category_by_ids(
     // 2. when updating variants: always add, remove only when no products are using it. (we don't care if the product has another category that has the variant, just don't delete)
     todo!()
 }
-
-pub async fn delete_category_by_ids(
-    db: &DBExtension,
-    ids: &Vec<ObjectId>,
-) -> Result<Option<models::Categories>> {
-    // Requirements:
-    // 1. only when no children
-    // 2. and no products are using it
-    todo!()
-}

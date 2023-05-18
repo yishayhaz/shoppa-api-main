@@ -33,10 +33,7 @@ pub struct CreateStorePayload {
     pub business_type: StoreBusinessType,
 }
 
-#[derive(Debug, Validate, Deserialize, Serialize)]
-pub struct StoreLocationPayload {
-    pub locations: Vec<StoreLocation>,
-}
+pub type StoreLocationPayload = StoreLocation;
 
 #[derive(Validate)]
 pub struct UpdateStorePayload {

@@ -1,11 +1,9 @@
-use argon2::Params;
-
 use super::types::{
     CreateInnerCatgoriePayload, CreateInnerInnerCatgoriePayload, CreateRootCatgoriePayload, DeleteCategory, UpdateCategoryInfo
 };
 use crate::{
     api::v1::middlewares::*,
-    db::{inserts, queries},
+    db::{inserts, queries, updates},
     prelude::{handlers::*, *},
 };
 
@@ -100,7 +98,7 @@ pub async fn delete_category_by_ids(
     // TODO: read ids from params
     Path(payload): Path<DeleteCategory>,
 ) -> HandlerResult {
-    let _ = queries::delete_category_by_ids(&db, &payload.category_ids).await?;
+    let _ = updates::delete_category_by_ids(&db, &payload.category_ids).await?;
 
     Ok(().into_response())
 }

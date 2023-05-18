@@ -127,13 +127,35 @@ pub async fn update_store(
     Ok(ResponseBuilder::<u16>::success(None, None, None).into_response())
 }
 
-pub async fn update_store_locations(
+pub async fn update_store_location(
     db: DBExtension,
     _: OnlyInDev,
     Path(store_id): Path<ObjectId>,
-    JsonWithValidation(payload): JsonWithValidation<types::StoreLocationPayload>,
+    JsonWithValidation(location): JsonWithValidation<types::StoreLocationPayload>,
 ) -> HandlerResult {
-    let _ = updates::update_store_locations(&db, &store_id, &payload.locations).await?;
+    let _ = updates::update_store_location(&db, &store_id, &location).await?;
+
+    Ok(ResponseBuilder::<u16>::success(None, None, None).into_response())
+}
+
+pub async fn add_store_location(
+    db: DBExtension,
+    _: OnlyInDev,
+    Path(store_id): Path<ObjectId>,
+    JsonWithValidation(location): JsonWithValidation<types::StoreLocationPayload>,
+) -> HandlerResult {
+    let _ = inserts::add_store_location(&db, &store_id, &location).await?;
+
+    Ok(ResponseBuilder::<u16>::success(None, None, None).into_response())
+}
+
+pub async fn delete_store_location(
+    db: DBExtension,
+    _: OnlyInDev,
+    Path(store_id): Path<ObjectId>,
+    Path(location_id): Path<ObjectId>,
+) -> HandlerResult {
+    let _ = updates::delete_store_location(&db, &store_id, &location_id).await?;
 
     Ok(ResponseBuilder::<u16>::success(None, None, None).into_response())
 }
