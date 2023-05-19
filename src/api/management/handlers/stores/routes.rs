@@ -171,16 +171,67 @@ pub async fn add_store_locations(
     Path(store_id): Path<ObjectId>,
     JsonWithValidation(payload): JsonWithValidation<types::StoreLocationPayload>,
 ) -> HandlerResult {
-    let _ = updates::add_store_locations(&db, &store_id, &payload).await?;
+    let store = updates::add_store_locations(&db, &store_id, &payload).await?;
 
-    Ok(ResponseBuilder::<u16>::success(None, None, None).into_response())
+    if store.is_none() {
+        return Ok(
+            ResponseBuilder::<u16>::error("", None, Some("store not found"), Some(400))
+                .into_response(),
+        );
+    }
+
+    Ok(ResponseBuilder::success(store, None, None).into_response())
 }
 
 pub async fn delete_store_location(
     db: DBExtension,
     Path((store_id, location_id)): Path<(ObjectId, ObjectId)>,
 ) -> HandlerResult {
-    let _ = updates::delete_store_location(&db, &store_id, &location_id).await?;
+    let store = updates::delete_store_location(&db, &store_id, &location_id).await?;
 
-    Ok(ResponseBuilder::<u16>::success(None, None, None).into_response())
+    if store.is_none() {
+        return Ok(
+            ResponseBuilder::<u16>::error("", None, Some("store not found"), Some(400))
+                .into_response(),
+        );
+    }
+
+    Ok(ResponseBuilder::success(store, None, None).into_response())
+}
+
+pub async fn update_store_location(
+    db: DBExtension,
+    Path((store_id, location_id)): Path<(ObjectId, ObjectId)>,
+    JsonWithValidation(payload): JsonWithValidation<types::UpdateStoreLocationPayload>,
+) -> HandlerResult {
+    let free_text = if let Some(free_text) = payload.free_text {
+        if free_text == DELETE_FIELD_KEY_OPETATOR {
+            Some(None)
+        } else {
+            Some(Some(free_text))
+        }
+    } else {
+        None
+    };
+
+    let store = updates::update_store_location(
+        &db,
+        &store_id,
+        &location_id,
+        &payload.city,
+        &payload.street,
+        &payload.street_number,
+        &free_text,
+        &payload.phone,
+    )
+    .await?;
+
+    if store.is_none() {
+        return Ok(
+            ResponseBuilder::<u16>::error("", None, Some("store not found"), Some(400))
+                .into_response(),
+        );
+    }
+
+    Ok(ResponseBuilder::success(store, None, None).into_response())
 }

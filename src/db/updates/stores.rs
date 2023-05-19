@@ -68,11 +68,7 @@ pub async fn update_store(
     }
 
     if let Some(slogan) = slogan {
-        if let Some(slogan) = slogan {
-            update.insert(Store::fields().slogan, slogan);
-        } else {
-            update.insert::<_, Option<&str>>(Store::fields().slogan, None);
-        }
+        update.insert(Store::fields().slogan, slogan);
     }
 
     if let Some(contact_email) = contact_email {
@@ -111,7 +107,11 @@ pub async fn add_store_locations(
     location: &StoreLocation,
 ) -> UpdateStoreResult {
     let filters = doc! {
-        "_id": store_id
+        "_id": store_id,
+        // to make sure that the id is not in the store locations already
+        Store::fields().locations(true).id: {
+            "$ne": location.id()
+        }
     };
 
     let update = doc! {
@@ -138,6 +138,66 @@ pub async fn delete_store_location(
                 "_id": location_id
             }
         }
+    };
+
+    private_update_store(db, filters, update, None).await
+}
+
+pub async fn update_store_location(
+    db: &DBExtension,
+    store_id: &ObjectId,
+    location_id: &ObjectId,
+    city: &Option<String>,
+    street: &Option<String>,
+    street_number: &Option<String>,
+    free_text: &Option<Option<String>>,
+    phone: &Option<String>,
+) -> UpdateStoreResult {
+    let filters = doc! {
+        "_id": store_id,
+        Store::fields().locations(true).id: location_id
+    };
+
+    let mut update = doc! {};
+
+    let loca_key_dollar = format!("{}.{}", Store::fields().locations, "$");
+
+    let locations_fields = Store::fields().locations(false);
+
+    if let Some(city) = city {
+        update.insert(format!("{loca_key_dollar}.{}", locations_fields.city), city);
+    }
+
+    if let Some(street) = street {
+        update.insert(
+            format!("{loca_key_dollar}.{}", locations_fields.street),
+            street,
+        );
+    }
+
+    if let Some(street_number) = street_number {
+        update.insert(
+            format!("{loca_key_dollar}.{}", locations_fields.street_number),
+            street_number,
+        );
+    }
+
+    if let Some(free_text) = free_text {
+        update.insert(
+            format!("{loca_key_dollar}.{}", locations_fields.free_text),
+            free_text,
+        );
+    }
+
+    if let Some(phone) = phone {
+        update.insert(
+            format!("{loca_key_dollar}.{}", locations_fields.phone),
+            phone,
+        );
+    }
+
+    let update = doc! {
+        "$set": update
     };
 
     private_update_store(db, filters, update, None).await

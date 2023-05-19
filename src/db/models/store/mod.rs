@@ -519,3 +519,9 @@ impl From<StoreLocation> for Bson {
         })
     }
 }
+
+impl StoreLocation {
+    pub fn id(&self) -> &ObjectId {
+        &self.id
+    }
+}

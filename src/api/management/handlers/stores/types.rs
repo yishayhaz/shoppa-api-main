@@ -61,6 +61,20 @@ pub struct UpdateStorePayload {
     pub business_type: Option<StoreBusinessType>,
 }
 
+#[derive(Debug, Validate, Deserialize, Serialize)]
+pub struct UpdateStoreLocationPayload {
+    #[validate(length(min = 2, max = 85))]
+    pub city: Option<String>,
+    #[validate(length(min = 2, max = 85))]
+    pub street: Option<String>,
+    #[validate(length(min = 2, max = 85))]
+    pub street_number: Option<String>,
+    #[validate(length(min = 2, max = 85))]
+    pub free_text: Option<String>,
+    #[validate(custom = "number_string_validator")]
+    pub phone: Option<String>,
+}
+
 #[async_trait]
 impl FromMultipart for UpdateStoreAssetsPayload {
     async fn from_multipart(mut multipart: Multipart) -> Result<Self> {
