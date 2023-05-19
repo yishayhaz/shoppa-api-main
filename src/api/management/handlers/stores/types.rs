@@ -1,6 +1,6 @@
 use crate::prelude::{types::*, *};
 use crate::{
-    db::models::{Store, StoreBusinessType, StoreLocation},
+    db::models::{Store, StoreBusinessType},
     helpers::{
         extractors::{FileFieldstr, FromMultipart},
         validators::{image_file_field_validator, number_string_validator, phone_number_validator},
@@ -33,36 +33,37 @@ pub struct CreateStorePayload {
     pub business_type: StoreBusinessType,
 }
 
-pub type StoreLocationPayload = StoreLocation;
-
 #[derive(Validate)]
-pub struct UpdateStorePayload {
+pub struct UpdateStoreAssetsPayload {
     #[validate(length(max = "MAX_IMAGE_SIZE"), custom = "image_file_field_validator")]
     pub logo: Option<FileFieldstr>,
     #[validate(length(max = "MAX_IMAGE_SIZE"), custom = "image_file_field_validator")]
     pub banner: Option<FileFieldstr>,
+}
+
+#[derive(Debug, Validate, Deserialize, Serialize)]
+pub struct UpdateStorePayload {
     #[validate(length(min = 3, max = 60))]
-    pub name: Option<String>,
-    #[validate(length(min = 20, max = 160))]
-    pub description: Option<String>,
+    pub name: Option<String>, // store name
     #[validate(length(min = 8, max = 40))]
     pub slogan: Option<String>,
-    // TODO: omer make it like `create` where the object is flat and not nested
-    // #[validate]
-    // pub contact: StoreContact,
-    // #[validate]
-    // pub legal_information: StoreLegalInformation,
+    #[validate(length(min = 20, max = 160))]
+    pub description: Option<String>,
+    #[validate(email)]
+    pub contact_email: Option<String>,
+    #[validate(custom = "phone_number_validator")]
+    pub contact_phone: Option<String>,
+    #[validate(custom = "number_string_validator")]
+    pub legal_id: Option<String>,
+    pub legal_name: Option<String>,
+    pub business_type: Option<StoreBusinessType>,
 }
 
 #[async_trait]
-impl FromMultipart for UpdateStorePayload {
+impl FromMultipart for UpdateStoreAssetsPayload {
     async fn from_multipart(mut multipart: Multipart) -> Result<Self> {
         let mut logo: Option<FileFieldstr> = None;
         let mut banner: Option<FileFieldstr> = None;
-
-        let mut store_name: Option<String> = None;
-        let mut description: Option<String> = None;
-        let mut slogan: Option<String> = None;
 
         let mut data_provided: bool = false;
 
@@ -71,12 +72,7 @@ impl FromMultipart for UpdateStorePayload {
             .await
             .map_err(Error::MultiPartFormError)?
         {
-            if logo.is_some()
-                && banner.is_some()
-                && store_name.is_some()
-                && description.is_some()
-                && slogan.is_some()
-            {
+            if logo.is_some() && banner.is_some() {
                 break;
             }
 
@@ -118,32 +114,13 @@ impl FromMultipart for UpdateStorePayload {
                 }
 
                 data_provided = true;
-            } else if name == "name" {
-                let value = field.text().await.map_err(Error::MultiPartFormError)?;
-                store_name = Some(value);
-                data_provided = true;
-            } else if name == "description" {
-                let value = field.text().await.map_err(Error::MultiPartFormError)?;
-                description = Some(value);
-                data_provided = true;
-            } else if name == "slogan" {
-                let value = field.text().await.map_err(Error::MultiPartFormError)?;
-                slogan = Some(value);
-                data_provided = true;
+            }
+
+            if !data_provided {
+                return Err(Error::Static("No data provided"));
             }
         }
-
-        if !data_provided {
-            return Err(Error::Static("No data provided"));
-        }
-
-        Ok(Self {
-            logo,
-            banner,
-            name: store_name,
-            description,
-            slogan,
-        })
+        Ok(Self { logo, banner })
     }
 }
 

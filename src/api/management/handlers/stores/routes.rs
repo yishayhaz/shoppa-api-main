@@ -13,7 +13,6 @@ use crate::{
 
 pub async fn create_new_store(
     db: DBExtension,
-    _: OnlyInDev,
     JsonWithValidation(payload): JsonWithValidation<types::CreateStorePayload>,
 ) -> HandlerResult {
     let store = inserts::new_store(&db, payload).await?;
@@ -21,17 +20,13 @@ pub async fn create_new_store(
     Ok(ResponseBuilder::success(Some(store), None, None).into_response())
 }
 
-pub async fn get_stores(db: DBExtension, _: OnlyInDev) -> HandlerResult {
+pub async fn get_stores(db: DBExtension) -> HandlerResult {
     let stores = queries::get_stores(&db).await?;
 
     Ok(ResponseBuilder::success(Some(stores), None, None).into_response())
 }
 
-pub async fn get_store_by_id(
-    db: DBExtension,
-    _: OnlyInDev,
-    Path(store_oid): Path<ObjectId>,
-) -> HandlerResult {
+pub async fn get_store_by_id(db: DBExtension, Path(store_oid): Path<ObjectId>) -> HandlerResult {
     let store = queries::get_store_by_id(&db, &store_oid).await?;
 
     Ok(ResponseBuilder::success(Some(store), None, None).into_response())
@@ -43,12 +38,13 @@ pub async fn get_stores_count(db: DBExtension, _: OnlyInDev) -> HandlerResult {
     Ok(ResponseBuilder::success(Some(count), None, None).into_response())
 }
 
-pub async fn update_store(
+pub async fn update_store_assets(
     db: DBExtension,
     storage_client: StorgeClientExtension,
-    _: OnlyInDev,
     Path(store_id): Path<ObjectId>,
-    MultipartFormWithValidation(payload): MultipartFormWithValidation<types::UpdateStorePayload>,
+    MultipartFormWithValidation(payload): MultipartFormWithValidation<
+        types::UpdateStoreAssetsPayload,
+    >,
 ) -> HandlerResult {
     let store = queries::get_store_by_id(&db, &store_id).await?;
 
@@ -125,6 +121,16 @@ pub async fn update_store(
     }
 
     Ok(ResponseBuilder::<u16>::success(None, None, None).into_response())
+}
+
+pub async fn update_store(
+    db: DBExtension,
+    Path(store_id): Path<ObjectId>,
+    JsonWithValidation(payload): JsonWithValidation<types::UpdateStorePayload>,
+) -> HandlerResult {
+    let store = updates::update_store(&db, &store_id, None, None, None).await?;
+
+    Ok(ResponseBuilder::success(Some(store), None, None).into_response())
 }
 
 pub async fn update_store_location(

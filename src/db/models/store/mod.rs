@@ -424,8 +424,8 @@ impl DBModel for Store {
             .build();
 
         Some(doc! {
-            "$jsonSchema": s
-         })
+           "$jsonSchema": s
+        })
     }
 
     db_model!(Store);
