@@ -1,9 +1,8 @@
 use super::types;
 use crate::{
-    api::v1::middlewares::*,
     db::{
         inserts,
-        models::{FileDocument, FileTypes},
+        models::{constans::DELETE_FIELD_KEY_OPETATOR, FileDocument, FileTypes},
         queries, updates,
     },
     helpers::extractors::MultipartFormWithValidation,
@@ -30,12 +29,6 @@ pub async fn get_store_by_id(db: DBExtension, Path(store_oid): Path<ObjectId>) -
     let store = queries::get_store_by_id(&db, &store_oid).await?;
 
     Ok(ResponseBuilder::success(Some(store), None, None).into_response())
-}
-
-pub async fn get_stores_count(db: DBExtension, _: OnlyInDev) -> HandlerResult {
-    let count = queries::get_stores_count(&db).await?;
-
-    Ok(ResponseBuilder::success(Some(count), None, None).into_response())
 }
 
 pub async fn update_store_assets(
@@ -104,7 +97,22 @@ pub async fn update_store_assets(
         upload.fire(&storage_client).await;
     }
 
-    updates::update_store(&db, &store_id, logo_doc, banner_doc, None).await?;
+    let logo_doc = if let Some(logo_doc) = logo_doc {
+        Some(Some(logo_doc))
+    } else {
+        None
+    };
+
+    let banner_doc = if let Some(banner_doc) = banner_doc {
+        Some(Some(banner_doc))
+    } else {
+        None
+    };
+
+    updates::update_store(
+        &db, &store_id, logo_doc, banner_doc, None, None, None, None, None, None, None, None, None,
+    )
+    .await?;
 
     if let Some(logo) = store.logo {
         delete_files.push(logo.path);
@@ -128,38 +136,49 @@ pub async fn update_store(
     Path(store_id): Path<ObjectId>,
     JsonWithValidation(payload): JsonWithValidation<types::UpdateStorePayload>,
 ) -> HandlerResult {
-    let store = updates::update_store(&db, &store_id, None, None, None).await?;
+    let slogan = if let Some(slogan) = payload.slogan {
+        if slogan == DELETE_FIELD_KEY_OPETATOR {
+            Some(None)
+        } else {
+            Some(Some(slogan))
+        }
+    } else {
+        None
+    };
+
+    let store = updates::update_store(
+        &db,
+        &store_id,
+        None,
+        None,
+        payload.name,
+        payload.description,
+        slogan,
+        payload.contact_email,
+        payload.contact_phone,
+        payload.legal_id,
+        payload.business_type,
+        payload.business_name,
+        None,
+    )
+    .await?;
 
     Ok(ResponseBuilder::success(Some(store), None, None).into_response())
 }
 
-pub async fn update_store_location(
+pub async fn add_store_locations(
     db: DBExtension,
-    _: OnlyInDev,
     Path(store_id): Path<ObjectId>,
-    JsonWithValidation(location): JsonWithValidation<types::StoreLocationPayload>,
+    JsonWithValidation(payload): JsonWithValidation<types::StoreLocationPayload>,
 ) -> HandlerResult {
-    let _ = updates::update_store_location(&db, &store_id, &location).await?;
-
-    Ok(ResponseBuilder::<u16>::success(None, None, None).into_response())
-}
-
-pub async fn add_store_location(
-    db: DBExtension,
-    _: OnlyInDev,
-    Path(store_id): Path<ObjectId>,
-    JsonWithValidation(location): JsonWithValidation<types::StoreLocationPayload>,
-) -> HandlerResult {
-    let _ = inserts::add_store_location(&db, &store_id, &location).await?;
+    let _ = updates::add_store_locations(&db, &store_id, &payload).await?;
 
     Ok(ResponseBuilder::<u16>::success(None, None, None).into_response())
 }
 
 pub async fn delete_store_location(
     db: DBExtension,
-    _: OnlyInDev,
-    Path(store_id): Path<ObjectId>,
-    Path(location_id): Path<ObjectId>,
+    Path((store_id, location_id)): Path<(ObjectId, ObjectId)>,
 ) -> HandlerResult {
     let _ = updates::delete_store_location(&db, &store_id, &location_id).await?;
 

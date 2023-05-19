@@ -56,7 +56,7 @@ pub struct StoreContact {
 
 #[derive(Serialize, Deserialize, Debug, Clone, Validate)]
 pub struct StoreLocation {
-    #[serde(rename = "_id")]
+    #[serde(default, rename = "_id")]
     id: ObjectId,
     #[validate(length(max = "constans::LOCATION_FREE_TEXT_MAX_LENGTH"))]
     pub free_text: Option<String>,
@@ -83,6 +83,7 @@ pub struct StoreLocation {
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub struct StoreAnalytics {
     pub views: u64,
+    // total sales in ILS
     pub sales: f64,
     pub rating: StoreRating,
     pub orders: StoreOrdersStats,
@@ -489,5 +490,32 @@ impl Store {
 
     pub fn fields() -> &'static fields::StoreFields {
         &fields::FIELDS
+    }
+}
+
+impl From<StoreBusinessType> for Bson {
+    fn from(business_type: StoreBusinessType) -> Self {
+        match business_type {
+            StoreBusinessType::AuthorizedDealer => "authorized_dealer",
+            StoreBusinessType::ExemptDealer => "exempt_dealer",
+            StoreBusinessType::Ltd => "ltd",
+            StoreBusinessType::NonProfit => "non_profit",
+            StoreBusinessType::Public => "public",
+        }
+        .into()
+    }
+}
+
+impl From<StoreLocation> for Bson {
+    fn from(location: StoreLocation) -> Self {
+        let fields = Store::fields().locations(false);
+        Self::Document(doc! {
+            fields.id: location.id,
+            fields.free_text: location.free_text,
+            fields.city: location.city,
+            fields.street: location.street,
+            fields.street_number: location.street_number,
+            fields.phone: location.phone,
+        })
     }
 }

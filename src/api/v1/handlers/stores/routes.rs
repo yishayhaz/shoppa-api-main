@@ -16,3 +16,9 @@ pub async fn get_stores_autocomplete(
 
     Ok(ResponseBuilder::success(Some(stores), None, None).into_response())
 }
+
+pub async fn get_stores_count(db: DBExtension) -> HandlerResult {
+    let count = queries::get_stores_count(&db).await?;
+
+    Ok(ResponseBuilder::success(Some(count), None, None).into_response())
+}

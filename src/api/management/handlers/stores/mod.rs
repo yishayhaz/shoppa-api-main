@@ -14,17 +14,16 @@ pub fn router() -> Router {
         .route("/:store_oid", routing::get(routes::get_store_by_id))
         .route("/", routing::get(routes::get_stores))
         .route("/", routing::post(routes::create_new_store))
-        .route("/count", routing::get(routes::get_stores_count))
         .route(
             "/:store_oid/locations",
-            routing::post(routes::add_store_location),
+            routing::post(routes::add_store_locations),
         )
         .route(
             "/:store_oid/locations/:location_oid",
             routing::delete(routes::delete_store_location),
         )
-        .route(
-            "/:store_oid/locations/:location_oid",
-            routing::put(routes::update_store_location),
-        )
+    // .route(
+    //     "/:store_oid/locations/:location_oid",
+    //     routing::patch(routes::update_store_location),
+    // )
 }

@@ -1,6 +1,6 @@
 use crate::prelude::{types::*, *};
 use crate::{
-    db::models::{Store, StoreBusinessType},
+    db::models::{Store, StoreBusinessType, StoreLocation},
     helpers::{
         extractors::{FileFieldstr, FromMultipart},
         validators::{image_file_field_validator, number_string_validator, phone_number_validator},
@@ -41,6 +41,8 @@ pub struct UpdateStoreAssetsPayload {
     pub banner: Option<FileFieldstr>,
 }
 
+pub type StoreLocationPayload = StoreLocation;
+
 #[derive(Debug, Validate, Deserialize, Serialize)]
 pub struct UpdateStorePayload {
     #[validate(length(min = 3, max = 60))]
@@ -55,7 +57,7 @@ pub struct UpdateStorePayload {
     pub contact_phone: Option<String>,
     #[validate(custom = "number_string_validator")]
     pub legal_id: Option<String>,
-    pub legal_name: Option<String>,
+    pub business_name: Option<String>,
     pub business_type: Option<StoreBusinessType>,
 }
 
