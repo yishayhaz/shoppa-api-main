@@ -1,4 +1,4 @@
-use crate::db::models::common::{FILE_DOCUMENT_FIELDS, FileDocumentFields};
+use crate::db::models::common::{FileDocumentFields, FILE_DOCUMENT_FIELDS};
 
 pub struct StoreFields {
     pub id: &'static str,
@@ -49,7 +49,6 @@ pub struct StoreRatingFields {
     pub average: &'static str,
 }
 
-
 pub struct StoreLegalInformation {
     pub legal_id: &'static str,
     pub business_type: &'static str,
@@ -71,12 +70,15 @@ pub const FIELDS: StoreFields = StoreFields {
     legal_information: "legal_information",
 };
 
-
 pub const STORE_CONTACT_FIELDS: StoreContactFields = StoreContactFields {
     email: "email",
     phone: "phone",
 };
 
+pub const STORE_CONTACT_FIELDS_FULL_PATH: StoreContactFields = StoreContactFields {
+    email: "contact.email",
+    phone: "contact.phone",
+};
 
 pub const STORE_LOCATION_FIELDS: StoreLocationFields = StoreLocationFields {
     id: "_id",
@@ -88,11 +90,28 @@ pub const STORE_LOCATION_FIELDS: StoreLocationFields = StoreLocationFields {
     phone: "phone",
 };
 
+pub const STORE_LOCATION_FIELDS_FULL_PATH: StoreLocationFields = StoreLocationFields {
+    id: "locations._id",
+    free_text: "locations.free_text",
+    city: "locations.city",
+    street: "locations.street",
+    street_number: "locations.street_number",
+    legal_id: "locations.legal_id",
+    phone: "locations.phone",
+};
+
 pub const STORE_ANALYTICS_FIELDS: StoreAnalyticsFields = StoreAnalyticsFields {
     views: "views",
     sales: "sales",
     rating: "rating",
     orders: "orders",
+};
+
+pub const STORE_ANALYTICS_FIELDS_FULL_PATH: StoreAnalyticsFields = StoreAnalyticsFields {
+    views: "analytics.views",
+    sales: "analytics.sales",
+    rating: "analytics.rating",
+    orders: "analytics.orders",
 };
 
 pub const STORE_ORDERS_STATS_FIELDS: StoreOrdersStatsFields = StoreOrdersStatsFields {
@@ -102,11 +121,22 @@ pub const STORE_ORDERS_STATS_FIELDS: StoreOrdersStatsFields = StoreOrdersStatsFi
     arrived: "arrived",
 };
 
+pub const STORE_ORDERS_STATS_FIELDS_FULL_PATH: StoreOrdersStatsFields = StoreOrdersStatsFields {
+    pending: "analytics.orders.pending",
+    in_progress: "analytics.orders.in_progress",
+    failed: "analytics.orders.failed",
+    arrived: "analytics.orders.arrived",
+};
+
 pub const STORE_RATING_FIELDS: StoreRatingFields = StoreRatingFields {
     votes: "votes",
     average: "average",
 };
 
+pub const STORE_RATING_FIELDS_FULL_PATH: StoreRatingFields = StoreRatingFields {
+    votes: "analytics.rating.votes",
+    average: "analytics.rating.average",
+};
 
 pub const STORE_LEGAL_INFORMATION_FIELDS: StoreLegalInformation = StoreLegalInformation {
     legal_id: "legal_id",
@@ -114,37 +144,97 @@ pub const STORE_LEGAL_INFORMATION_FIELDS: StoreLegalInformation = StoreLegalInfo
     name: "name",
 };
 
+pub const STORE_LEGAL_INFORMATION_FIELDS_FULL_PATH: StoreLegalInformation = StoreLegalInformation {
+    legal_id: "legal_information.legal_id",
+    business_type: "legal_information.business_type",
+    name: "legal_information.name",
+};
+
+pub const STORE_LOGO_FULL_PATH: FileDocumentFields = FileDocumentFields {
+    id: "logo._id",
+    public: "logo.public",
+    hidden: "logo.hidden",
+    file_name: "logo.file_name",
+    path: "logo.path",
+    size: "logo.size",
+    mime_type: "logo.mime_type",
+    file_type: "logo.file_type",
+    created_at: "logo.created_at",
+    updated_at: "logo.updated_at",
+};
+
+pub const STORE_BANNER_FULL_PATH: FileDocumentFields = FileDocumentFields {
+    id: "banner._id",
+    public: "banner.public",
+    hidden: "banner.hidden",
+    file_name: "banner.file_name",
+    path: "banner.path",
+    size: "banner.size",
+    mime_type: "banner.mime_type",
+    file_type: "banner.file_type",
+    created_at: "banner.created_at",
+    updated_at: "banner.updated_at",
+};
+
 impl StoreFields {
     pub fn contact(&self, full_path: bool) -> &'static StoreContactFields {
-        &STORE_CONTACT_FIELDS
+        if full_path {
+            &STORE_CONTACT_FIELDS_FULL_PATH
+        } else {
+            &STORE_CONTACT_FIELDS
+        }
     }
     pub fn locations(&self, full_path: bool) -> &'static StoreLocationFields {
-        &STORE_LOCATION_FIELDS
+        if full_path {
+            &STORE_LOCATION_FIELDS_FULL_PATH
+        } else {
+            &STORE_LOCATION_FIELDS
+        }
     }
     pub fn analytics(&self, full_path: bool) -> &'static StoreAnalyticsFields {
-        &STORE_ANALYTICS_FIELDS
+        if full_path {
+            &STORE_ANALYTICS_FIELDS_FULL_PATH
+        } else {
+            &STORE_ANALYTICS_FIELDS
+        }
     }
     pub fn banner(&self, full_path: bool) -> &'static FileDocumentFields {
-        &FILE_DOCUMENT_FIELDS
+        if full_path {
+            &STORE_BANNER_FULL_PATH
+        } else {
+            &FILE_DOCUMENT_FIELDS
+        }
     }
     pub fn logo(&self, full_path: bool) -> &'static FileDocumentFields {
-        &FILE_DOCUMENT_FIELDS
+        if full_path {
+            &STORE_LOGO_FULL_PATH
+        } else {
+            &FILE_DOCUMENT_FIELDS
+        }
     }
 
     pub fn legal_information(&self, full_path: bool) -> &'static StoreLegalInformation {
-        &STORE_LEGAL_INFORMATION_FIELDS
+        if full_path {
+            &STORE_LEGAL_INFORMATION_FIELDS_FULL_PATH
+        } else {
+            &STORE_LEGAL_INFORMATION_FIELDS
+        }
     }
 }
-
 
 impl StoreAnalyticsFields {
     pub fn orders(&self, full_path: bool) -> &'static StoreOrdersStatsFields {
-        &STORE_ORDERS_STATS_FIELDS
+        if full_path {
+            &STORE_ORDERS_STATS_FIELDS_FULL_PATH
+        } else {
+            &STORE_ORDERS_STATS_FIELDS
+        }
     }
     pub fn rating(&self, full_path: bool) -> &'static StoreRatingFields {
-        &STORE_RATING_FIELDS
+        if full_path {
+            &STORE_RATING_FIELDS_FULL_PATH
+        } else {
+            &STORE_RATING_FIELDS
+        }
     }
 }
-
-
-

@@ -152,7 +152,7 @@ pub struct FileDocumentFields {
     pub updated_at: &'static str,
 }
 
-pub const FILE_DOCUMENT_FIELDS : FileDocumentFields = FileDocumentFields {
+pub const FILE_DOCUMENT_FIELDS: FileDocumentFields = FileDocumentFields {
     id: "_id",
     public: "public",
     hidden: "hidden",
@@ -164,27 +164,3 @@ pub const FILE_DOCUMENT_FIELDS : FileDocumentFields = FileDocumentFields {
     created_at: "created_at",
     updated_at: "updated_at",
 };
-
-// fn string_to_static_str(s: String) -> &'static str {
-//     Box::leak(s.into_boxed_str())
-// }
-
-// impl FileDocumentFields {
-//     pub fn new_full_field(
-//         parent_field: &'static str,
-//     ) -> FileDocumentFields {
-
-//         Self {
-//             id: string_to_static_str(format!("{}.{}", parent_field, FILE_DOCUMENT_FIELDS.id)),
-//             public: format!("{}.{}", parent_field, FILE_DOCUMENT_FIELDS.public).as_str(),
-//             hidden: format!("{}.{}", parent_field, FILE_DOCUMENT_FIELDS.hidden).as_str(),
-//             file_name: format!("{}.{}", parent_field, FILE_DOCUMENT_FIELDS.file_name).as_str(),
-//             path: format!("{}.{}", parent_field, FILE_DOCUMENT_FIELDS.path).as_str(),
-//             size: format!("{}.{}", parent_field, FILE_DOCUMENT_FIELDS.size).as_str(),
-//             mime_type: format!("{}.{}", parent_field, FILE_DOCUMENT_FIELDS.mime_type).as_str(),
-//             file_type: format!("{}.{}", parent_field, FILE_DOCUMENT_FIELDS.file_type).as_str(),
-//             created_at: format!("{}.{}", parent_field, FILE_DOCUMENT_FIELDS.created_at).as_str(),
-//             updated_at: format!("{}.{}", parent_field, FILE_DOCUMENT_FIELDS.updated_at).as_str(),
-//         }
-//     }
-// }
