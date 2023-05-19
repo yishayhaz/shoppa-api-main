@@ -39,6 +39,7 @@ async fn main() {
 
     let app = Router::new()
         .nest("/api/v1", api::v1::router())
+        .nest("/api/management", api::management::router())
         .layer(Extension(file_storge_client))
         .layer(Extension(db_collections))
         .layer(CookieManagerLayer::new())
