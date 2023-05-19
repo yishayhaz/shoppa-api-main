@@ -47,6 +47,7 @@ pub struct UpdateStorePayload {
     pub description: Option<String>,
     #[validate(length(min = 8, max = 40))]
     pub slogan: Option<String>,
+    // TODO: omer make it like `create` where the object is flat and not nested
     // #[validate]
     // pub contact: StoreContact,
     // #[validate]
