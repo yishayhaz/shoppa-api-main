@@ -1,6 +1,6 @@
 use crate::prelude::{types::*, *};
 use crate::{
-    db::models::{Store, StoreBusinessType, StoreLocation},
+    db::models::{constans, Store, StoreBusinessType, StoreLocation},
     helpers::{
         extractors::{FileFieldstr, FromMultipart},
         validators::{image_file_field_validator, number_string_validator, phone_number_validator},
@@ -17,11 +17,20 @@ pub struct SearchStoresQueryParams {
 
 #[derive(Debug, Validate, Deserialize, Serialize)]
 pub struct CreateStorePayload {
-    #[validate(length(min = 3, max = 60))]
+    #[validate(length(
+        min = "constans::STORE_NAME_MIN_LENGTH",
+        max = "constans::STORE_NAME_MAX_LENGTH"
+    ))]
     pub name: String, // store name
-    #[validate(length(min = 8, max = 40))]
+    #[validate(length(
+        min = "constans::STORE_SLOGAN_MIN_LENGTH",
+        max = "constans::STORE_SLOGAN_MAX_LENGTH"
+    ))]
     pub slogan: Option<String>,
-    #[validate(length(min = 20, max = 160))]
+    #[validate(length(
+        min = "constans::STORE_DESCRIPTION_MIN_LENGTH",
+        max = "constans::STORE_DESCRIPTION_MAX_LENGTH"
+    ))]
     pub description: String,
     #[validate(email)]
     pub contact_email: String,
@@ -45,11 +54,20 @@ pub type StoreLocationPayload = StoreLocation;
 
 #[derive(Debug, Validate, Deserialize, Serialize)]
 pub struct UpdateStorePayload {
-    #[validate(length(min = 3, max = 60))]
+    #[validate(length(
+        min = "constans::STORE_NAME_MIN_LENGTH",
+        max = "constans::STORE_NAME_MAX_LENGTH"
+    ))]
     pub name: Option<String>, // store name
-    #[validate(length(min = 8, max = 40))]
+    #[validate(length(
+        min = "constans::STORE_SLOGAN_MIN_LENGTH",
+        max = "constans::STORE_SLOGAN_MAX_LENGTH"
+    ))]
     pub slogan: Option<String>,
-    #[validate(length(min = 20, max = 160))]
+    #[validate(length(
+        min = "constans::STORE_DESCRIPTION_MIN_LENGTH",
+        max = "constans::STORE_DESCRIPTION_MAX_LENGTH"
+    ))]
     pub description: Option<String>,
     #[validate(email)]
     pub contact_email: Option<String>,
@@ -63,13 +81,25 @@ pub struct UpdateStorePayload {
 
 #[derive(Debug, Validate, Deserialize, Serialize)]
 pub struct UpdateStoreLocationPayload {
-    #[validate(length(min = 2, max = 85))]
+    #[validate(length(
+        min = "constans::CITY_NAME_MIN_LENGTH",
+        max = "constans::CITY_NAME_MAX_LENGTH"
+    ))]
     pub city: Option<String>,
-    #[validate(length(min = 2, max = 85))]
+    #[validate(length(
+        min = "constans::STREET_NAME_MIN_LENGTH",
+        max = "constans::STREET_NAME_MAX_LENGTH"
+    ))]
     pub street: Option<String>,
-    #[validate(length(min = 2, max = 85))]
+    #[validate(length(
+        min = "constans::STREET_NUMBER_MIN_LENGTH",
+        max = "constans::STREET_NUMBER_MAX_LENGTH"
+    ))]
     pub street_number: Option<String>,
-    #[validate(length(min = 2, max = 85))]
+    #[validate(length(
+        min = "constans::LOCATION_FREE_TEXT_MAX_LENGTH",
+        max = "constans::LOCATION_FREE_TEXT_MAX_LENGTH"
+    ))]
     pub free_text: Option<String>,
     #[validate(custom = "number_string_validator")]
     pub phone: Option<String>,
