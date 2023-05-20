@@ -9,9 +9,9 @@ pub struct ProductFields {
     pub store: &'static str,
     pub categories: &'static str,
     pub variants: &'static str,
+    pub images: &'static str,
     pub items: &'static str,
     pub analytics: &'static str,
-    pub images: &'static str,
 }
 
 pub struct StoreFields {
@@ -29,7 +29,10 @@ pub struct ItemsFields {
     pub created_at: &'static str,
     pub updated_at: &'static str,
     pub price: &'static str,
-    pub in_storage: &'static str
+    pub in_storage: &'static str,
+    pub variants: &'static str,
+    pub name: &'static str,
+    pub images_refs: &'static str,
 }
 
 
@@ -76,5 +79,8 @@ const ITEMS_FIELDS: ItemsFields = ItemsFields{
     created_at: "created_at",
     updated_at: "updated_at",
     price: "price",
-    in_storage: "in_storage"
+    in_storage: "in_storage",
+    variants: "variants",
+    name: "name",
+    images_refs: "images_refs",
 };

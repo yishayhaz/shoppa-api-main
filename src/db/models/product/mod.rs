@@ -117,7 +117,7 @@ impl DBModel for Product {
 
         vec![uniqe_index]
     }
-    
+
     fn collection_validator() -> Option<Document> {
         None
     }
@@ -241,27 +241,32 @@ impl Product {
         };
 
         if new_item_variants.len() != product_variants_length {
-            // not all variants are provided
-            return Err(Error::Static("TODO"));
+            return Err(Error::ApiErrorWithCode(
+                "The length of the variants is not the same as the product variants",
+                400,
+            ));
         }
 
         if images_refs.len() > self.images.len() {
-            // to many images
-            return Err(Error::Static("TODO"));
+            return Err(Error::ApiErrorWithCode(
+                "The length of the images refs is bigger than the product images length",
+                400,
+            ));
         }
 
         let images_ids = self.images.iter().map(|i| i.id.clone()).collect::<Vec<_>>();
 
         if !images_refs.iter().all(|i| images_ids.contains(i)) {
-            // not all images are in the product
-            return Err(Error::Static("TODO"));
+            return Err(Error::ApiErrorWithCode("Invalid image refrences", 400));
         }
 
         // if there are no variants, we can only have one item
         if product_variants_length == 0 {
             if self.items.len() != 0 {
-                // already has the only variant possible
-                return Err(Error::Static("TODO"));
+                return Err(Error::ApiErrorWithCode(
+                    "No more variants are allowed for this product",
+                    400,
+                ));
             }
             let item = ProductItem::new(price, in_storage, vec![], name, images_refs);
             self.items.push(item);
@@ -270,15 +275,17 @@ impl Product {
 
         for item in &self.items {
             if item.variants == new_item_variants {
-                // variant already exists
-                return Err(Error::Static("TODO"));
+                return Err(Error::ApiErrorWithCode(
+                    "This item already exists",
+                    400,
+                ));
             }
         }
 
         let product_variants = match &self.variants {
             RefrenceField::NotPopulated(_) => {
                 // to create a new item, we need to have the variants populated
-                return Err(Error::Static("TODO"));
+                return Err(Error::Static("The variants must be populated"));
             }
             RefrenceField::Populated(v) => v,
         };
@@ -299,7 +306,10 @@ impl Product {
             }
             if !found {
                 // variant not found
-                return Err(Error::Static("TODO"));
+                return Err(Error::ApiErrorWithCode(
+                    "Invalid variant value id",
+                    400,
+                ));
             }
         }
 

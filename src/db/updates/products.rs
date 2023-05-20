@@ -30,7 +30,14 @@ pub async fn add_product_item(
     option: Option<FindOneAndUpdateOptions>,
 ) -> UpdateProductResult {
     let filters = doc! {
-        "_id": product_id
+        "_id": product_id,
+        // models::Product::fields().items(true): {
+        //     "$not": {
+        //         "$elemMatch": {
+        //             "name": item.name.clone()
+        //         }
+        //     }
+        // }
     };
 
     let update = doc! {

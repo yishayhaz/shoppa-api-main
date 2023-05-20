@@ -11,9 +11,8 @@ use std::error::Error as StdError;
 
 #[derive(Debug)]
 pub enum Error {
-    /// For starter, to remove as code matures.
+    ApiErrorWithCode(&'static str, u16),
     Generic(String),
-    /// For starter, to remove as code matures.
     Static(&'static str),
     // The string is for the collection name.
     DBError((&'static str, mongodb::error::Error)),
@@ -32,6 +31,9 @@ pub enum Error {
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
         match self {
+            Self::ApiErrorWithCode(e, c) => {
+                ResponseBuilder::<u16>::error("", None, Some(e), Some(c)).into_response()
+            }
             Self::Generic(e) => {
                 ResponseBuilder::<u16>::error("", None, Some(e.as_str()), Some(500)).into_response()
             }
@@ -173,11 +175,11 @@ impl IntoResponse for Error {
                     )
                     .into_response(),
                 }
-            },
-            Self::NoNewDataProvided => ResponseBuilder::<u16>::validation_error(
-                None,
-                Some("No new data provided")
-            ).into_response()
+            }
+            Self::NoNewDataProvided => {
+                ResponseBuilder::<u16>::validation_error(None, Some("No new data provided"))
+                    .into_response()
+            }
         }
     }
 }
