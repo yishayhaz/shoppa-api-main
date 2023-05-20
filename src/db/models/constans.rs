@@ -13,7 +13,7 @@ pub const STREET_NAME_MIN_LENGTH: usize = 2;
 pub const STREET_NAME_MAX_LENGTH: usize = 85;
 pub const STREET_NUMBER_MIN_LENGTH: usize = 2;
 pub const STREET_NUMBER_MAX_LENGTH: usize = 85;
-pub const LOCATION_FREE_TEXT_MAX_LENGTH: usize = 2;
+pub const LOCATION_FREE_TEXT_MAX_LENGTH: usize = 60;
 
 // Simple email regex to validate that there is at least one @ and one .
 pub const EMAIL_REGEX: &str = r"^(?=.*@)(?=.*\.)";
