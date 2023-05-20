@@ -23,8 +23,12 @@ pub async fn get_stores_count(db: DBExtension) -> HandlerResult {
     Ok(ResponseBuilder::success(Some(count), None, None).into_response())
 }
 
-pub async fn get_stores(db: DBExtension) -> HandlerResult {
-    let stores = queries::get_stores(&db).await?;
+pub async fn get_stores(
+    db: DBExtension,
+    pagination: Pagination,
+    Query(query): Query<types::SearchStoresQueryParams>,
+) -> HandlerResult {
+    let stores = queries::get_stores_for_extarnel(&db, Some(pagination), query.free_text).await?;
 
-    Ok(ResponseBuilder::success(Some(stores), None, None).into_response())
+    Ok(ResponseBuilder::paginated_response(&stores).into_response())
 }

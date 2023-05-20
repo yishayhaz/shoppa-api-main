@@ -121,3 +121,31 @@ pub fn autocomplete_store_search(query: &String) -> Document {
         }
     })
 }
+
+pub fn search_store(
+    query: &Option<String>,
+    filters: &Vec<Document>,
+    minimum_should_match: Option<i32>,
+) -> Document {
+    if query.is_none() && filters.is_empty() {
+        return aggregations::match_query(&doc! {});
+    }
+
+    let mut compound = doc! {};
+
+    if let Some(query) = query {
+        compound.insert(
+            "should",
+            vec![
+                text_search("name", query, Some(20), Some(2)),
+            ],
+        );
+        compound.insert("minimumShouldMatch", minimum_should_match.unwrap_or(1));
+    }
+
+    compound.insert("filter", filters);
+
+    aggregations::search(doc! {
+        "compound": compound
+    })
+}

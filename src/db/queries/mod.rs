@@ -89,21 +89,21 @@ impl CursorConverter for Cursor<Document> {
             documents.push(
                 bson::from_bson::<T>(Bson::Document(
                     self.deserialize_current()
-                        .map_err(|e| Error::DBError(("unknown", e)))?,
+                        .map_err(|e| Error::DBError(("faild deserialize data from db", e)))?,
                 ))
-                .map_err(|e| Error::DBError(("unknown", e.into())))?,
+                .map_err(|e| Error::DBError(("faild converting doc into Bson::Document", e.into())))?,
             );
         }
 
         Ok(documents)
     }
-    // TODO improve error handling
+
     async fn extract_count(mut self) -> Result<u64> {
         let doc = self
             .next()
             .await
             .transpose()
-            .map_err(|e| Error::DBError(("unknown", e)))?;
+            .map_err(|e| Error::DBError(("unknown - when extracting count", e)))?;
 
         if let Some(doc) = doc {
             let count = doc.get_i32("count").unwrap_or(0) as u64;
