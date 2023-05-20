@@ -1,4 +1,4 @@
-use super::types::{CreateProductPayload, UploadProductImagesPayload};
+use super::types::{CreateProductPayload, UploadProductImagePayload};
 use crate::{
     api::v1::middlewares::OnlyInDev,
     db::{
@@ -79,7 +79,7 @@ pub async fn upload_product_images(
     storage_client: StorgeClientExtension,
     Path(product_id): Path<ObjectId>,
     _: OnlyInDev,
-    MultipartFrom(payload): MultipartFrom<UploadProductImagesPayload>,
+    MultipartFrom(payload): MultipartFrom<UploadProductImagePayload>,
 ) -> HandlerResult {
     let product = queries::get_product_by_id(&db, &product_id, None, None).await?;
 
@@ -89,31 +89,31 @@ pub async fn upload_product_images(
 
     let product = product.unwrap();
 
-    for image in payload.files {
-        let upload = upload_product_image(
-            image.file,
-            &image.content_type,
-            &product_id,
-            &image.file_extension,
-        );
+    let image = payload.file;
+    
+    let upload = upload_product_image(
+        image.file,
+        &image.content_type,
+        &product_id,
+        &image.file_extension,
+    );
 
-        updates::add_image_to_product(
-            &db,
-            &product_id,
-            FileDocument::new(
-                true,
-                image.file_name,
-                upload.key.clone(),
-                image.size as u64,
-                image.content_type.clone(),
-                FileTypes::Image,
-            ),
-            None,
-        )
-        .await?;
+    updates::add_image_to_product(
+        &db,
+        &product_id,
+        FileDocument::new(
+            true,
+            image.file_name,
+            upload.key.clone(),
+            image.size as u64,
+            image.content_type.clone(),
+            FileTypes::Image,
+        ),
+        None,
+    )
+    .await?;
 
-        upload.fire(&storage_client).await;
-    }
+    upload.fire(&storage_client).await;
 
     Ok(ResponseBuilder::success(Some(product), None, None).into_response())
 }

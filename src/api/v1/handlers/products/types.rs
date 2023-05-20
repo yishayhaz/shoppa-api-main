@@ -1,14 +1,13 @@
 use crate::{
     helpers::{
         extractors::{FileFieldstr, FromMultipart},
-        validators::valid_image_content_type,
+        validators::image_file_field_validator,
         MAX_IMAGE_SIZE,
     },
     prelude::{types::*, *},
 };
 use axum::{async_trait, extract::Multipart};
 use validator::Validate;
-// use bytes::Bytes;
 
 #[derive(Deserialize, Serialize, Debug, Clone, Validate)]
 pub struct CreateProductPayload {
@@ -44,22 +43,17 @@ pub struct GetProductsCountQueryParams {
 }
 
 #[derive(Debug, Clone, Validate)]
-pub struct UploadProductImagesPayload {
-    #[validate]
-    pub files: Vec<FileFieldstr>,
+pub struct UploadProductImagePayload {
+    #[validate(length(max = "MAX_IMAGE_SIZE"), custom = "image_file_field_validator")]
+    pub file: FileFieldstr,
 }
 
 #[async_trait]
-impl FromMultipart for UploadProductImagesPayload {
+impl FromMultipart for UploadProductImagePayload {
     async fn from_multipart(mut multipart: Multipart) -> Result<Self> {
-        let mut files: Vec<FileFieldstr> = vec![];
+        let mut file: Option<FileFieldstr> = None;
 
-        // TODO improve
-        while let Some(field) = multipart
-            .next_field()
-            .await
-            .map_err(|_| Error::Static("No field"))?
-        {
+        while let Some(field) = multipart.next_field().await? {
             let name = field.name().unwrap_or_default().to_string();
 
             if name == "files" {
@@ -67,19 +61,14 @@ impl FromMultipart for UploadProductImagesPayload {
                 let content_type = field.content_type().unwrap().to_string();
                 let data = field.bytes().await.unwrap();
 
-                let file = FileFieldstr::new(file_name, content_type, data);
-
-                if !valid_image_content_type(&file.content_type) {
-                    return Err(Error::Static("Invalid image content type"));
-                }
-
-                if file.size > MAX_IMAGE_SIZE {
-                    return Err(Error::Static("Image size is too big"));
-                }
-
-                files.push(file);
+                file = Some(FileFieldstr::new(file_name, content_type, data));
             }
         }
-        Ok(Self { files })
+
+        if let Some(file) = file {
+            Ok(Self { file })
+        } else {
+            Err(Error::NoNewDataProvided)
+        }
     }
 }

@@ -26,6 +26,7 @@ pub enum Error {
     FormError(FormRejection),
     JsonError(JsonRejection),
     FileUploadError(aws_sdk_s3::error::SdkError<aws_sdk_s3::operation::put_object::PutObjectError>),
+    NoNewDataProvided,
 }
 
 impl IntoResponse for Error {
@@ -172,7 +173,11 @@ impl IntoResponse for Error {
                     )
                     .into_response(),
                 }
-            }
+            },
+            Self::NoNewDataProvided => ResponseBuilder::<u16>::validation_error(
+                None,
+                Some("No new data provided")
+            ).into_response()
         }
     }
 }
@@ -186,5 +191,11 @@ impl From<argon2::password_hash::Error> for Error {
 impl From<ValidationErrors> for Error {
     fn from(e: ValidationErrors) -> Self {
         Self::StructValidation(e)
+    }
+}
+
+impl From<MultipartError> for Error {
+    fn from(e: MultipartError) -> Self {
+        Self::MultiPartFormError(e)
     }
 }
