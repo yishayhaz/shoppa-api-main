@@ -12,7 +12,6 @@ pub fn router() -> Router {
         .layer(DefaultBodyLimit::max(MAX_IMAGE_SIZE * 2 + 1024))
         .route("/:store_oid", routing::patch(routes::update_store))
         .route("/:store_oid", routing::get(routes::get_store_by_id))
-        .route("/", routing::get(routes::get_stores))
         .route("/", routing::post(routes::create_new_store))
         .route(
             "/:store_oid/locations",

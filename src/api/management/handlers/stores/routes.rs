@@ -19,12 +19,6 @@ pub async fn create_new_store(
     Ok(ResponseBuilder::success(Some(store), None, None).into_response())
 }
 
-pub async fn get_stores(db: DBExtension) -> HandlerResult {
-    let stores = queries::get_stores(&db).await?;
-
-    Ok(ResponseBuilder::success(Some(stores), None, None).into_response())
-}
-
 pub async fn get_store_by_id(db: DBExtension, Path(store_oid): Path<ObjectId>) -> HandlerResult {
     let store = queries::get_store_by_id(&db, &store_oid).await?;
 

@@ -22,3 +22,9 @@ pub async fn get_stores_count(db: DBExtension) -> HandlerResult {
 
     Ok(ResponseBuilder::success(Some(count), None, None).into_response())
 }
+
+pub async fn get_stores(db: DBExtension) -> HandlerResult {
+    let stores = queries::get_stores(&db).await?;
+
+    Ok(ResponseBuilder::success(Some(stores), None, None).into_response())
+}
