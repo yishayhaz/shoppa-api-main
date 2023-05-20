@@ -6,5 +6,7 @@ pub fn router() -> Router {
     if ENV_VARS.is_production() {
         return Router::new();
     }
-    Router::new().nest("/stores", handlers::stores::router())
+    Router::new()
+        .nest("/stores", handlers::stores::router())
+        .nest("/products", handlers::products::router())
 }

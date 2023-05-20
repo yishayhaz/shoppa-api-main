@@ -58,22 +58,6 @@ pub async fn create_new_product(
     Ok(ResponseBuilder::success(Some(product), None, None).into_response())
 }
 
-pub async fn add_view_to_product(
-    db: DBExtension,
-    Path(product_id): Path<ObjectId>,
-) -> HandlerResult {
-    let product = updates::add_view_to_product(&db, &product_id, None).await?;
-
-    if let Some(product) = product {
-        // the views is being returend before the update, so we need to add 1 to the views
-        return Ok(
-            ResponseBuilder::success(Some(product.analytics.views + 1), None, None).into_response(),
-        );
-    }
-
-    Ok(ResponseBuilder::not_found_error("product", &product_id).into_response())
-}
-
 pub async fn upload_product_images(
     db: DBExtension,
     storage_client: StorgeClientExtension,

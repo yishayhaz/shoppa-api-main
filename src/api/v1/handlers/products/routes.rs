@@ -1,7 +1,7 @@
 use super::types;
 use crate::{
     api::v1::middlewares::*,
-    db::{models::ProductSortBy, queries},
+    db::{models::ProductSortBy, queries, updates},
     prelude::{handlers::*, *},
 };
 use axum::extract::MatchedPath;
@@ -63,4 +63,21 @@ pub async fn products_count(
     let count = queries::get_products_count(&db, query.store_id, query.category_id).await?;
 
     Ok(ResponseBuilder::success(Some(count), None, None).into_response())
+}
+
+
+pub async fn add_view_to_product(
+    db: DBExtension,
+    Path(product_id): Path<ObjectId>,
+) -> HandlerResult {
+    let product = updates::add_view_to_product(&db, &product_id, None).await?;
+
+    if let Some(product) = product {
+        // the views is being returend before the update, so we need to add 1 to the views
+        return Ok(
+            ResponseBuilder::success(Some(product.analytics.views + 1), None, None).into_response(),
+        );
+    }
+
+    Ok(ResponseBuilder::not_found_error("product", &product_id).into_response())
 }
