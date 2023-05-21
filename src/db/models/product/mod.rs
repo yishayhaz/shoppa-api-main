@@ -18,9 +18,9 @@ pub struct Product {
     updated_at: DateTime<Utc>,
 
     pub brand: Option<String>,
-    // between 8 latters to 64
-    pub name: String,
-    pub description: String,
+    
+    pub name: String, // between 8 latters to 60
+    pub description: String, // between 20 latters to 160
     pub keywords: Vec<String>,
     pub store: RefrenceField<Store, StoreField>,
     // Not likely that it will be populated.
@@ -28,7 +28,7 @@ pub struct Product {
     // Caregories in the Vec<CategoriesField>>
     pub categories: RefrenceField<Categories, Vec<CategoriesField>>,
     pub variants: RefrenceField<Vec<Variants>, Vec<ObjectId>>,
-    pub images: Vec<ProductImage>,
+    pub images: Vec<ProductImage>, // chane to `assets: Vec<Asset>`
     pub items: Vec<ProductItem>, // pub product_info: Vec<String>
     pub analytics: ProductAnalytics,
 }
