@@ -229,3 +229,7 @@ pub async fn update_store_location(
 
     Ok(ResponseBuilder::success(store, None, None).into_response())
 }
+
+pub async fn get_stores(db: DBExtension, pagination: Pagination) -> HandlerResult {
+    todo!()
+}

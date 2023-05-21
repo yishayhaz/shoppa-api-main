@@ -25,4 +25,5 @@ pub fn router() -> Router {
             "/:store_oid/locations/:location_oid",
             routing::patch(routes::update_store_location),
         )
+        .route("/", routing::get(routes::get_stores))
 }
