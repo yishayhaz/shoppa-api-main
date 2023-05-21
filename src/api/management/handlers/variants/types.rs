@@ -1,10 +1,13 @@
-use crate::{prelude::types::*, db::models::{VariantType, VariantValue}, helpers::parser::deserialize_query_array};
-
+use crate::{
+    db::models::{VariantType, VariantValue},
+    helpers::parser::deserialize_query_array,
+    prelude::types::*,
+};
 
 #[derive(Deserialize, Serialize, Debug, Clone, Validate)]
 pub struct CreateVariantPayload {
     pub name: String,
-    #[validate(length(min=2))]
+    #[validate(length(min = 2))]
     pub values: Vec<CreateVariantsValues>,
     #[serde(rename = "type")]
     pub type_: VariantType,
@@ -12,9 +15,9 @@ pub struct CreateVariantPayload {
 
 #[derive(Deserialize, Serialize, Debug, Clone, Validate)]
 pub struct CreateVariantsValues {
-    #[validate(length(min=1, max=15))]
+    #[validate(length(min = 1, max = 15))]
     pub value: String,
-    #[validate(length(min=1, max=15))]
+    #[validate(length(min = 1, max = 15))]
     pub label: String,
 }
 
@@ -40,7 +43,7 @@ pub struct CreateVariantValuePayload {
 #[derive(Deserialize, Serialize, Debug, Clone, Validate)]
 pub struct UpdateVariantValuePayload {
     pub value: Option<String>,
-    pub label: Option<String>
+    pub label: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, Validate)]

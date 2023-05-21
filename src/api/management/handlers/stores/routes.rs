@@ -231,5 +231,7 @@ pub async fn update_store_location(
 }
 
 pub async fn get_stores(db: DBExtension, pagination: Pagination) -> HandlerResult {
-    todo!()
+    let stores = queries::get_stores_for_admins(&db, Some(pagination)).await?;
+
+    Ok(ResponseBuilder::paginated_response(&stores).into_response())
 }

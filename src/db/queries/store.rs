@@ -154,14 +154,10 @@ pub async fn get_stores_for_extarnel(
 pub async fn get_stores_for_admins(
     db: &DBExtension,
     pagination: Option<Pagination>,
-    // free_text: Option<String>,
 ) -> PaginatedResult<Document> {
     let pagination = pagination.unwrap_or_default();
 
     let pipeline = [
-        // aggregations::search_store(&free_text, &vec![], None),
-        // aggregations::add_score_meta(),
-        // aggregations::sort_by_score(),
         aggregations::skip(pagination.offset),
         aggregations::limit(pagination.amount),
         aggregations::project(
@@ -201,17 +197,11 @@ pub async fn get_stores_for_admins(
         return Ok((stores, count as u64));
     }
 
-    let cursor = db
+    let count = db
         .stores
-        .aggregate(
-            [
-                // aggregations::search_store(&free_text, &vec![], None),
-                aggregations::count("count"),
-            ],
-            None,
-        )
+        .count_documents(doc! {}, None)
         .await
         .map_err(|e| Error::DBError(("stores", e)))?;
 
-    Ok((stores, cursor.extract_count().await?))
+    Ok((stores, count))
 }
