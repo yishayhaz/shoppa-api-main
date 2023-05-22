@@ -1,12 +1,11 @@
 use super::types;
 use crate::{
-    api::v1::middlewares::OnlyInDev,
     db::queries,
     prelude::{handlers::*, *},
 };
 
-pub async fn get_variants(db: DBExtension, _: OnlyInDev) -> HandlerResult {
-    let variants = queries::get_variants_for_extarnel(&db).await?;
+pub async fn get_variants(db: DBExtension, pagination: Pagination) -> HandlerResult {
+    let variants = queries::get_variants_for_extarnel(&db, Some(pagination)).await?;
 
     Ok(ResponseBuilder::paginated_response(&variants).into_response())
 }
