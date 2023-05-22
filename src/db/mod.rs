@@ -158,12 +158,16 @@ impl DBCollections {
     {
         if let Some(validator) = Model::collection_validator() {
             self.db
-                .run_command(doc! {"collMod": Model::get_collection_name(), "validator": validator}, None)
+                .run_command(
+                    doc! {"collMod": Model::get_collection_name(), "validator": validator},
+                    None,
+                )
                 .await
-                .expect(format!("Faild to create {} schame", Model::get_collection_name()).as_str());
+                .expect(
+                    format!("Faild to create {} schame", Model::get_collection_name()).as_str(),
+                );
         }
     }
-
 }
 
 pub struct Pagination {
@@ -212,5 +216,21 @@ impl From<&SortDireaction> for bson::Bson {
             SortDireaction::Ascending => Bson::Int32(1),
             SortDireaction::Descending => Bson::Int32(-1),
         }
+    }
+}
+
+impl Pagination {
+    pub fn need_count(&self, current_amount: usize) -> bool {
+        let current_amount = current_amount as i64;
+
+        if current_amount < self.amount {
+            return false;
+        }
+
+        true
+    }
+
+    pub fn calculate_total(&self, current_amount: usize) -> u64 {
+        (self.offset + current_amount as i64) as u64
     }
 }

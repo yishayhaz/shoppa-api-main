@@ -180,12 +180,12 @@ pub async fn get_stores_for_admins(
 
     let stores = cursor.consume().await?;
 
-    let mut count = stores.len() as i64;
+    let count = stores.len();
 
-    if count < pagination.amount {
-        count += pagination.offset;
+    pagination.need_count(count);
 
-        return Ok((stores, count as u64));
+    if !pagination.need_count(count) {
+        return Ok((stores, pagination.calculate_total(count)));
     }
 
     let count = db
