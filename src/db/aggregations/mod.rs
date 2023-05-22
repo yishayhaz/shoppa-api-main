@@ -1,6 +1,10 @@
+mod add_fields;
 mod common;
 mod lookups;
 mod search;
+mod sorting;
+pub use add_fields::*;
 pub use common::*;
 pub use lookups::*;
 pub use search::*;
+pub use sorting::*;

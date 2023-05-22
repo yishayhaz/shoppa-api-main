@@ -155,10 +155,16 @@ pub fn union_with<T: DBModel>(_collection: T, pipeline: Document) -> Document {
     }
 }
 
-pub fn search(
-    document: Document
-) -> Document {
+pub fn search(document: Document) -> Document {
     doc! {
         "$search": document
+    }
+}
+
+pub fn sample(size: i64) -> Document {
+    doc! {
+        "$sample": {
+            "size": size,
+        }
     }
 }

@@ -58,15 +58,25 @@ pub async fn get_stores_names_for_autocomplete(
         .aggregate(
             [
                 aggregations::autocomplete_store_search(&free_text),
-                aggregations::add_fields(doc! {
-                    "score": {
-                        "$meta": "searchScore"
-                    }
-                }),
-                aggregations::sort(doc! {
-                    "score": -1
-                }),
-                aggregations::limit(3),
+                aggregations::add_score_meta(),
+                aggregations::sort_by_score(),
+                aggregations::limit(10),
+                aggregations::project(ProjectIdOptions::Keep, [models::Store::fields().name], None),
+            ],
+            None,
+        )
+        .await
+        .map_err(|e| Error::DBError(("stores", e)))?;
+
+    Ok(cursor.consume().await?)
+}
+
+pub async fn get_random_stores_names(db: &DBExtension) -> Result<Vec<Document>> {
+    let cursor = db
+        .stores
+        .aggregate(
+            [
+                aggregations::sample(10),
                 aggregations::project(ProjectIdOptions::Keep, [models::Store::fields().name], None),
             ],
             None,
@@ -86,14 +96,8 @@ pub async fn get_stores_for_extarnel(
 
     let pipeline = [
         aggregations::search_store(&free_text, &vec![], None),
-        aggregations::add_fields(doc! {
-            "score": {
-                "$meta": "searchScore"
-            }
-        }),
-        aggregations::sort(doc! {
-            "score": -1
-        }),
+        aggregations::add_score_meta(),
+        aggregations::sort_by_score(),
         aggregations::skip(pagination.offset),
         aggregations::limit(pagination.amount),
         aggregations::project(
@@ -110,6 +114,7 @@ pub async fn get_stores_for_extarnel(
                 models::Store::fields().banner(true).file_type,
                 models::Store::fields().description,
                 models::Store::fields().slogan,
+                models::Store::fields().created_at,
             ],
             None,
         ),
@@ -144,4 +149,50 @@ pub async fn get_stores_for_extarnel(
         .map_err(|e| Error::DBError(("stores", e)))?;
 
     Ok((stores, cursor.extract_count().await?))
+}
+
+pub async fn get_stores_for_admins(
+    db: &DBExtension,
+    pagination: Option<Pagination>,
+) -> PaginatedResult<Document> {
+    let pagination = pagination.unwrap_or_default();
+
+    let pipeline = [
+        aggregations::skip(pagination.offset),
+        aggregations::limit(pagination.amount),
+        aggregations::project(
+            ProjectIdOptions::Keep,
+            [
+                models::Store::fields().name,
+                models::Store::fields().created_at,
+                models::Store::fields().analytics,
+                models::Store::fields().contact,
+            ],
+            None,
+        ),
+    ];
+
+    let cursor = db
+        .stores
+        .aggregate(pipeline, None)
+        .await
+        .map_err(|e| Error::DBError(("stores", e)))?;
+
+    let stores = cursor.consume().await?;
+
+    let mut count = stores.len() as i64;
+
+    if count < pagination.amount {
+        count += pagination.offset;
+
+        return Ok((stores, count as u64));
+    }
+
+    let count = db
+        .stores
+        .count_documents(doc! {}, None)
+        .await
+        .map_err(|e| Error::DBError(("stores", e)))?;
+
+    Ok((stores, count))
 }
