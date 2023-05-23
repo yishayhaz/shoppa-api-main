@@ -182,8 +182,6 @@ pub async fn get_stores_for_admins(
 
     let count = stores.len();
 
-    pagination.need_count(count);
-
     if !pagination.need_count(count) {
         return Ok((stores, pagination.calculate_total(count)));
     }
