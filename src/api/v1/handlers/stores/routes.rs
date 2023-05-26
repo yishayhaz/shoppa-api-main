@@ -34,3 +34,19 @@ pub async fn get_stores(
 
     Ok(ResponseBuilder::paginated_response(&stores).into_response())
 }
+
+pub async fn get_store_by_id(
+    db: DBExtension,
+    Path(store_id): Path<ObjectId>,
+) -> HandlerResult {
+    let store = queries::get_store_for_external(&db, &store_id).await?;
+
+    if store.is_none() {
+        return Ok(
+            ResponseBuilder::<u16>::error("", None, Some("store not found"), Some(400))
+                .into_response(),
+        );
+    }
+
+    Ok(ResponseBuilder::success(store, None, None).into_response())
+}

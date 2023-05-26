@@ -194,3 +194,42 @@ pub async fn get_stores_for_admins(
 
     Ok((stores, count))
 }
+
+pub async fn get_store_for_external(db: &DBExtension, id: &ObjectId) -> Result<Option<Document>> {
+    let filter = doc! {
+        "_id": id,
+    };
+
+    let store = db
+        .stores
+        .aggregate(
+            [
+                aggregations::match_query(&filter),
+                aggregations::project(
+                    ProjectIdOptions::Keep,
+                    [
+                        models::Store::fields().name,
+                        models::Store::fields().slogan,
+                        models::Store::fields().description,
+                        models::Store::fields().banner(true).path,
+                        models::Store::fields().banner(true).file_name,
+                        models::Store::fields().banner(true).mime_type,
+                        models::Store::fields().banner(true).file_type,
+                        models::Store::fields().logo(true).path,
+                        models::Store::fields().logo(true).file_name,
+                        models::Store::fields().logo(true).mime_type,
+                        models::Store::fields().logo(true).file_type,
+                        models::Store::fields().analytics(true).views,
+                        models::Store::fields().analytics(true).rating(true).average,
+                        models::Store::fields().locations,
+                    ],
+                    None,
+                ),
+            ],
+            None,
+        )
+        .await
+        .map_err(|e| Error::DBError(("stores", e)))?;
+
+    Ok(store.convert_one_doc().await?)
+}

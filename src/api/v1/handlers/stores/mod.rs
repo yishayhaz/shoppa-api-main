@@ -9,5 +9,6 @@ pub fn router() -> Router {
             routing::get(routes::get_stores_autocomplete),
         )
         .route("/count", routing::get(routes::get_stores_count))
+        .route("/:store_oid", routing::get(routes::get_store_by_id))
         .route("/", routing::get(routes::get_stores))
 }

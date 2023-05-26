@@ -26,7 +26,6 @@ pub struct StoreLocationFields {
     pub city: &'static str,
     pub street: &'static str,
     pub street_number: &'static str,
-    pub legal_id: &'static str,
     pub phone: &'static str,
 }
 
@@ -86,7 +85,6 @@ pub const STORE_LOCATION_FIELDS: StoreLocationFields = StoreLocationFields {
     city: "city",
     street: "street",
     street_number: "street_number",
-    legal_id: "legal_id",
     phone: "phone",
 };
 
@@ -96,7 +94,6 @@ pub const STORE_LOCATION_FIELDS_FULL_PATH: StoreLocationFields = StoreLocationFi
     city: "locations.city",
     street: "locations.street",
     street_number: "locations.street_number",
-    legal_id: "locations.legal_id",
     phone: "locations.phone",
 };
 
