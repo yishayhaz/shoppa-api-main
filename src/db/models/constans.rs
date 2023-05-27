@@ -22,3 +22,6 @@ pub const PHONE_REGEX: &str = r"^\+\d{7,17}$";
 pub const NUMBER_STRING_REGEX: &str = r"^\d+$";
 
 pub const DELETE_FIELD_KEY_OPETATOR: &str = "$delete_this$";
+
+// product related constants
+pub const PRODUCT_MAX_VARIANTS: usize = 5;

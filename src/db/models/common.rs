@@ -1,5 +1,7 @@
 use crate::prelude::{db_models::*, *};
 use bson::{doc, Bson, Document};
+use validator::HasLen;
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct FileDocument {
     #[serde(rename = "_id")]

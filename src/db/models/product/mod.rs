@@ -3,12 +3,13 @@ mod fields;
 use super::{
     common::{db_model, embedded_document, DBModel, EmbeddedDocument, RefrenceField},
     Categories, InnerCategories, InnerInnerCategories, Store, Variants,
+    constans
 };
 use crate::prelude::{db_models::*, *};
 use bson::Document;
 
 // product model
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Validate)]
 pub struct Product {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     id: Option<ObjectId>,
@@ -27,6 +28,8 @@ pub struct Product {
     // But if it will be, I need to make it only contain the
     // Caregories in the Vec<CategoriesField>>
     pub categories: RefrenceField<Categories, Vec<CategoriesField>>,
+        
+    // #[validate(length(max = "constans::PRODUCT_MAX_VARIANTS"))]
     pub variants: RefrenceField<Vec<Variants>, Vec<ObjectId>>,
     pub images: Vec<ProductImage>, // chane to `assets: Vec<Asset>`
     pub items: Vec<ProductItem>, // pub product_info: Vec<String>

@@ -1,5 +1,5 @@
 use crate::{
-    db::models::{VariantType, VariantValue},
+    db::models::{constans, VariantType, VariantValue},
     helpers::parser::deserialize_query_array,
     prelude::types::*,
 };
@@ -49,5 +49,6 @@ pub struct UpdateVariantValuePayload {
 #[derive(Deserialize, Serialize, Debug, Clone, Validate)]
 pub struct GetVariantsByIdsQuery {
     #[serde(deserialize_with = "deserialize_query_array")]
+    #[validate(length(min = 1, max = "constans::PRODUCT_MAX_VARIANTS"))]
     pub variants_ids: Vec<ObjectId>,
 }
