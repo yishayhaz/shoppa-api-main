@@ -208,6 +208,8 @@ pub async fn get_store_for_external(db: &DBExtension, id: &ObjectId) -> Result<O
                 aggregations::project(
                     ProjectIdOptions::Keep,
                     [
+                        models::Store::fields().created_at,
+                        models::Store::fields().updated_at,
                         models::Store::fields().name,
                         models::Store::fields().slogan,
                         models::Store::fields().description,
