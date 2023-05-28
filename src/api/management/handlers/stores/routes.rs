@@ -69,6 +69,10 @@ pub async fn update_store_assets(
         ));
 
         upload.fire(&storage_client).await;
+
+        if let Some(logo) = store.logo {
+            delete_files.push(logo.path);
+        }
     }
 
     if let Some(banner) = payload.banner {
@@ -89,6 +93,11 @@ pub async fn update_store_assets(
         ));
 
         upload.fire(&storage_client).await;
+
+        if let Some(banner) = store.banner {
+            delete_files.push(banner.path);
+        }
+
     }
 
     let logo_doc = if let Some(logo_doc) = logo_doc {
@@ -107,14 +116,6 @@ pub async fn update_store_assets(
         &db, &store_id, logo_doc, banner_doc, None, None, None, None, None, None, None, None, None,
     )
     .await?;
-
-    if let Some(logo) = store.logo {
-        delete_files.push(logo.path);
-    }
-
-    if let Some(banner) = store.banner {
-        delete_files.push(banner.path);
-    }
 
     if delete_files.len() > 0 {
         tokio::spawn(async move {
