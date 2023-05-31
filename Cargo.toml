@@ -34,3 +34,4 @@ strum_macros = "0.24.3"
 strum = "0.24.1"
 futures-util = "0.3.28"
 rand = "0.8.5"
+shoppa-core = {path = "../api-core/shoppa-core", features = ["db"]}

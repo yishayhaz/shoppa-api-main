@@ -3,8 +3,8 @@ pub mod inserts;
 pub mod models;
 pub mod populate;
 pub mod queries;
+mod stores;
 pub mod updates;
-
 use std::str::FromStr;
 
 use crate::helpers::env::ENV_VARS;
