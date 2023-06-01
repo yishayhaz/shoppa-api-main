@@ -2,6 +2,7 @@ use crate::{
     db::models::{ContactFormStatus, ContactUsReason},
     prelude::types::*,
 };
+use shoppa_core::parser::empty_string_as_none;
 
 #[derive(Debug, Validate, Deserialize)]
 pub struct ContactUsPayload {
