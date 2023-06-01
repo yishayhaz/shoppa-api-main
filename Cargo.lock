@@ -2420,6 +2420,7 @@ name = "shoppa-db"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "axum",
  "bson",
  "chrono",
  "futures-util",

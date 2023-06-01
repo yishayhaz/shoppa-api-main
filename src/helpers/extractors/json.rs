@@ -1,4 +1,4 @@
-use crate::error::Error;
+use shoppa_core::prelude::*;
 use async_trait::async_trait;
 use axum::{
     body::HttpBody,
@@ -23,7 +23,7 @@ where
 {
     type Rejection = Error;
 
-    async fn from_request(req: Request<B>, state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request(req: Request<B>, state: &S) -> StdResult<Self, Self::Rejection> {
         let Json(data): Json<T> = match Json::from_request(req, state).await {
             Ok(data) => data,
             Err(e) => {

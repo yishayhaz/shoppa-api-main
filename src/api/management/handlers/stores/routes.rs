@@ -1,39 +1,50 @@
 use super::types;
 use crate::{
-    db::{
-        inserts,
-        models::{constans::DELETE_FIELD_KEY_OPETATOR, FileDocument, FileTypes},
-        queries, updates,
-    },
-    helpers::extractors::MultipartFormWithValidation,
-    prelude::{handlers::*, *},
+    db::AdminStoreFunctions,
+    prelude::{handlers::StorgeClientExtension, *},
     services::file_storage,
+};
+use axum::{
+    extract::{Extension, Path},
+    response::IntoResponse,
+};
+use bson::oid::ObjectId;
+use shoppa_core::{
+    db::{
+        models::{FileDocument, FileTypes},
+        DBConection, Pagination,
+    },
+    extractors::{JsonWithValidation, MultipartFormWithValidation},
+    ResponseBuilder,
 };
 
 pub async fn create_new_store(
-    db: DBExtension,
+    db: Extension<DBConection>,
     JsonWithValidation(payload): JsonWithValidation<types::CreateStorePayload>,
 ) -> HandlerResult {
-    let store = inserts::new_store(&db, payload).await?;
+    let store = db.insert_new_store(payload).await?;
 
     Ok(ResponseBuilder::success(Some(store), None, None).into_response())
 }
 
-pub async fn get_store_by_id(db: DBExtension, Path(store_oid): Path<ObjectId>) -> HandlerResult {
-    let store = queries::get_store_by_id(&db, &store_oid).await?;
+pub async fn get_store_by_id(
+    db: Extension<DBConection>,
+    Path(store_id): Path<ObjectId>,
+) -> HandlerResult {
+    let store = db.get_store_by_id(&store_id, None, None).await?;
 
     Ok(ResponseBuilder::success(Some(store), None, None).into_response())
 }
 
 pub async fn update_store_assets(
-    db: DBExtension,
+    db: Extension<DBConection>,
     storage_client: StorgeClientExtension,
     Path(store_id): Path<ObjectId>,
     MultipartFormWithValidation(payload): MultipartFormWithValidation<
         types::UpdateStoreAssetsPayload,
     >,
 ) -> HandlerResult {
-    let store = queries::get_store_by_id(&db, &store_id).await?;
+    let store = db.get_store_by_id(&store_id, None, None).await?;
 
     if store.is_none() {
         return Ok(
@@ -97,7 +108,6 @@ pub async fn update_store_assets(
         if let Some(banner) = store.banner {
             delete_files.push(banner.path);
         }
-
     }
 
     let logo_doc = if let Some(logo_doc) = logo_doc {
@@ -112,8 +122,8 @@ pub async fn update_store_assets(
         None
     };
 
-    updates::update_store(
-        &db, &store_id, logo_doc, banner_doc, None, None, None, None, None, None, None, None, None,
+    db.update_store_base_data(
+        &store_id, logo_doc, banner_doc, None, None, None, None, None, None, None, None, None,
     )
     .await?;
 
@@ -127,46 +137,36 @@ pub async fn update_store_assets(
 }
 
 pub async fn update_store(
-    db: DBExtension,
+    db: Extension<DBConection>,
     Path(store_id): Path<ObjectId>,
     JsonWithValidation(payload): JsonWithValidation<types::UpdateStorePayload>,
 ) -> HandlerResult {
-    let slogan = if let Some(slogan) = payload.slogan {
-        if slogan == DELETE_FIELD_KEY_OPETATOR {
-            Some(None)
-        } else {
-            Some(Some(slogan))
-        }
-    } else {
-        None
-    };
-
-    let store = updates::update_store(
-        &db,
-        &store_id,
-        None,
-        None,
-        payload.name,
-        payload.description,
-        slogan,
-        payload.contact_email,
-        payload.contact_phone,
-        payload.legal_id,
-        payload.business_type,
-        payload.business_name,
-        None,
-    )
-    .await?;
+    let store = db
+        .update_store_base_data(
+            &store_id,
+            None,
+            None,
+            payload.name,
+            payload.description,
+            payload.slogan,
+            payload.contact_email,
+            payload.contact_phone,
+            payload.legal_id,
+            payload.business_type,
+            payload.business_name,
+            None,
+        )
+        .await?;
 
     Ok(ResponseBuilder::success(Some(store), None, None).into_response())
 }
 
 pub async fn add_store_locations(
-    db: DBExtension,
+    db: Extension<DBConection>,
     Path(store_id): Path<ObjectId>,
     JsonWithValidation(payload): JsonWithValidation<types::StoreLocationPayload>,
 ) -> HandlerResult {
-    let store = updates::add_store_locations(&db, &store_id, &payload).await?;
+    let store = db.add_store_location(&store_id, &payload, None).await?;
 
     if store.is_none() {
         return Ok(
@@ -179,10 +179,12 @@ pub async fn add_store_locations(
 }
 
 pub async fn delete_store_location(
-    db: DBExtension,
+    db: Extension<DBConection>,
     Path((store_id, location_id)): Path<(ObjectId, ObjectId)>,
 ) -> HandlerResult {
-    let store = updates::delete_store_location(&db, &store_id, &location_id).await?;
+    let store = db
+        .delete_store_location(&store_id, &location_id, None)
+        .await?;
 
     if store.is_none() {
         return Ok(
@@ -195,31 +197,22 @@ pub async fn delete_store_location(
 }
 
 pub async fn update_store_location(
-    db: DBExtension,
+    db: Extension<DBConection>,
     Path((store_id, location_id)): Path<(ObjectId, ObjectId)>,
     JsonWithValidation(payload): JsonWithValidation<types::UpdateStoreLocationPayload>,
 ) -> HandlerResult {
-    let free_text = if let Some(free_text) = payload.free_text {
-        if free_text == DELETE_FIELD_KEY_OPETATOR {
-            Some(None)
-        } else {
-            Some(Some(free_text))
-        }
-    } else {
-        None
-    };
-
-    let store = updates::update_store_location(
-        &db,
-        &store_id,
-        &location_id,
-        &payload.city,
-        &payload.street,
-        &payload.street_number,
-        &free_text,
-        &payload.phone,
-    )
-    .await?;
+    let store = db
+        .update_store_location(
+            &store_id,
+            &location_id,
+            &payload.city,
+            &payload.street,
+            &payload.street_number,
+            &payload.free_text,
+            &payload.phone,
+            None,
+        )
+        .await?;
 
     if store.is_none() {
         return Ok(
@@ -231,8 +224,8 @@ pub async fn update_store_location(
     Ok(ResponseBuilder::success(store, None, None).into_response())
 }
 
-pub async fn get_stores(db: DBExtension, pagination: Pagination) -> HandlerResult {
-    let stores = queries::get_stores_for_admins(&db, Some(pagination)).await?;
+pub async fn get_stores(db: Extension<DBConection>, pagination: Pagination) -> HandlerResult {
+    let stores = db.get_stores_for_admins(Some(pagination), None).await?;
 
     Ok(ResponseBuilder::paginated_response(&stores).into_response())
 }

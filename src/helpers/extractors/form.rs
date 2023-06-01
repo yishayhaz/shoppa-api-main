@@ -1,5 +1,4 @@
-use crate::error::Error;
-use async_trait::async_trait;
+use crate::prelude::*;
 use axum::{
     body::HttpBody,
     extract::{Form, FromRequest, Multipart},
@@ -13,7 +12,7 @@ use validator::{HasLen, Validate};
 
 #[async_trait]
 pub trait FromMultipart: Sized + Send + Sync {
-    async fn from_multipart(multipart: Multipart) -> Result<Self, Error>;
+    async fn from_multipart(multipart: Multipart) -> Result<Self>;
 }
 
 pub struct MultipartFrom<T: FromMultipart>(pub T);
@@ -70,7 +69,7 @@ where
 {
     type Rejection = Error;
 
-    async fn from_request(req: Request<B>, state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request(req: Request<B>, state: &S) -> StdResult<Self, Self::Rejection> {
         let Form(data): Form<T> = match Form::from_request(req, state).await {
             Ok(data) => data,
             Err(e) => {
@@ -100,7 +99,7 @@ where
 {
     type Rejection = Response;
 
-    async fn from_request(req: Request<B>, state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request(req: Request<B>, state: &S) -> StdResult<Self, Self::Rejection> {
         let multipart = Multipart::from_request(req, state)
             .await
             // the only possible e is Invalid boundry
@@ -126,7 +125,7 @@ where
 {
     type Rejection = Response;
 
-    async fn from_request(req: Request<B>, state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request(req: Request<B>, state: &S) -> StdResult<Self, Self::Rejection> {
         let MultipartFrom(data) = MultipartFrom::<T>::from_request(req, state).await?;
 
         data.validate()
@@ -139,7 +138,7 @@ where
 use serde::Serialize;
 
 impl Serialize for FileFieldstr {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    fn serialize<S>(&self, serializer: S) -> StdResult<S::Ok, S::Error>
     where
         S: serde::ser::Serializer,
     {

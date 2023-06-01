@@ -7,6 +7,8 @@ mod stores;
 pub mod updates;
 use std::str::FromStr;
 
+pub use stores::{AdminStoreFunctions, StoreFunctions};
+
 use crate::helpers::env::ENV_VARS;
 use bson::{doc, Bson};
 use models::DBModel;

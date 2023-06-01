@@ -3,8 +3,7 @@ use dotenv::dotenv;
 use shoppa_api::{
     api, db,
     helpers::{env::ENV_VARS, security::get_cors_layer, setup},
-    services::file_storage,
-    AppState
+    services::file_storage
 };
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -37,21 +36,17 @@ async fn main() {
 
     let db_collections = Arc::new(db::DBCollections::new(mongo_client, &ENV_VARS.DB_NAME));
 
-    let app_state = Arc::new(
-        AppState {
-            db: DBConection::connect().await.unwrap(),
-        }
-    );
+    let new_db = Arc::new(DBConection::connect().await.unwrap());
 
     let app = Router::new()
         .nest("/api/v1", api::v1::router())
         .nest("/api/management", api::management::router())
         .layer(Extension(file_storge_client))
         .layer(Extension(db_collections))
+        .layer(Extension(new_db))
         .layer(CookieManagerLayer::new())
         .layer(get_cors_layer())
-        .layer(TraceLayer::new_for_http())
-        .with_state(());
+        .layer(TraceLayer::new_for_http());
 
     let address = format!("{}:{}", &ENV_VARS.HOST, &ENV_VARS.PORT);
 

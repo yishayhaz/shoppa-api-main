@@ -1,13 +1,12 @@
 use crate::prelude::{types::*, *};
-use crate::{
-    db::models::{constans, Store, StoreBusinessType, StoreLocation},
-    helpers::{
-        extractors::{FileFieldstr, FromMultipart},
-        validators::{image_file_field_validator, number_string_validator, phone_number_validator},
-        MAX_IMAGE_SIZE,
-    },
-};
 use axum::{async_trait, extract::Multipart};
+use shoppa_core::{
+    constans,
+    db::models::{Store, StoreBusinessType, StoreLocation},
+    validators::{image_file_field_validator, number_string_validator, phone_number_validator},
+    extractors::{FileFieldstr, FromMultipart},
+    parser::empty_string_as_none,
+};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SearchStoresQueryParams {
@@ -44,9 +43,15 @@ pub struct CreateStorePayload {
 
 #[derive(Validate)]
 pub struct UpdateStoreAssetsPayload {
-    #[validate(length(max = "MAX_IMAGE_SIZE"), custom = "image_file_field_validator")]
+    #[validate(
+        length(max = "constans::MAX_IMAGE_SIZE"),
+        custom = "image_file_field_validator"
+    )]
     pub logo: Option<FileFieldstr>,
-    #[validate(length(max = "MAX_IMAGE_SIZE"), custom = "image_file_field_validator")]
+    #[validate(
+        length(max = "constans::MAX_IMAGE_SIZE"),
+        custom = "image_file_field_validator"
+    )]
     pub banner: Option<FileFieldstr>,
 }
 
