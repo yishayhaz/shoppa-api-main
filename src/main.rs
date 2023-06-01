@@ -4,6 +4,7 @@ use shoppa_api::{
     api, db,
     helpers::{env::ENV_VARS, security::get_cors_layer, setup},
     services::file_storage,
+    AppState
 };
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -11,6 +12,7 @@ use tower_cookies::CookieManagerLayer;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use validator::Validate;
+use shoppa_core::db::DBConection;
 
 #[tokio::main]
 async fn main() {
@@ -34,8 +36,12 @@ async fn main() {
     let file_storge_client = Arc::new(file_storage::connect().await);
 
     let db_collections = Arc::new(db::DBCollections::new(mongo_client, &ENV_VARS.DB_NAME));
-    // db_collections.create_schames().await;
-    // db_collections.create_indexes().await;
+
+    let app_state = Arc::new(
+        AppState {
+            db: DBConection::connect().await.unwrap(),
+        }
+    );
 
     let app = Router::new()
         .nest("/api/v1", api::v1::router())
@@ -44,7 +50,8 @@ async fn main() {
         .layer(Extension(db_collections))
         .layer(CookieManagerLayer::new())
         .layer(get_cors_layer())
-        .layer(TraceLayer::new_for_http());
+        .layer(TraceLayer::new_for_http())
+        .with_state(());
 
     let address = format!("{}:{}", &ENV_VARS.HOST, &ENV_VARS.PORT);
 
