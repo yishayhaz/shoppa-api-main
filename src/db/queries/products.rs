@@ -7,52 +7,6 @@ use models::{Product, ProductSortBy};
 
 type GetProductResult = Result<Option<Product>>;
 
-async fn get_product(
-    db: &DBExtension,
-    filter: Document,
-    populate: Option<ProductsPopulate>,
-    option: Option<FindOneOptions>,
-) -> GetProductResult {
-    if let Some(populate) = populate {
-        let mut pipeline = vec![aggregations::match_query(&filter), aggregations::limit(1)];
-
-        pipeline.extend(populate.build_pipeline());
-
-        let cursor = db
-            .products
-            .aggregate(pipeline, None)
-            .await
-            .map_err(|e| Error::DBError(("products", e)))?;
-
-        let product = cursor
-            .convert_one_doc::<Product>()
-            .await?;
-
-        return Ok(product);
-    };
-
-    let product = db
-        .products
-        .find_one(filter, option)
-        .await
-        .map_err(|e| Error::DBError(("products", e)))?;
-
-    Ok(product)
-}
-
-pub async fn get_product_by_id(
-    db: &DBExtension,
-    id: &ObjectId,
-    populate: Option<ProductsPopulate>,
-    option: Option<FindOneOptions>,
-) -> GetProductResult {
-    let filter = doc! {
-        "_id": id,
-    };
-
-    get_product(db, filter, populate, option).await
-}
-
 pub async fn get_products_for_extarnel(
     db: &DBExtension,
     pagination: Option<Pagination>,

@@ -8,6 +8,7 @@ mod products;
 pub mod updates;
 use std::str::FromStr;
 
+pub use products::{AdminProductFunctions, ProductFunctions};
 pub use stores::{AdminStoreFunctions, StoreFunctions};
 
 use crate::helpers::env::ENV_VARS;
