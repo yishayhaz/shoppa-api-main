@@ -7,7 +7,7 @@ use crate::{
     prelude::{types::*, *},
 };
 use axum::{async_trait, extract::Multipart};
-use shoppa_core::parser::empty_string_as_none;
+use shoppa_core::parser::{empty_string_as_none, deserialize_optional_query_array};
 use validator::Validate;
 
 #[derive(Deserialize, Serialize, Debug, Clone, Validate)]
@@ -26,7 +26,7 @@ pub struct CreateProductPayload {
 }
 
 #[derive(Deserialize, Debug, Clone, Validate)]
-pub struct GetProductQueryParams {
+pub struct GetProductsAutoCompleteQueryParams {
     #[serde(default, deserialize_with = "empty_string_as_none")]
     pub free_text: Option<String>,
     #[serde(default, deserialize_with = "empty_string_as_none")]
@@ -47,6 +47,16 @@ pub struct GetProductsCountQueryParams {
 pub struct UploadProductImagePayload {
     #[validate(length(max = "MAX_IMAGE_SIZE"), custom = "image_file_field_validator")]
     pub file: FileFieldstr,
+}
+
+#[derive(Deserialize, Debug, Clone, Validate)]
+pub struct GetProductsInfiniteQueryParams {
+    #[serde(deserialize_with = "deserialize_optional_query_array")]
+    pub product_ids: Option<Vec<ObjectId>>,
+    #[serde(default, deserialize_with = "empty_string_as_none")]
+    pub category_id: Option<ObjectId>,
+    #[serde(default, deserialize_with = "empty_string_as_none")]
+    pub store_id: Option<ObjectId>,
 }
 
 #[async_trait]

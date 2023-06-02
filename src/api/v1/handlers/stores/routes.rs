@@ -1,8 +1,7 @@
 use super::types;
 use crate::{
     db::StoreFunctions,
-    prelude::{handlers::StorgeClientExtension, *},
-    services::file_storage,
+    prelude::*,
 };
 use axum::{
     extract::{Extension, Path, Query},
@@ -11,7 +10,6 @@ use axum::{
 use bson::oid::ObjectId;
 use shoppa_core::{
     db::{
-        models::{FileDocument, FileTypes},
         DBConection, Pagination,
     },
     extractors::{JsonWithValidation, MultipartFormWithValidation},

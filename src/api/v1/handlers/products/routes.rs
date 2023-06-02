@@ -1,14 +1,26 @@
 use super::types;
-use crate::{
-    api::v1::middlewares::*,
-    db::{models::ProductSortBy, queries, updates},
-    prelude::{handlers::*, *},
+use crate::{db::ProductFunctions, prelude::*};
+use axum::{
+    extract::{Extension, Path, Query},
+    response::IntoResponse,
 };
-use axum::extract::MatchedPath;
+use bson::oid::ObjectId;
+use shoppa_core::{
+    db::{DBConection, Pagination},
+    extractors::{JsonWithValidation, MultipartFormWithValidation},
+    ResponseBuilder,
+};
+
+pub async fn get_products_infinite(
+    db: Extension<DBConection>,
+    pagination: Pagination,
+    Query(query): Query<types::GetProductsInfiniteQueryParams>,
+) -> HandlerResult {
+    todo!()
+}
 
 pub async fn get_products(
     db: DBExtension,
-    path: MatchedPath,
     pagination: Pagination,
     sorting: OptionalSorting<ProductSortBy>,
     Query(query): Query<types::GetProductQueryParams>,
@@ -27,33 +39,37 @@ pub async fn get_products(
     Ok(ResponseBuilder::paginated_response(&products).into_response())
 }
 
-pub async fn get_product(db: DBExtension, Path(product_id): Path<ObjectId>) -> HandlerResult {
-    let product = queries::get_one_product_for_extarnel(&db, &product_id).await?;
+pub async fn get_product(
+    db: Extension<DBConection>,
+    Path(product_id): Path<ObjectId>,
+) -> HandlerResult {
+    let product = db.get_one_product_for_extarnel(&product_id, None).await?;
 
     if product.is_none() {
-        return Ok(ResponseBuilder::not_found_error("products", &product_id).into_response());
+        return Ok(ResponseBuilder::error("", Some(""), None, Some(404)).into_response());
     }
 
     Ok(ResponseBuilder::success(product, None, None).into_response())
 }
 
-pub async fn products_names_for_autocomplete(
-    db: DBExtension,
-    Query(query): Query<types::GetProductQueryParams>,
+pub async fn products_autocomplete(
+    db: Extension<DBConection>,
+    Query(query): Query<types::GetProductsAutoCompleteQueryParams>,
 ) -> HandlerResult {
+    // maybe get random products if there is no free text
     if query.free_text.is_none() {
         return Ok(ResponseBuilder::<Vec<u16>>::success(Some(vec![]), None, None).into_response());
     }
+    todo!()
+    // let products = queries::get_products_names_for_autocomplete(
+    //     &db,
+    //     query.free_text.unwrap(),
+    //     query.store_id,
+    //     query.category_id,
+    // )
+    // .await?;
 
-    let products = queries::get_products_names_for_autocomplete(
-        &db,
-        query.free_text.unwrap(),
-        query.store_id,
-        query.category_id,
-    )
-    .await?;
-
-    Ok(ResponseBuilder::success(Some(products), None, None).into_response())
+    // Ok(ResponseBuilder::success(Some(products), None, None).into_response())
 }
 
 pub async fn products_count(
@@ -64,7 +80,6 @@ pub async fn products_count(
 
     Ok(ResponseBuilder::success(Some(count), None, None).into_response())
 }
-
 
 pub async fn add_view_to_product(
     db: DBExtension,
