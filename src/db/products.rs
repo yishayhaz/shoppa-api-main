@@ -7,8 +7,8 @@ use shoppa_core::{
     constans,
     db::{
         aggregations::{self, ProjectIdOptions},
-        models::{self, EmbeddedDocument, FileDocument, Product, ProductItem},
-        DBConection, Pagination, SortDirection, Sorter,
+        models::{EmbeddedDocument, FileDocument, Product, ProductItem},
+        DBConection, Pagination, Sorter,
     },
 };
 use strum_macros::EnumString;
@@ -288,11 +288,7 @@ impl ProductFunctions for DBConection {
 
         let count = self
             .count_products_with_aggregation(
-                [aggregations::search_products(
-                    &free_text,
-                    &filters,
-                    Some(1),
-                )],
+                [aggregations::search_products(&free_text, &filters, Some(1))],
                 options,
             )
             .await?;

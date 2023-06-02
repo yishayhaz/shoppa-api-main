@@ -1,12 +1,15 @@
 use super::types;
-use crate::{db::{ProductFunctions, ProductSortBy}, prelude::*};
+use crate::{
+    db::{ProductFunctions, ProductSortBy},
+    prelude::*,
+};
 use axum::{
     extract::{Extension, Path, Query},
     response::IntoResponse,
 };
 use bson::oid::ObjectId;
 use shoppa_core::{
-    db::{DBConection, Pagination, OptionalSorter},
+    db::{DBConection, OptionalSorter, Pagination},
     ResponseBuilder,
 };
 
@@ -24,15 +27,16 @@ pub async fn get_products(
     sorting: OptionalSorter<ProductSortBy>,
     Query(query): Query<types::GetProductQueryParams>,
 ) -> HandlerResult {
-    let products = db.get_products_for_extarnel(
-        Some(pagination),
-        sorting.0,
-        query.free_text,
-        query.store_id,
-        query.category_id,
-        None
-    )
-    .await?;
+    let products = db
+        .get_products_for_extarnel(
+            Some(pagination),
+            sorting.0,
+            query.free_text,
+            query.store_id,
+            query.category_id,
+            None,
+        )
+        .await?;
 
     Ok(ResponseBuilder::paginated_response(&products).into_response())
 }
@@ -71,19 +75,20 @@ pub async fn products_autocomplete(
 }
 
 pub async fn products_count(
-    db: DBExtension,
+    db: Extension<DBConection>,
     Query(query): Query<types::GetProductsCountQueryParams>,
 ) -> HandlerResult {
-    let count = queries::get_products_count(&db, query.store_id, query.category_id).await?;
+    todo!()
+    // let count = queries::get_products_count(&db, query.store_id, query.category_id).await?;
 
-    Ok(ResponseBuilder::success(Some(count), None, None).into_response())
+    // Ok(ResponseBuilder::success(Some(count), None, None).into_response())
 }
 
 pub async fn add_view_to_product(
     db: Extension<DBConection>,
     Path(product_id): Path<ObjectId>,
 ) -> HandlerResult {
-    let product = updates::add_view_to_product(&db, &product_id, None).await?;
+    let product = db.add_view_to_product(&product_id, None).await?;
 
     if let Some(product) = product {
         // the views is being returend before the update, so we need to add 1 to the views
@@ -92,5 +97,5 @@ pub async fn add_view_to_product(
         );
     }
 
-    Ok(ResponseBuilder::not_found_error("product", &product_id).into_response())
+    Ok(ResponseBuilder::error("", Some(""), None, Some(404)).into_response())
 }
