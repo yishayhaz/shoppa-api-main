@@ -6,8 +6,8 @@ use shoppa_core::{
     constans,
     db::{
         aggregations::{self, ProjectIdOptions},
-        models::{self, EmbeddedDocument, FileDocument, Product, ProductItem},
-        DBConection, Pagination,
+        models::{self, EmbeddedDocument, FileDocument, Product, ProductItem, ProductSortBy},
+        DBConection, Pagination, Sorter,
     },
 };
 
@@ -18,6 +18,29 @@ pub trait ProductFunctions {
         product_id: &ObjectId,
         options: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Product>>;
+    async fn get_products_names_for_autocomplete(
+        &self,
+        free_text: String,
+        store_id: Option<ObjectId>,
+        category_id: Option<ObjectId>,
+        options: Option<AggregateOptions>,
+    ) -> Result<Vec<Document>>;
+    async fn get_one_product_for_extarnel(
+        &self,
+        product_id: &ObjectId,
+        options: Option<AggregateOptions>,
+    ) -> Result<Option<Document>>;
+
+    async fn get_products_for_extarnel(
+        &self,
+        pagination: Option<Pagination>,
+        sorting: Option<Sorter<models::ProductSortBy>>,
+        mut free_text: Option<String>,
+        store_id: Option<ObjectId>,
+        category_id: Option<ObjectId>,
+        infinite: bool,
+        options: Option<AggregateOptions>,
+    ) -> Result<(Vec<Document>, u64)>;
 }
 
 #[async_trait]
@@ -64,6 +87,230 @@ impl ProductFunctions for DBConection {
 
         self.find_and_update_product_by_id(product_id, update, options)
             .await
+    }
+
+    async fn get_products_names_for_autocomplete(
+        &self,
+        free_text: String,
+        store_id: Option<ObjectId>,
+        category_id: Option<ObjectId>,
+        options: Option<AggregateOptions>,
+    ) -> Result<Vec<Document>> {
+        let mut filters = vec![];
+
+        if let Some(store_id) = store_id {
+            filters.push(doc! {
+                "equals": {
+                    "value": store_id,
+                    "path": Product::fields().store(true).id
+                }
+            });
+        };
+
+        if let Some(category_id) = category_id {
+            filters.push(doc! {
+                "equals": {
+                    "value": category_id,
+                    "path": Product::fields().categories(true).id
+                }
+            });
+        }
+
+        // TODO in the future we need to use the embeddeddocuments search to return the must
+        // relevant product item and not the first one
+        let pipeline = [
+            aggregations::autocomplete_products_search(&free_text, filters),
+            aggregations::add_score_meta(),
+            aggregations::sort_by_score(),
+            aggregations::limit(10),
+            aggregations::project(
+                ProjectIdOptions::Keep,
+                [Product::fields().name],
+                Some(doc! {
+                    "item_id": {
+                        "$first":
+                        format!("${}", Product::fields().items(true).id)
+                    },
+                    "views": format!("${}", Product::fields().analytics(true).views),
+                }),
+            ),
+        ];
+
+        self.aggregate_products(pipeline, options).await
+    }
+
+    async fn get_one_product_for_extarnel(
+        &self,
+        product_id: &ObjectId,
+        options: Option<AggregateOptions>,
+    ) -> Result<Option<Document>> {
+        let filter = doc! {
+            Product::fields().id: product_id,
+        };
+
+        let pipeline = [
+            aggregations::match_query(&filter),
+            aggregations::lookup_product_variants(Some(vec![aggregations::project(
+                ProjectIdOptions::Keep,
+                ["type", "name", "values.label", "values._id", "values.value"],
+                None,
+            )])),
+            aggregations::project(
+                ProjectIdOptions::Keep,
+                [
+                    "created_at",
+                    "brand",
+                    "name",
+                    "description",
+                    "keywords",
+                    "store",
+                    "categories.name",
+                    "categories._id",
+                    "analytics.views",
+                    "items",
+                    "variants",
+                    "images",
+                ],
+                None,
+            ),
+        ];
+
+        let products = self.aggregate_products(pipeline, options).await?;
+
+        Ok(products.into_iter().next())
+    }
+
+    async fn get_products_for_extarnel(
+        &self,
+        pagination: Option<Pagination>,
+        sorting: Option<Sorter<models::ProductSortBy>>,
+        mut free_text: Option<String>,
+        store_id: Option<ObjectId>,
+        category_id: Option<ObjectId>,
+        infinite: bool,
+        options: Option<AggregateOptions>,
+    ) -> Result<(Vec<Document>, u64)> {
+        let pagination = pagination.unwrap_or_default();
+
+        let sort_stage = match sorting {
+            None => {
+                if free_text.is_some() {
+                    aggregations::sort_by_score()
+                } else {
+                    // this is the default sorting
+                    aggregations::sort(doc! {
+                        Product::fields().created_at: -1
+                    })
+                }
+            }
+            Some(sort) => {
+                let direcation = &sort.direction;
+                match sort.sort_by {
+                    ProductSortBy::Date => {
+                        // free text and infinte can only be used in Relevance sorting
+                        if infinite {
+                            free_text = None;
+                        }
+                        aggregations::sort(doc! {
+                            Product::fields().created_at: direcation
+                        })
+                    }
+                    ProductSortBy::Popularity => {
+                        // free text and infinte can only be used in Relevance sorting
+                        if infinite {
+                            free_text = None;
+                        }
+                        aggregations::sort(doc! {
+                            "analytics.views": direcation
+                        })
+                    }
+                    ProductSortBy::Relevance => {
+                        if free_text.is_some() {
+                            aggregations::sort(doc! {
+                                "score": direcation
+                            })
+                        } else {
+                            // this is the default sorting
+                            aggregations::sort(doc! {
+                                Product::fields().created_at: -1
+                            })
+                        }
+                    }
+                }
+            }
+        };
+
+        let mut min_should_match = 1;
+
+        if infinite {
+            min_should_match = 0;
+        }
+
+        let filters = {
+            let mut f = vec![];
+
+            if let Some(store_id) = store_id {
+                f.push(doc! {
+                    "equals": {
+                        "value": store_id,
+                        "path": "store._id"
+                    }
+                });
+            };
+
+            if let Some(category_id) = category_id {
+                f.push(doc! {
+                    "equals": {
+                        "value": category_id,
+                        "path": "categories._id"
+                    }
+                });
+            }
+            f
+        };
+
+        let pipeline = [
+            aggregations::search_products(&free_text, &filters, Some(min_should_match)),
+            aggregations::add_score_meta(),
+            sort_stage,
+            aggregations::skip(pagination.offset),
+            aggregations::limit(pagination.amount),
+            aggregations::project(
+                ProjectIdOptions::Keep,
+                vec![
+                    Product::fields().brand,
+                    Product::fields().name,
+                    Product::fields().keywords,
+                    Product::fields().analytics,
+                    Product::fields().categories,
+                    Product::fields().created_at,
+                    Product::fields().store,
+                    Product::fields().assets,
+                ],
+                None,
+            ),
+        ];
+
+        let products = self.aggregate_products(pipeline, options).await?;
+
+        let count = products.len();
+
+        if !pagination.need_count(count) {
+            return Ok((products, pagination.calculate_total(count)));
+        }
+
+        let count = self
+            .count_products_with_aggregation(
+                [aggregations::search_products(
+                    &free_text,
+                    &filters,
+                    Some(min_should_match),
+                )],
+                options,
+            )
+            .await?;
+
+        Ok((products, count))
     }
 }
 
@@ -143,7 +390,6 @@ impl AdminProductFunctions for DBConection {
         assets_refs: Option<Vec<ObjectId>>,
         options: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Product>> {
-
         let filters = doc! {
             Product::fields().id: product_id,
             Product::fields().items(true).id: item_id
@@ -152,17 +398,29 @@ impl AdminProductFunctions for DBConection {
         let mut update = doc! {};
 
         if let Some(price) = price {
-            let field = format!("{}.$.{}", Product::fields().items, Product::fields().items(false).price);
+            let field = format!(
+                "{}.$.{}",
+                Product::fields().items,
+                Product::fields().items(false).price
+            );
             update.insert(field, price);
         }
 
         if let Some(in_storage) = in_storage {
-            let field = format!("{}.$.{}", Product::fields().items, Product::fields().items(false).in_storage);
+            let field = format!(
+                "{}.$.{}",
+                Product::fields().items,
+                Product::fields().items(false).in_storage
+            );
             update.insert(field, in_storage as i64);
         }
 
         if let Some(name) = name {
-            let field = format!("{}.$.{}", Product::fields().items, Product::fields().items(false).name);
+            let field = format!(
+                "{}.$.{}",
+                Product::fields().items,
+                Product::fields().items(false).name
+            );
             if name == constans::DELETE_FIELD_KEY_OPETATOR {
                 update.insert::<_, Option<String>>(field, None);
             } else {
@@ -171,11 +429,19 @@ impl AdminProductFunctions for DBConection {
         }
 
         if let Some(assets_refs) = assets_refs {
-            let field = format!("{}.$.{}", Product::fields().items, Product::fields().items(false).assets_refs);
+            let field = format!(
+                "{}.$.{}",
+                Product::fields().items,
+                Product::fields().items(false).assets_refs
+            );
             update.insert(field, assets_refs);
         }
 
-        let update_at_field = format!("{}.$.{}", Product::fields().items, Product::fields().items(false).updated_at);
+        let update_at_field = format!(
+            "{}.$.{}",
+            Product::fields().items,
+            Product::fields().items(false).updated_at
+        );
 
         update.insert(update_at_field, chrono::Utc::now());
 
@@ -183,7 +449,6 @@ impl AdminProductFunctions for DBConection {
             "$set": update
         };
 
-        self.find_and_update_product(filters, update, options)
-            .await
+        self.find_and_update_product(filters, update, options).await
     }
 }

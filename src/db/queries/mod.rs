@@ -2,7 +2,6 @@ mod analytics;
 mod categories;
 mod contact_us;
 mod prelude;
-mod products;
 mod users;
 mod variants;
 
@@ -10,7 +9,6 @@ pub use analytics::*;
 use bson::{Bson, Document};
 pub use categories::*;
 pub use contact_us::*;
-pub use products::*;
 pub use users::*;
 pub use variants::*;
 
