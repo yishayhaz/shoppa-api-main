@@ -4,6 +4,7 @@ pub mod models;
 pub mod populate;
 pub mod queries;
 mod stores;
+mod products;
 pub mod updates;
 use std::str::FromStr;
 
