@@ -8,8 +8,8 @@ mod products;
 pub mod updates;
 use std::str::FromStr;
 
-pub use products::{AdminProductFunctions, ProductFunctions};
-pub use stores::{AdminStoreFunctions, StoreFunctions};
+pub use products::*;
+pub use stores::*;
 
 use crate::helpers::env::ENV_VARS;
 use bson::{doc, Bson};
@@ -185,12 +185,12 @@ pub struct Sorter<T: FromStr> {
     #[serde(rename = "sort_by")]
     pub sort_by: T,
     #[serde(rename = "sort_direction")]
-    pub direction: SortDireaction,
+    pub direction: SortDirection,
 }
 
 #[derive(Debug, Serialize_repr, Deserialize_repr, Clone)]
 #[repr(i8)]
-pub enum SortDireaction {
+pub enum SortDirection {
     Ascending = 1,
     Descending = -1,
 }
@@ -209,16 +209,16 @@ impl Default for Sorter<String> {
     fn default() -> Self {
         Sorter {
             sort_by: String::from("created_at"),
-            direction: SortDireaction::Descending,
+            direction: SortDirection::Descending,
         }
     }
 }
 
-impl From<&SortDireaction> for bson::Bson {
-    fn from(sort_dir: &SortDireaction) -> Self {
+impl From<&SortDirection> for bson::Bson {
+    fn from(sort_dir: &SortDirection) -> Self {
         match sort_dir {
-            SortDireaction::Ascending => Bson::Int32(1),
-            SortDireaction::Descending => Bson::Int32(-1),
+            SortDirection::Ascending => Bson::Int32(1),
+            SortDirection::Descending => Bson::Int32(-1),
         }
     }
 }

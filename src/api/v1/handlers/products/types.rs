@@ -1,28 +1,21 @@
-use crate::{
-    helpers::{
-        extractors::{FileFieldstr, FromMultipart},
-        validators::image_file_field_validator,
-        MAX_IMAGE_SIZE,
-    },
-    prelude::{types::*, *},
-};
+use crate::prelude::{types::*, *};
 use axum::{async_trait, extract::Multipart};
-use shoppa_core::parser::{empty_string_as_none, deserialize_optional_query_array};
+use shoppa_core::{
+    constans::MAX_IMAGE_SIZE,
+    extractors::{FileFieldstr, FromMultipart},
+    parser::{deserialize_optional_query_array, empty_string_as_none},
+    validators::image_file_field_validator,
+};
 use validator::Validate;
 
-#[derive(Deserialize, Serialize, Debug, Clone, Validate)]
-pub struct CreateProductPayload {
-    #[validate(length(min = 8, max = 64))]
-    pub name: String,
-    // 3 categories must be provided
-    #[validate(length(min = 3, max = 3))]
-    pub categories: Vec<ObjectId>,
-    pub variants: Option<Vec<ObjectId>>,
-    pub store: ObjectId,
-    pub keywords: Option<Vec<String>>,
-    pub brand: Option<String>,
-    #[validate(length(min = 8))]
-    pub description: String,
+#[derive(Deserialize, Debug, Clone, Validate)]
+pub struct GetProductQueryParams {
+    #[serde(default, deserialize_with = "empty_string_as_none")]
+    pub free_text: Option<String>,
+    #[serde(default, deserialize_with = "empty_string_as_none")]
+    pub store_id: Option<ObjectId>,
+    #[serde(default, deserialize_with = "empty_string_as_none")]
+    pub category_id: Option<ObjectId>,
 }
 
 #[derive(Deserialize, Debug, Clone, Validate)]
@@ -43,12 +36,6 @@ pub struct GetProductsCountQueryParams {
     pub category_id: Option<ObjectId>,
 }
 
-#[derive(Debug, Clone, Validate)]
-pub struct UploadProductImagePayload {
-    #[validate(length(max = "MAX_IMAGE_SIZE"), custom = "image_file_field_validator")]
-    pub file: FileFieldstr,
-}
-
 #[derive(Deserialize, Debug, Clone, Validate)]
 pub struct GetProductsInfiniteQueryParams {
     #[serde(deserialize_with = "deserialize_optional_query_array")]
@@ -57,6 +44,12 @@ pub struct GetProductsInfiniteQueryParams {
     pub category_id: Option<ObjectId>,
     #[serde(default, deserialize_with = "empty_string_as_none")]
     pub store_id: Option<ObjectId>,
+}
+
+#[derive(Debug, Clone, Validate)]
+pub struct UploadProductImagePayload {
+    #[validate(length(max = "MAX_IMAGE_SIZE"), custom = "image_file_field_validator")]
+    pub file: FileFieldstr,
 }
 
 #[async_trait]

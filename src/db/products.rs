@@ -2,14 +2,26 @@ use crate::prelude::*;
 use axum::async_trait;
 use bson::{doc, oid::ObjectId, Document};
 use mongodb::options::{AggregateOptions, FindOneAndUpdateOptions};
+use serde::Deserialize;
 use shoppa_core::{
     constans,
     db::{
         aggregations::{self, ProjectIdOptions},
-        models::{self, EmbeddedDocument, FileDocument, Product, ProductItem, ProductSortBy},
-        DBConection, Pagination, Sorter,
+        models::{self, EmbeddedDocument, FileDocument, Product, ProductItem},
+        DBConection, Pagination, SortDirection, Sorter,
     },
 };
+use strum_macros::EnumString;
+
+#[derive(Deserialize, Debug, Clone, PartialEq, EnumString)]
+pub enum ProductSortBy {
+    #[serde(alias = "popularity", alias = "pop", alias = "p", alias = "Popularity")]
+    Popularity,
+    #[serde(alias = "date", alias = "da", alias = "d", alias = "Date")]
+    Date,
+    #[serde(alias = "relevance", alias = "rel", alias = "r", alias = "Relevance")]
+    Relevance,
+}
 
 #[async_trait]
 pub trait ProductFunctions {
@@ -34,11 +46,10 @@ pub trait ProductFunctions {
     async fn get_products_for_extarnel(
         &self,
         pagination: Option<Pagination>,
-        sorting: Option<Sorter<models::ProductSortBy>>,
+        sorting: Option<Sorter<ProductSortBy>>,
         mut free_text: Option<String>,
         store_id: Option<ObjectId>,
         category_id: Option<ObjectId>,
-        infinite: bool,
         options: Option<AggregateOptions>,
     ) -> Result<(Vec<Document>, u64)>;
 }
@@ -183,11 +194,10 @@ impl ProductFunctions for DBConection {
     async fn get_products_for_extarnel(
         &self,
         pagination: Option<Pagination>,
-        sorting: Option<Sorter<models::ProductSortBy>>,
+        sorting: Option<Sorter<ProductSortBy>>,
         mut free_text: Option<String>,
         store_id: Option<ObjectId>,
         category_id: Option<ObjectId>,
-        infinite: bool,
         options: Option<AggregateOptions>,
     ) -> Result<(Vec<Document>, u64)> {
         let pagination = pagination.unwrap_or_default();
@@ -197,54 +207,31 @@ impl ProductFunctions for DBConection {
                 if free_text.is_some() {
                     aggregations::sort_by_score()
                 } else {
-                    // this is the default sorting
                     aggregations::sort(doc! {
                         Product::fields().created_at: -1
                     })
                 }
             }
-            Some(sort) => {
-                let direcation = &sort.direction;
-                match sort.sort_by {
-                    ProductSortBy::Date => {
-                        // free text and infinte can only be used in Relevance sorting
-                        if infinite {
-                            free_text = None;
-                        }
+            Some(sort) => match sort.sort_by {
+                ProductSortBy::Date => aggregations::sort(doc! {
+                    Product::fields().created_at: &sort.direction
+                }),
+                ProductSortBy::Popularity => aggregations::sort(doc! {
+                    Product::fields().analytics(true).views: &sort.direction
+                }),
+                ProductSortBy::Relevance => {
+                    if free_text.is_some() {
                         aggregations::sort(doc! {
-                            Product::fields().created_at: direcation
+                            "score": &sort.direction
                         })
-                    }
-                    ProductSortBy::Popularity => {
-                        // free text and infinte can only be used in Relevance sorting
-                        if infinite {
-                            free_text = None;
-                        }
+                    } else {
                         aggregations::sort(doc! {
-                            "analytics.views": direcation
+                            Product::fields().created_at: -1
                         })
-                    }
-                    ProductSortBy::Relevance => {
-                        if free_text.is_some() {
-                            aggregations::sort(doc! {
-                                "score": direcation
-                            })
-                        } else {
-                            // this is the default sorting
-                            aggregations::sort(doc! {
-                                Product::fields().created_at: -1
-                            })
-                        }
                     }
                 }
-            }
+            },
         };
-
-        let mut min_should_match = 1;
-
-        if infinite {
-            min_should_match = 0;
-        }
 
         let filters = {
             let mut f = vec![];
@@ -253,7 +240,7 @@ impl ProductFunctions for DBConection {
                 f.push(doc! {
                     "equals": {
                         "value": store_id,
-                        "path": "store._id"
+                        "path": Product::fields().store(true).id
                     }
                 });
             };
@@ -262,7 +249,7 @@ impl ProductFunctions for DBConection {
                 f.push(doc! {
                     "equals": {
                         "value": category_id,
-                        "path": "categories._id"
+                        "path": Product::fields().categories(true).id
                     }
                 });
             }
@@ -270,7 +257,7 @@ impl ProductFunctions for DBConection {
         };
 
         let pipeline = [
-            aggregations::search_products(&free_text, &filters, Some(min_should_match)),
+            aggregations::search_products(&free_text, &filters, Some(1)),
             aggregations::add_score_meta(),
             sort_stage,
             aggregations::skip(pagination.offset),
@@ -304,7 +291,7 @@ impl ProductFunctions for DBConection {
                 [aggregations::search_products(
                     &free_text,
                     &filters,
-                    Some(min_should_match),
+                    Some(1),
                 )],
                 options,
             )

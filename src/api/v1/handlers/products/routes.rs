@@ -1,13 +1,12 @@
 use super::types;
-use crate::{db::ProductFunctions, prelude::*};
+use crate::{db::{ProductFunctions, ProductSortBy}, prelude::*};
 use axum::{
     extract::{Extension, Path, Query},
     response::IntoResponse,
 };
 use bson::oid::ObjectId;
 use shoppa_core::{
-    db::{DBConection, Pagination},
-    extractors::{JsonWithValidation, MultipartFormWithValidation},
+    db::{DBConection, Pagination, OptionalSorter},
     ResponseBuilder,
 };
 
@@ -20,19 +19,18 @@ pub async fn get_products_infinite(
 }
 
 pub async fn get_products(
-    db: DBExtension,
+    db: Extension<DBConection>,
     pagination: Pagination,
-    sorting: OptionalSorting<ProductSortBy>,
+    sorting: OptionalSorter<ProductSortBy>,
     Query(query): Query<types::GetProductQueryParams>,
 ) -> HandlerResult {
-    let products = queries::get_products_for_extarnel(
-        &db,
+    let products = db.get_products_for_extarnel(
         Some(pagination),
-        sorting.into(),
+        sorting.0,
         query.free_text,
         query.store_id,
         query.category_id,
-        path.as_str().ends_with("/infinite"),
+        None
     )
     .await?;
 
@@ -82,7 +80,7 @@ pub async fn products_count(
 }
 
 pub async fn add_view_to_product(
-    db: DBExtension,
+    db: Extension<DBConection>,
     Path(product_id): Path<ObjectId>,
 ) -> HandlerResult {
     let product = updates::add_view_to_product(&db, &product_id, None).await?;
