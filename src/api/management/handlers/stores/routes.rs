@@ -22,7 +22,7 @@ pub async fn create_new_store(
     db: Extension<DBConection>,
     JsonWithValidation(payload): JsonWithValidation<types::CreateStorePayload>,
 ) -> HandlerResult {
-    let store = db.insert_new_store(payload).await?;
+    let store = db.insert_new_store(payload, None).await?;
 
     Ok(ResponseBuilder::success(Some(store), None, None).into_response())
 }

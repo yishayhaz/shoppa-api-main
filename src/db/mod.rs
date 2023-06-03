@@ -5,11 +5,13 @@ pub mod populate;
 pub mod queries;
 mod stores;
 mod products;
+mod categories;
 pub mod updates;
 use std::str::FromStr;
 
 pub use products::*;
 pub use stores::*;
+pub use categories::*;
 
 use crate::helpers::env::ENV_VARS;
 use bson::{doc, Bson};
