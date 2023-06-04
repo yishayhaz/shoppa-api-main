@@ -102,7 +102,6 @@ pub struct UpdateStoreLocationPayload {
     ))]
     pub street_number: Option<String>,
     #[validate(length(
-        min = "constans::LOCATION_FREE_TEXT_MAX_LENGTH",
         max = "constans::LOCATION_FREE_TEXT_MAX_LENGTH"
     ))]
     pub free_text: Option<String>,
