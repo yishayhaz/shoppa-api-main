@@ -26,7 +26,7 @@ pub async fn create_new_product(
         .await?;
 
     if categories.is_none() {
-        return Ok(ResponseBuilder::<u16>::success(None, None, None).into_response());
+        return Ok(ResponseBuilder::<u16>::error("", None, Some("categories not found"), None).into_response());
     }
 
     let (category, inner_category, inner_inner_category) = categories.unwrap();
@@ -34,7 +34,7 @@ pub async fn create_new_product(
     let store = db.get_store_by_id(&payload.store, None, None).await?;
 
     if store.is_none() {
-        return Ok(ResponseBuilder::<u16>::success(None, None, None).into_response());
+        return Ok(ResponseBuilder::<u16>::error("", None, Some("store not found"), None).into_response());
     }
 
     let store = store.unwrap();
@@ -68,8 +68,6 @@ pub async fn upload_product_images(
     if product.is_none() {
         return Ok(ResponseBuilder::<u16>::success(None, None, None).into_response());
     }
-
-    let product = product.unwrap();
 
     let image = payload.file;
 
