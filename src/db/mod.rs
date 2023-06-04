@@ -12,6 +12,10 @@ use std::str::FromStr;
 pub use products::*;
 pub use stores::*;
 pub use categories::*;
+use axum::extract::Extension;
+use shoppa_core::db::DBConection;
+use std::sync::Arc;
+pub type AxumDBExtansion = Extension<Arc<DBConection>>;
 
 use crate::helpers::env::ENV_VARS;
 use bson::{doc, Bson};

@@ -1,25 +1,22 @@
 use super::types;
 use crate::{
-    db::AdminStoreFunctions,
+    db::{AdminStoreFunctions, AxumDBExtansion},
     prelude::{handlers::StorgeClientExtension, *},
     services::file_storage,
 };
-use axum::{
-    extract::{Extension, Path},
-    response::IntoResponse,
-};
+use axum::{extract::Path, response::IntoResponse};
 use bson::oid::ObjectId;
 use shoppa_core::{
     db::{
         models::{FileDocument, FileTypes},
-        DBConection, Pagination,
+        Pagination,
     },
     extractors::{JsonWithValidation, MultipartFormWithValidation},
     ResponseBuilder,
 };
 
 pub async fn create_new_store(
-    db: Extension<DBConection>,
+    db: AxumDBExtansion,
     JsonWithValidation(payload): JsonWithValidation<types::CreateStorePayload>,
 ) -> HandlerResult {
     let store = db.insert_new_store(payload, None).await?;
@@ -27,17 +24,14 @@ pub async fn create_new_store(
     Ok(ResponseBuilder::success(Some(store), None, None).into_response())
 }
 
-pub async fn get_store_by_id(
-    db: Extension<DBConection>,
-    Path(store_id): Path<ObjectId>,
-) -> HandlerResult {
+pub async fn get_store_by_id(db: AxumDBExtansion, Path(store_id): Path<ObjectId>) -> HandlerResult {
     let store = db.get_store_by_id(&store_id, None, None).await?;
 
     Ok(ResponseBuilder::success(Some(store), None, None).into_response())
 }
 
 pub async fn update_store_assets(
-    db: Extension<DBConection>,
+    db: AxumDBExtansion,
     storage_client: StorgeClientExtension,
     Path(store_id): Path<ObjectId>,
     MultipartFormWithValidation(payload): MultipartFormWithValidation<
@@ -137,7 +131,7 @@ pub async fn update_store_assets(
 }
 
 pub async fn update_store(
-    db: Extension<DBConection>,
+    db: AxumDBExtansion,
     Path(store_id): Path<ObjectId>,
     JsonWithValidation(payload): JsonWithValidation<types::UpdateStorePayload>,
 ) -> HandlerResult {
@@ -162,7 +156,7 @@ pub async fn update_store(
 }
 
 pub async fn add_store_locations(
-    db: Extension<DBConection>,
+    db: AxumDBExtansion,
     Path(store_id): Path<ObjectId>,
     JsonWithValidation(payload): JsonWithValidation<types::StoreLocationPayload>,
 ) -> HandlerResult {
@@ -179,7 +173,7 @@ pub async fn add_store_locations(
 }
 
 pub async fn delete_store_location(
-    db: Extension<DBConection>,
+    db: AxumDBExtansion,
     Path((store_id, location_id)): Path<(ObjectId, ObjectId)>,
 ) -> HandlerResult {
     let store = db
@@ -197,7 +191,7 @@ pub async fn delete_store_location(
 }
 
 pub async fn update_store_location(
-    db: Extension<DBConection>,
+    db: AxumDBExtansion,
     Path((store_id, location_id)): Path<(ObjectId, ObjectId)>,
     JsonWithValidation(payload): JsonWithValidation<types::UpdateStoreLocationPayload>,
 ) -> HandlerResult {
@@ -224,7 +218,7 @@ pub async fn update_store_location(
     Ok(ResponseBuilder::success(store, None, None).into_response())
 }
 
-pub async fn get_stores(db: Extension<DBConection>, pagination: Pagination) -> HandlerResult {
+pub async fn get_stores(db: AxumDBExtansion, pagination: Pagination) -> HandlerResult {
     let stores = db.get_stores_for_admins(Some(pagination), None).await?;
 
     Ok(ResponseBuilder::paginated_response(&stores).into_response())

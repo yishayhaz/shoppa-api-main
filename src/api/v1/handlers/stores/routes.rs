@@ -1,23 +1,17 @@
 use super::types;
 use crate::{
-    db::StoreFunctions,
+    db::{AxumDBExtansion, StoreFunctions},
     prelude::*,
 };
 use axum::{
-    extract::{Extension, Path, Query},
+    extract::{Path, Query},
     response::IntoResponse,
 };
 use bson::oid::ObjectId;
-use shoppa_core::{
-    db::{
-        DBConection, Pagination,
-    },
-    extractors::{JsonWithValidation, MultipartFormWithValidation},
-    ResponseBuilder,
-};
+use shoppa_core::{db::Pagination, ResponseBuilder};
 
 pub async fn get_stores_autocomplete(
-    db: Extension<DBConection>,
+    db: AxumDBExtansion,
     Query(query): Query<types::SearchStoresQueryParams>,
 ) -> HandlerResult {
     let stores;
@@ -33,14 +27,14 @@ pub async fn get_stores_autocomplete(
     Ok(ResponseBuilder::success(Some(stores), None, None).into_response())
 }
 
-pub async fn get_stores_count(db: Extension<DBConection>) -> HandlerResult {
+pub async fn get_stores_count(db: AxumDBExtansion) -> HandlerResult {
     let count = db.count_stores(None, None).await?;
 
     Ok(ResponseBuilder::success(Some(count), None, None).into_response())
 }
 
 pub async fn get_stores(
-    db: Extension<DBConection>,
+    db: AxumDBExtansion,
     pagination: Pagination,
     Query(query): Query<types::SearchStoresQueryParams>,
 ) -> HandlerResult {
@@ -51,10 +45,7 @@ pub async fn get_stores(
     Ok(ResponseBuilder::paginated_response(&stores).into_response())
 }
 
-pub async fn get_store_by_id(
-    db: Extension<DBConection>,
-    Path(store_id): Path<ObjectId>,
-) -> HandlerResult {
+pub async fn get_store_by_id(db: AxumDBExtansion, Path(store_id): Path<ObjectId>) -> HandlerResult {
     let store = db.get_store_for_extarnel(&store_id, None).await?;
 
     if store.is_none() {

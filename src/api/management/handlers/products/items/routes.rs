@@ -1,23 +1,22 @@
 use super::types;
-use crate::{db::AdminProductFunctions, prelude::*};
-use axum::{
-    extract::{Extension, Path},
-    response::IntoResponse,
+use crate::{
+    db::{AdminProductFunctions, AxumDBExtansion},
+    prelude::*,
 };
+use axum::{extract::Path, response::IntoResponse};
 use bson::oid::ObjectId;
 use mongodb::options::FindOneAndUpdateOptions;
 use shoppa_core::{
     db::{
         models::EmbeddedDocument,
         populate::{FieldPopulate, ProductsPopulate},
-        DBConection,
     },
     extractors::JsonWithValidation,
     ResponseBuilder,
 };
 
 pub async fn add_product_item(
-    db: Extension<DBConection>,
+    db: AxumDBExtansion,
     Path(product_id): Path<ObjectId>,
     JsonWithValidation(payload): JsonWithValidation<types::AddProductItemPayload>,
 ) -> HandlerResult {
@@ -60,7 +59,7 @@ pub async fn add_product_item(
 }
 
 pub async fn edit_product_item(
-    db: Extension<DBConection>,
+    db: AxumDBExtansion,
     Path((product_id, item_id)): Path<(ObjectId, ObjectId)>,
     JsonWithValidation(payload): JsonWithValidation<types::EditProductItemPayload>,
 ) -> HandlerResult {

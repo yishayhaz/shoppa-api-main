@@ -1,25 +1,19 @@
 use super::types::{CreateProductPayload, UploadProductImagePayload};
 use crate::{
-    db::{AdminProductFunctions, CategoriesFunctions},
+    db::{AdminProductFunctions, AxumDBExtansion, CategoriesFunctions},
     prelude::{handlers::StorgeClientExtension, *},
     services::file_storage::upload_product_image,
 };
-use axum::{
-    extract::{Extension, Path},
-    response::IntoResponse,
-};
+use axum::{extract::Path, response::IntoResponse};
 use bson::oid::ObjectId;
 use shoppa_core::{
-    db::{
-        models::{FileDocument, FileTypes, Product},
-        DBConection,
-    },
+    db::models::{FileDocument, FileTypes, Product},
     extractors::{JsonWithValidation, MultipartFormWithValidation},
     ResponseBuilder,
 };
 
 pub async fn create_new_product(
-    db: Extension<DBConection>,
+    db: AxumDBExtansion,
     JsonWithValidation(payload): JsonWithValidation<CreateProductPayload>,
 ) -> HandlerResult {
     let categories = db
@@ -64,7 +58,7 @@ pub async fn create_new_product(
 }
 
 pub async fn upload_product_images(
-    db: Extension<DBConection>,
+    db: AxumDBExtansion,
     storage_client: StorgeClientExtension,
     Path(product_id): Path<ObjectId>,
     MultipartFormWithValidation(payload): MultipartFormWithValidation<UploadProductImagePayload>,

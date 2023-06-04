@@ -1,6 +1,6 @@
 use super::types;
 use crate::{
-    db::{ProductFunctions, ProductSortBy},
+    db::{ProductFunctions, ProductSortBy, AxumDBExtansion},
     prelude::*,
 };
 use axum::{
@@ -14,7 +14,7 @@ use shoppa_core::{
 };
 
 pub async fn get_products_infinite(
-    db: Extension<DBConection>,
+    db: AxumDBExtansion,
     pagination: Pagination,
     Query(query): Query<types::GetProductsInfiniteQueryParams>,
 ) -> HandlerResult {
@@ -22,7 +22,7 @@ pub async fn get_products_infinite(
 }
 
 pub async fn get_products(
-    db: Extension<DBConection>,
+    db: AxumDBExtansion,
     pagination: Pagination,
     sorting: OptionalSorter<ProductSortBy>,
     Query(query): Query<types::GetProductQueryParams>,
@@ -42,7 +42,7 @@ pub async fn get_products(
 }
 
 pub async fn get_product(
-    db: Extension<DBConection>,
+    db: AxumDBExtansion,
     Path(product_id): Path<ObjectId>,
 ) -> HandlerResult {
     let product = db.get_one_product_for_extarnel(&product_id, None).await?;
@@ -55,7 +55,7 @@ pub async fn get_product(
 }
 
 pub async fn products_autocomplete(
-    db: Extension<DBConection>,
+    db: AxumDBExtansion,
     Query(query): Query<types::GetProductsAutoCompleteQueryParams>,
 ) -> HandlerResult {
     // maybe get random products if there is no free text
@@ -75,7 +75,7 @@ pub async fn products_autocomplete(
 }
 
 pub async fn products_count(
-    db: Extension<DBConection>,
+    db: AxumDBExtansion,
     Query(query): Query<types::GetProductsCountQueryParams>,
 ) -> HandlerResult {
     todo!()
@@ -85,7 +85,7 @@ pub async fn products_count(
 }
 
 pub async fn add_view_to_product(
-    db: Extension<DBConection>,
+    db: AxumDBExtansion,
     Path(product_id): Path<ObjectId>,
 ) -> HandlerResult {
     let product = db.add_view_to_product(&product_id, None).await?;
