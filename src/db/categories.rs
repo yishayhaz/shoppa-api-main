@@ -1,15 +1,10 @@
 use crate::prelude::*;
 use axum::async_trait;
-use bson::{doc, oid::ObjectId, Document};
-use mongodb::options::{AggregateOptions, FindOneAndUpdateOptions, FindOneOptions};
-use serde::Deserialize;
-use shoppa_core::{
-    constans,
-    db::{
-        aggregations::{self, ProjectIdOptions},
-        models::{Categories, EmbeddedDocument, InnerCategories, InnerInnerCategories},
-        DBConection, Pagination, Sorter,
-    },
+use bson::{doc, oid::ObjectId};
+use mongodb::options::FindOneOptions;
+use shoppa_core::db::{
+    models::{Categories, EmbeddedDocument, InnerCategories, InnerInnerCategories},
+    DBConection,
 };
 
 #[async_trait]
@@ -62,18 +57,18 @@ impl CategoriesFunctions for DBConection {
         if let Some(mut category) = category {
             // we can safly unwrap since the above query will make sure that we get one category,
             // and only the one we need
-            let inner_category = category.categories.pop().unwrap();
+            let mut inner_category = category.categories.pop().unwrap();
 
             // In the category.categories.categories we can have multiple categories
             // but the one we need will be there for sure, so we can filter and safely unwrap
-            
-            let inner_inner_category = inner_category
+
+            inner_category.categories = inner_category
                 .categories
                 .into_iter()
                 .filter(|inner_inner_category| inner_inner_category.id() == innerinnercategorie_id)
-                .collect::<Vec<InnerInnerCategories>>()
-                .pop()
-                .unwrap();
+                .collect::<Vec<InnerInnerCategories>>();
+
+            let inner_inner_category = inner_category.categories.pop().unwrap();
 
             return Ok(Some((category, inner_category, inner_inner_category)));
         }

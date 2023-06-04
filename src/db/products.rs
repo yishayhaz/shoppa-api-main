@@ -278,7 +278,7 @@ impl ProductFunctions for DBConection {
             ),
         ];
 
-        let products = self.aggregate_products(pipeline, options).await?;
+        let products = self.aggregate_products(pipeline, options.clone()).await?;
 
         let count = products.len();
 
