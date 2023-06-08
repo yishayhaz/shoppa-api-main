@@ -120,9 +120,9 @@ impl ProductFunctions for DBConection {
 
         if let Some(category_id) = category_id {
             filters.push(doc! {
-                "equals": {
+                "in": {
                     "value": category_id,
-                    "path": Product::fields().categories(true).id
+                    "path": Product::fields().categories(true).ids
                 }
             });
         }
@@ -248,8 +248,8 @@ impl ProductFunctions for DBConection {
             if let Some(category_id) = category_id {
                 f.push(doc! {
                     "equals": {
-                        "value": category_id,
-                        "path": Product::fields().categories(true).id
+                        "in": category_id,
+                        "path": Product::fields().categories(true).ids
                     }
                 });
             }

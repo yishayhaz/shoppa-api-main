@@ -3,7 +3,7 @@ use axum::async_trait;
 use bson::{doc, oid::ObjectId};
 use mongodb::options::FindOneOptions;
 use shoppa_core::db::{
-    models::{Categories, EmbeddedDocument, InnerCategories, InnerInnerCategories},
+    models::Category,
     DBConection,
 };
 
