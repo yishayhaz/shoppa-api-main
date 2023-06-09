@@ -1,8 +1,8 @@
 use super::types;
 use crate::{
     db::{AdminStoreFunctions, AxumDBExtansion},
-    prelude::{handlers::StorgeClientExtension, *},
-    services::file_storage,
+    prelude::*,
+    helpers::types::AxumStorgeClientExtension
 };
 use axum::{extract::Path, response::IntoResponse};
 use bson::oid::ObjectId;
@@ -32,7 +32,7 @@ pub async fn get_store_by_id(db: AxumDBExtansion, Path(store_id): Path<ObjectId>
 
 pub async fn update_store_assets(
     db: AxumDBExtansion,
-    storage_client: StorgeClientExtension,
+    storage_client: AxumStorgeClientExtension,
     Path(store_id): Path<ObjectId>,
     MultipartFormWithValidation(payload): MultipartFormWithValidation<
         types::UpdateStoreAssetsPayload,
@@ -56,48 +56,48 @@ pub async fn update_store_assets(
 
     let mut delete_files: Vec<String> = Vec::new();
 
-    if let Some(logo) = payload.logo {
-        let upload = file_storage::upload_store_logo(
+    if let Some(mut logo) = payload.logo {
+        let upload = storage_client.upload_store_logo(
             logo.file,
             &logo.content_type,
             &store_id,
-            &logo.file_extension,
+            &mut logo.file_extension,
         );
 
         logo_doc = Some(FileDocument::new(
             true,
             logo.file_name,
-            upload.key.clone(),
+            upload.clone_key(),
             logo.size as u64,
             logo.content_type.clone(),
             FileTypes::Image,
         ));
 
-        upload.fire(&storage_client).await;
+        upload.fire().await;
 
         if let Some(logo) = store.logo {
             delete_files.push(logo.path);
         }
     }
 
-    if let Some(banner) = payload.banner {
-        let upload = file_storage::upload_store_banner(
+    if let Some(mut banner) = payload.banner {
+        let upload = storage_client.upload_store_banner(
             banner.file,
             &banner.content_type,
             &store_id,
-            &banner.file_extension,
+            &mut banner.file_extension,
         );
 
         banner_doc = Some(FileDocument::new(
             true,
             banner.file_name,
-            upload.key.clone(),
+            upload.clone_key(),
             banner.size as u64,
             banner.content_type.clone(),
             FileTypes::Image,
         ));
 
-        upload.fire(&storage_client).await;
+        upload.fire().await;
 
         if let Some(banner) = store.banner {
             delete_files.push(banner.path);
@@ -123,7 +123,7 @@ pub async fn update_store_assets(
 
     if delete_files.len() > 0 {
         tokio::spawn(async move {
-            file_storage::delete_files(delete_files, &storage_client).await;
+            storage_client.delete_files(delete_files).await;
         });
     }
 

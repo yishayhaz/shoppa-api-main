@@ -1,13 +1,13 @@
 use super::types::{CreateProductPayload, UploadProductImagePayload};
 use crate::{
-    db::{AdminProductFunctions, AxumDBExtansion, CategoriesFunctions},
+    db::{AdminProductFunctions, AxumDBExtansion},
     helpers::types::AxumStorgeClientExtension,
     prelude::*,
 };
 use axum::{extract::Path, response::IntoResponse};
 use bson::oid::ObjectId;
 use shoppa_core::{
-    db::models::{FileDocument, FileTypes, Product},
+    db::models::{FileDocument, FileTypes},
     extractors::{JsonWithValidation, MultipartFormWithValidation},
     ResponseBuilder,
 };
@@ -70,19 +70,19 @@ pub async fn upload_product_images(
         return Ok(ResponseBuilder::<u16>::success(None, None, None).into_response());
     }
 
-    let image = payload.file;
+    let mut image = payload.file;
 
-    let upload = upload_product_image(
+    let upload = storage_client.upload_product_image(
         image.file,
         &image.content_type,
         &product_id,
-        &image.file_extension,
+        &mut image.file_extension,
     );
 
     let asset = FileDocument::new(
         true,
         image.file_name,
-        upload.key.clone(),
+        upload.clone_key(),
         image.size as u64,
         image.content_type.clone(),
         FileTypes::Image,
@@ -91,7 +91,7 @@ pub async fn upload_product_images(
     db.add_asset_to_product(&product_id, &asset, None, None)
         .await?;
 
-    upload.fire(&storage_client).await;
+    upload.fire().await;
 
     Ok(ResponseBuilder::success(Some(asset), None, None).into_response())
 }
