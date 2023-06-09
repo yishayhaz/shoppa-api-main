@@ -1,22 +1,26 @@
 use super::types::UserLoginPayload;
 use crate::{
-    db::queries,
+    api::v1::middlewares::*,
     helpers::{
         cookies::{delete_cookie, set_access_cookie},
-        security,
         types::Cookeys,
     },
-    prelude::{handlers::*, *},
-    api::v1::middlewares::*,
 };
+use crate::{
+    db::{AxumDBExtansion, UserFunctions},
+    prelude::*,
+};
+use axum::response::IntoResponse;
+use shoppa_core::{extractors::JsonWithValidation, security, ResponseBuilder};
+use tower_cookies::Cookies;
 
 pub async fn login(
-    db: DBExtension,
+    db: AxumDBExtansion,
     cookies: Cookies,
     GuestOnly(_): GuestOnly,
     JsonWithValidation(payload): JsonWithValidation<UserLoginPayload>,
 ) -> HandlerResult {
-    let user = queries::get_user_by_email(&db, &payload.email).await?;
+    let user = db.get_user_by_email(&payload.email, None, None).await?;
 
     let user_not_found =
     //TODO add error code here

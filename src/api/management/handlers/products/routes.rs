@@ -1,8 +1,8 @@
 use super::types::{CreateProductPayload, UploadProductImagePayload};
 use crate::{
     db::{AdminProductFunctions, AxumDBExtansion, CategoriesFunctions},
-    prelude::{handlers::StorgeClientExtension, *},
-    services::file_storage::upload_product_image,
+    helpers::types::AxumStorgeClientExtension,
+    prelude::*,
 };
 use axum::{extract::Path, response::IntoResponse};
 use bson::oid::ObjectId;
@@ -60,7 +60,7 @@ pub async fn create_new_product(
 
 pub async fn upload_product_images(
     db: AxumDBExtansion,
-    storage_client: StorgeClientExtension,
+    storage_client: AxumStorgeClientExtension,
     Path(product_id): Path<ObjectId>,
     MultipartFormWithValidation(payload): MultipartFormWithValidation<UploadProductImagePayload>,
 ) -> HandlerResult {

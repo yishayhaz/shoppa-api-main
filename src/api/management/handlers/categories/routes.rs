@@ -1,18 +1,7 @@
 use super::types::CreateCatgoryPayload;
-use crate::{
-    db::{AdminProductFunctions, AxumDBExtansion, CategoriesFunctions},
-    prelude::*,
-};
-use axum::{
-    extract::{Json, Path},
-    response::IntoResponse,
-};
-use bson::oid::ObjectId;
-use shoppa_core::{
-    db::models::Category,
-    extractors::{JsonWithValidation, MultipartFormWithValidation},
-    ResponseBuilder,
-};
+use crate::{db::AxumDBExtansion, prelude::*};
+use axum::{extract::Json, response::IntoResponse};
+use shoppa_core::{db::models::Category, ResponseBuilder};
 
 pub async fn create_new_catagorie(
     db: AxumDBExtansion,

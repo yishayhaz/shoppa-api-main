@@ -1,9 +1,7 @@
-use crate::{api::v1::middlewares::*, db::AxumDBExtansion, prelude::*};
-use crate::{
-    helpers::{cookies::create_cookie, types::Cookeys},
-};
+use crate::helpers::{cookies::create_cookie, types::Cookeys};
+use crate::{db::AxumDBExtansion, prelude::*};
 use axum::response::IntoResponse;
-use shoppa_core::ResponseBuilder;
+use shoppa_core::{extractors::ClientIpAddress, ResponseBuilder};
 use tower_cookies::Cookies;
 
 pub async fn add_new_visitor_to_counter(
