@@ -1,45 +1,52 @@
 use super::types;
 use crate::{
-    db::queries,
-    prelude::{handlers::*, *},
+    db::{AxumDBExtansion, StoreFunctions},
+    prelude::*,
 };
+use axum::{
+    extract::{Path, Query},
+    response::IntoResponse,
+};
+use bson::oid::ObjectId;
+use shoppa_core::{db::Pagination, ResponseBuilder};
 
 pub async fn get_stores_autocomplete(
-    db: DBExtension,
+    db: AxumDBExtansion,
     Query(query): Query<types::SearchStoresQueryParams>,
 ) -> HandlerResult {
     let stores;
 
-    if query.free_text.is_none() {
-        stores = queries::get_random_stores_names(&db).await?;
+    if let Some(free_text) = query.free_text {
+        stores = db
+            .get_stores_names_for_autocomplete(free_text, None)
+            .await?;
     } else {
-        stores = queries::get_stores_names_for_autocomplete(&db, query.free_text.unwrap()).await?;
+        stores = db.get_random_stores_names(None).await?;
     }
 
     Ok(ResponseBuilder::success(Some(stores), None, None).into_response())
 }
 
-pub async fn get_stores_count(db: DBExtension) -> HandlerResult {
-    let count = queries::get_stores_count(&db).await?;
+pub async fn get_stores_count(db: AxumDBExtansion) -> HandlerResult {
+    let count = db.count_stores(None, None).await?;
 
     Ok(ResponseBuilder::success(Some(count), None, None).into_response())
 }
 
 pub async fn get_stores(
-    db: DBExtension,
+    db: AxumDBExtansion,
     pagination: Pagination,
     Query(query): Query<types::SearchStoresQueryParams>,
 ) -> HandlerResult {
-    let stores = queries::get_stores_for_extarnel(&db, Some(pagination), query.free_text).await?;
+    let stores = db
+        .get_many_stores_for_extarnel(Some(pagination), query.free_text, None)
+        .await?;
 
     Ok(ResponseBuilder::paginated_response(&stores).into_response())
 }
 
-pub async fn get_store_by_id(
-    db: DBExtension,
-    Path(store_id): Path<ObjectId>,
-) -> HandlerResult {
-    let store = queries::get_store_for_external(&db, &store_id).await?;
+pub async fn get_store_by_id(db: AxumDBExtansion, Path(store_id): Path<ObjectId>) -> HandlerResult {
+    let store = db.get_store_for_extarnel(&store_id, None).await?;
 
     if store.is_none() {
         return Ok(

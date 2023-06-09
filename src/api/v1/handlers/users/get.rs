@@ -1,18 +1,19 @@
 use crate::{
-    db::queries,
-    helpers::{cookies::delete_cookie, types::Cookeys},
-    prelude::{handlers::*, *},
     api::v1::middlewares::*,
+    db::AxumDBExtansion,
+    helpers::{cookies::delete_cookie, types::Cookeys},
+    prelude::*,
 };
+use tower_cookies::Cookies;
+use shoppa_core::ResponseBuilder;
+use axum::response::IntoResponse;
 
 pub async fn get_me(
-    db: DBExtension,
+    db: AxumDBExtansion,
     cookies: Cookies,
     GetTokenForGetMe(token_data): GetTokenForGetMe,
 ) -> HandlerResult {
-
-
-    let user = queries::get_user_by_id(&db, &token_data.user_id).await?;
+    let user = db.get_user_by_id(&token_data.user_id, None, None).await?;
 
     match user {
         Some(user) => {

@@ -1,103 +1,97 @@
 use super::types::{CreateProductPayload, UploadProductImagePayload};
 use crate::{
-    api::v1::middlewares::OnlyInDev,
-    db::{
-        inserts,
-        models::{FileDocument, FileTypes},
-        queries, updates,
-    },
-    helpers::extractors::MultipartFrom,
-    prelude::{handlers::*, *},
-    services::file_storage::upload_product_image,
+    db::{AdminProductFunctions, AxumDBExtansion},
+    helpers::types::AxumStorgeClientExtension,
+    prelude::*,
+};
+use axum::{extract::Path, response::IntoResponse};
+use bson::oid::ObjectId;
+use shoppa_core::{
+    db::models::{FileDocument, FileTypes},
+    extractors::{JsonWithValidation, MultipartFormWithValidation},
+    ResponseBuilder,
 };
 
 pub async fn create_new_product(
-    db: DBExtension,
-    _: OnlyInDev,
+    db: AxumDBExtansion,
     JsonWithValidation(payload): JsonWithValidation<CreateProductPayload>,
 ) -> HandlerResult {
-    let categories = queries::get_category_hierarchy_for_subsubcategory(
-        &db,
-        // we can safely unwrap since the CreateProductPayload validate the length of the categories
-        payload.categories.get(0).unwrap(),
-        payload.categories.get(1).unwrap(),
-        payload.categories.get(2).unwrap(),
-    )
-    .await?;
+    todo!("create_new_product");
+    // let categories = db
+    //     .get_nested_categories(
+    //         &payload.categories[0],
+    //         &payload.categories[1],
+    //         &payload.categories[2],
+    //         None,
+    //     )
+    //     .await?;
 
-    if categories.is_none() {
-        return Ok(ResponseBuilder::<u16>::success(None, None, None).into_response());
-    }
+    // if categories.is_none() {
+    //     return Ok(ResponseBuilder::<u16>::error("", None, Some("categories not found"), None).into_response());
+    // }
 
-    let categories = categories.unwrap();
+    // let (category, inner_category, inner_inner_category) = categories.unwrap();
 
-    let store = queries::get_store_by_id(&db, &payload.store).await?;
+    // let store = db.get_store_by_id(&payload.store, None, None).await?;
 
-    if store.is_none() {
-        return Ok(ResponseBuilder::<u16>::success(None, None, None).into_response());
-    }
+    // if store.is_none() {
+    //     return Ok(ResponseBuilder::<u16>::error("", None, Some("store not found"), None).into_response());
+    // }
 
-    let store = store.unwrap();
+    // let store = store.unwrap();
 
-    let inner_category = categories.categories.get(0).unwrap();
+    // let new_product = Product::new(
+    //     &store,
+    //     payload.brand,
+    //     payload.description,
+    //     payload.keywords,
+    //     payload.name,
+    //     &category,
+    //     &inner_category,
+    //     &inner_inner_category,
+    //     payload.variants,
+    //     payload.feature_bullet_points,
+    // )?;
 
-    let product = inserts::new_product(
-        &db,
-        &store,
-        payload.brand,
-        payload.description,
-        payload.keywords.unwrap_or(vec![]),
-        payload.name,
-        &categories,
-        inner_category,
-        inner_category.categories.get(0).unwrap(),
-        payload.variants.unwrap_or(vec![]),
-    )
-    .await?;
+    // let product = db.insert_new_product(new_product, None).await?;
 
-    Ok(ResponseBuilder::success(Some(product), None, None).into_response())
+    // Ok(ResponseBuilder::success(Some(product), None, None).into_response())
 }
 
 pub async fn upload_product_images(
-    db: DBExtension,
-    storage_client: StorgeClientExtension,
+    db: AxumDBExtansion,
+    storage_client: AxumStorgeClientExtension,
     Path(product_id): Path<ObjectId>,
-    _: OnlyInDev,
-    MultipartFrom(payload): MultipartFrom<UploadProductImagePayload>,
+    MultipartFormWithValidation(payload): MultipartFormWithValidation<UploadProductImagePayload>,
 ) -> HandlerResult {
-    let product = queries::get_product_by_id(&db, &product_id, None, None).await?;
+    let product = db.get_product_by_id(&product_id, None, None).await?;
 
     if product.is_none() {
         return Ok(ResponseBuilder::<u16>::success(None, None, None).into_response());
     }
 
-    let product = product.unwrap();
+    let mut image = payload.file;
 
-    let image = payload.file;
-    
-    let upload = upload_product_image(
+    let upload = storage_client.upload_product_image(
         image.file,
         &image.content_type,
         &product_id,
-        &image.file_extension,
+        &mut image.file_extension,
     );
 
-    updates::add_image_to_product(
-        &db,
-        &product_id,
-        FileDocument::new(
-            true,
-            image.file_name,
-            upload.key.clone(),
-            image.size as u64,
-            image.content_type.clone(),
-            FileTypes::Image,
-        ),
-        None,
-    )
-    .await?;
+    let asset = FileDocument::new(
+        true,
+        image.file_name,
+        upload.clone_key(),
+        image.size as u64,
+        image.content_type.clone(),
+        FileTypes::Image,
+    );
 
-    upload.fire(&storage_client).await;
+    db.add_asset_to_product(&product_id, &asset, None, None)
+        .await?;
 
-    Ok(ResponseBuilder::success(Some(product), None, None).into_response())
+    upload.fire().await;
+
+    Ok(ResponseBuilder::success(Some(asset), None, None).into_response())
 }

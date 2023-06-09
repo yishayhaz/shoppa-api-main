@@ -1,4 +1,4 @@
-use crate::helpers::MAX_IMAGE_SIZE;
+use shoppa_core::constans::MAX_IMAGE_SIZE;
 use axum::{extract::DefaultBodyLimit, routing, Router};
 mod routes;
 mod types;

@@ -1,4 +1,5 @@
 use crate::prelude::types::*;
+use shoppa_core::parser::empty_string_as_none;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SearchStoresQueryParams {

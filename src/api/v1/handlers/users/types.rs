@@ -1,6 +1,5 @@
 use crate::prelude::types::*;
 
-
 #[derive(Deserialize, Serialize, Validate)]
 pub struct UserLoginPayload {
     #[validate(email)]

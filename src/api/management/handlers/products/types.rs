@@ -1,27 +1,32 @@
-use crate::{
-    helpers::{
-        extractors::{FileFieldstr, FromMultipart},
-        validators::image_file_field_validator,
-        MAX_IMAGE_SIZE,
-    },
-    prelude::{types::*, *},
-};
+use crate::prelude::{types::*, *};
 use axum::{async_trait, extract::Multipart};
+use shoppa_core::{
+    constans::{self, MAX_IMAGE_SIZE},
+    extractors::{FileFieldstr, FromMultipart},
+    parser::empty_string_as_none,
+    validators::image_file_field_validator,
+};
 use validator::Validate;
 
 #[derive(Deserialize, Serialize, Debug, Clone, Validate)]
 pub struct CreateProductPayload {
-    #[validate(length(min = 8, max = 64))]
+    #[validate(length(
+        min = "constans::PRODUCT_NAME_MIN_LENGTH",
+        max = "constans::PRODUCT_NAME_MAX_LENGTH"
+    ))]
     pub name: String,
     // 3 categories must be provided
-    #[validate(length(min = 3, max = 3))]
-    pub categories: Vec<ObjectId>,
+    pub categories: [ObjectId; 3],
     pub variants: Option<Vec<ObjectId>>,
     pub store: ObjectId,
     pub keywords: Option<Vec<String>>,
     pub brand: Option<String>,
-    #[validate(length(min = 8))]
+    #[validate(length(
+        min = "constans::PRODUCT_DESCRIPTION_MIN_LENGTH",
+        max = "constans::PRODUCT_DESCRIPTION_MAX_LENGTH"
+    ))]
     pub description: String,
+    pub feature_bullet_points: Option<Vec<String>>,
 }
 
 #[derive(Deserialize, Debug, Clone, Validate)]

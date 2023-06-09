@@ -1,13 +1,10 @@
-use crate::{
-    db::models::{DBModel, User},
-    helpers::env::ENV_VARS,
-    prelude::*,
-};
+use crate::{helpers::env::ENV_VARS, prelude::*};
 use bson::oid::ObjectId;
 use chrono::Utc;
 use rusty_paseto::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use shoppa_core::db::models::{User, DBModel};
 
 lazy_static! {
     static ref LOGIN_TOKEN_KEY: PasetoSymmetricKey<V4, Local> =

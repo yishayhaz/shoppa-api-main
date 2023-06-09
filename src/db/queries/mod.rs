@@ -1,20 +1,16 @@
+mod analytics;
 mod categories;
 mod contact_us;
 mod prelude;
-mod products;
-mod store;
 mod users;
 mod variants;
-mod analytics;
 
+pub use analytics::*;
 use bson::{Bson, Document};
 pub use categories::*;
 pub use contact_us::*;
-pub use products::*;
-pub use store::*;
 pub use users::*;
 pub use variants::*;
-pub use analytics::*;
 
 use crate::prelude::*;
 use futures_util::StreamExt;
@@ -91,7 +87,9 @@ impl CursorConverter for Cursor<Document> {
                     self.deserialize_current()
                         .map_err(|e| Error::DBError(("faild deserialize data from db", e)))?,
                 ))
-                .map_err(|e| Error::DBError(("faild converting doc into Bson::Document", e.into())))?,
+                .map_err(|e| {
+                    Error::DBError(("faild converting doc into Bson::Document", e.into()))
+                })?,
             );
         }
 

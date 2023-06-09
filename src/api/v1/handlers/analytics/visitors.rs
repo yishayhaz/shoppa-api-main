@@ -1,12 +1,11 @@
-use crate::{
-    api::v1::middlewares::*,
-    db::{inserts, queries},
-    helpers::{cookies::create_cookie, types::Cookeys},
-    prelude::{handlers::*, *},
-};
+use crate::helpers::{cookies::create_cookie, types::Cookeys};
+use crate::{db::AxumDBExtansion, prelude::*};
+use axum::response::IntoResponse;
+use shoppa_core::{extractors::ClientIpAddress, ResponseBuilder};
+use tower_cookies::Cookies;
 
 pub async fn add_new_visitor_to_counter(
-    db: DBExtension,
+    db: AxumDBExtansion,
     cookies: Cookies,
     ClientIpAddress(ip): ClientIpAddress,
 ) -> HandlerResult {
@@ -23,7 +22,7 @@ pub async fn add_new_visitor_to_counter(
                 true,
             );
 
-            let _ = inserts::new_site_visit_from_ip(&db, ip.to_string()).await;
+            db.insert_new_site_visit(ip, None).await;
 
             cookies.add(cookie);
         }
@@ -32,10 +31,8 @@ pub async fn add_new_visitor_to_counter(
     Ok(ResponseBuilder::<u16>::success(None, None, None).into_response())
 }
 
-pub async fn get_views_count(
-    db: DBExtension,
-) -> HandlerResult {
-    let views_count: u64 = queries::get_views_count(&db).await?;
+pub async fn get_views_count(db: AxumDBExtansion) -> HandlerResult {
+    let views_count = db.count_site_visits(None, None).await?;
 
-    Ok(ResponseBuilder::<u64>::success(Some(views_count), None, None).into_response())
+    Ok(ResponseBuilder::success(Some(views_count), None, None).into_response())
 }

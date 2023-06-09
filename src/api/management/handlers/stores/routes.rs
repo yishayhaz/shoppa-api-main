@@ -1,39 +1,44 @@
 use super::types;
 use crate::{
+    db::{AdminStoreFunctions, AxumDBExtansion},
+    prelude::*,
+    helpers::types::AxumStorgeClientExtension
+};
+use axum::{extract::Path, response::IntoResponse};
+use bson::oid::ObjectId;
+use shoppa_core::{
     db::{
-        inserts,
-        models::{constans::DELETE_FIELD_KEY_OPETATOR, FileDocument, FileTypes},
-        queries, updates,
+        models::{FileDocument, FileTypes},
+        Pagination,
     },
-    helpers::extractors::MultipartFormWithValidation,
-    prelude::{handlers::*, *},
-    services::file_storage,
+    extractors::{JsonWithValidation, MultipartFormWithValidation},
+    ResponseBuilder,
 };
 
 pub async fn create_new_store(
-    db: DBExtension,
+    db: AxumDBExtansion,
     JsonWithValidation(payload): JsonWithValidation<types::CreateStorePayload>,
 ) -> HandlerResult {
-    let store = inserts::new_store(&db, payload).await?;
+    let store = db.insert_new_store(payload, None).await?;
 
     Ok(ResponseBuilder::success(Some(store), None, None).into_response())
 }
 
-pub async fn get_store_by_id(db: DBExtension, Path(store_oid): Path<ObjectId>) -> HandlerResult {
-    let store = queries::get_store_by_id(&db, &store_oid).await?;
+pub async fn get_store_by_id(db: AxumDBExtansion, Path(store_id): Path<ObjectId>) -> HandlerResult {
+    let store = db.get_store_by_id(&store_id, None, None).await?;
 
     Ok(ResponseBuilder::success(Some(store), None, None).into_response())
 }
 
 pub async fn update_store_assets(
-    db: DBExtension,
-    storage_client: StorgeClientExtension,
+    db: AxumDBExtansion,
+    storage_client: AxumStorgeClientExtension,
     Path(store_id): Path<ObjectId>,
     MultipartFormWithValidation(payload): MultipartFormWithValidation<
         types::UpdateStoreAssetsPayload,
     >,
 ) -> HandlerResult {
-    let store = queries::get_store_by_id(&db, &store_id).await?;
+    let store = db.get_store_by_id(&store_id, None, None).await?;
 
     if store.is_none() {
         return Ok(
@@ -51,53 +56,52 @@ pub async fn update_store_assets(
 
     let mut delete_files: Vec<String> = Vec::new();
 
-    if let Some(logo) = payload.logo {
-        let upload = file_storage::upload_store_logo(
+    if let Some(mut logo) = payload.logo {
+        let upload = storage_client.upload_store_logo(
             logo.file,
             &logo.content_type,
             &store_id,
-            &logo.file_extension,
+            &mut logo.file_extension,
         );
 
         logo_doc = Some(FileDocument::new(
             true,
             logo.file_name,
-            upload.key.clone(),
+            upload.clone_key(),
             logo.size as u64,
             logo.content_type.clone(),
             FileTypes::Image,
         ));
 
-        upload.fire(&storage_client).await;
+        upload.fire().await;
 
         if let Some(logo) = store.logo {
             delete_files.push(logo.path);
         }
     }
 
-    if let Some(banner) = payload.banner {
-        let upload = file_storage::upload_store_banner(
+    if let Some(mut banner) = payload.banner {
+        let upload = storage_client.upload_store_banner(
             banner.file,
             &banner.content_type,
             &store_id,
-            &banner.file_extension,
+            &mut banner.file_extension,
         );
 
         banner_doc = Some(FileDocument::new(
             true,
             banner.file_name,
-            upload.key.clone(),
+            upload.clone_key(),
             banner.size as u64,
             banner.content_type.clone(),
             FileTypes::Image,
         ));
 
-        upload.fire(&storage_client).await;
+        upload.fire().await;
 
         if let Some(banner) = store.banner {
             delete_files.push(banner.path);
         }
-
     }
 
     let logo_doc = if let Some(logo_doc) = logo_doc {
@@ -112,14 +116,14 @@ pub async fn update_store_assets(
         None
     };
 
-    updates::update_store(
-        &db, &store_id, logo_doc, banner_doc, None, None, None, None, None, None, None, None, None,
+    db.update_store_base_data(
+        &store_id, logo_doc, banner_doc, None, None, None, None, None, None, None, None, None,
     )
     .await?;
 
     if delete_files.len() > 0 {
         tokio::spawn(async move {
-            file_storage::delete_files(delete_files, &storage_client).await;
+            storage_client.delete_files(delete_files).await;
         });
     }
 
@@ -127,46 +131,36 @@ pub async fn update_store_assets(
 }
 
 pub async fn update_store(
-    db: DBExtension,
+    db: AxumDBExtansion,
     Path(store_id): Path<ObjectId>,
     JsonWithValidation(payload): JsonWithValidation<types::UpdateStorePayload>,
 ) -> HandlerResult {
-    let slogan = if let Some(slogan) = payload.slogan {
-        if slogan == DELETE_FIELD_KEY_OPETATOR {
-            Some(None)
-        } else {
-            Some(Some(slogan))
-        }
-    } else {
-        None
-    };
-
-    let store = updates::update_store(
-        &db,
-        &store_id,
-        None,
-        None,
-        payload.name,
-        payload.description,
-        slogan,
-        payload.contact_email,
-        payload.contact_phone,
-        payload.legal_id,
-        payload.business_type,
-        payload.business_name,
-        None,
-    )
-    .await?;
+    let store = db
+        .update_store_base_data(
+            &store_id,
+            None,
+            None,
+            payload.name,
+            payload.description,
+            payload.slogan,
+            payload.contact_email,
+            payload.contact_phone,
+            payload.legal_id,
+            payload.business_type,
+            payload.business_name,
+            None,
+        )
+        .await?;
 
     Ok(ResponseBuilder::success(Some(store), None, None).into_response())
 }
 
 pub async fn add_store_locations(
-    db: DBExtension,
+    db: AxumDBExtansion,
     Path(store_id): Path<ObjectId>,
     JsonWithValidation(payload): JsonWithValidation<types::StoreLocationPayload>,
 ) -> HandlerResult {
-    let store = updates::add_store_locations(&db, &store_id, &payload).await?;
+    let store = db.add_store_location(&store_id, &payload, None).await?;
 
     if store.is_none() {
         return Ok(
@@ -179,10 +173,12 @@ pub async fn add_store_locations(
 }
 
 pub async fn delete_store_location(
-    db: DBExtension,
+    db: AxumDBExtansion,
     Path((store_id, location_id)): Path<(ObjectId, ObjectId)>,
 ) -> HandlerResult {
-    let store = updates::delete_store_location(&db, &store_id, &location_id).await?;
+    let store = db
+        .delete_store_location(&store_id, &location_id, None)
+        .await?;
 
     if store.is_none() {
         return Ok(
@@ -195,31 +191,22 @@ pub async fn delete_store_location(
 }
 
 pub async fn update_store_location(
-    db: DBExtension,
+    db: AxumDBExtansion,
     Path((store_id, location_id)): Path<(ObjectId, ObjectId)>,
     JsonWithValidation(payload): JsonWithValidation<types::UpdateStoreLocationPayload>,
 ) -> HandlerResult {
-    let free_text = if let Some(free_text) = payload.free_text {
-        if free_text == DELETE_FIELD_KEY_OPETATOR {
-            Some(None)
-        } else {
-            Some(Some(free_text))
-        }
-    } else {
-        None
-    };
-
-    let store = updates::update_store_location(
-        &db,
-        &store_id,
-        &location_id,
-        &payload.city,
-        &payload.street,
-        &payload.street_number,
-        &free_text,
-        &payload.phone,
-    )
-    .await?;
+    let store = db
+        .update_store_location(
+            &store_id,
+            &location_id,
+            &payload.city,
+            &payload.street,
+            &payload.street_number,
+            &payload.free_text,
+            &payload.phone,
+            None,
+        )
+        .await?;
 
     if store.is_none() {
         return Ok(
@@ -231,8 +218,8 @@ pub async fn update_store_location(
     Ok(ResponseBuilder::success(store, None, None).into_response())
 }
 
-pub async fn get_stores(db: DBExtension, pagination: Pagination) -> HandlerResult {
-    let stores = queries::get_stores_for_admins(&db, Some(pagination)).await?;
+pub async fn get_stores(db: AxumDBExtansion, pagination: Pagination) -> HandlerResult {
+    let stores = db.get_stores_for_admins(Some(pagination), None).await?;
 
     Ok(ResponseBuilder::paginated_response(&stores).into_response())
 }

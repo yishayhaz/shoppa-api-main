@@ -1,10 +1,10 @@
 use axum::{Extension, Router};
 use dotenv::dotenv;
 use shoppa_api::{
-    api, db,
+    api,
     helpers::{env::ENV_VARS, security::get_cors_layer, setup},
-    services::file_storage,
 };
+use shoppa_core::{db::DBConection, file_storage::StorageClient};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tower_cookies::CookieManagerLayer;
@@ -29,19 +29,15 @@ async fn main() {
         .map_err(|e| panic!("ENV validation failed: \n{:?}", e))
         .unwrap();
 
-    let mongo_client = db::connect().await.unwrap();
+    let storge_client = Arc::new(StorageClient::connect().await);
 
-    let file_storge_client = Arc::new(file_storage::connect().await);
-
-    let db_collections = Arc::new(db::DBCollections::new(mongo_client, &ENV_VARS.DB_NAME));
-    // db_collections.create_schames().await;
-    // db_collections.create_indexes().await;
+    let db = Arc::new(DBConection::connect().await.unwrap());
 
     let app = Router::new()
         .nest("/api/v1", api::v1::router())
         .nest("/api/management", api::management::router())
-        .layer(Extension(file_storge_client))
-        .layer(Extension(db_collections))
+        .layer(Extension(db))
+        .layer(Extension(storge_client))
         .layer(CookieManagerLayer::new())
         .layer(get_cors_layer())
         .layer(TraceLayer::new_for_http());

@@ -1,22 +1,22 @@
 use super::types;
-use crate::{
-    db::{inserts, queries, updates},
-    prelude::{handlers::*, *},
-    api::v1::middlewares::*,
+use crate::{api::v1::middlewares::*, db::AxumDBExtansion, prelude::*};
+use axum::{
+    extract::{Json, Path, Query},
+    response::IntoResponse,
 };
+use shoppa_core::{extractors::JsonWithValidation, ResponseBuilder};
 
 pub async fn contact_us_request(
-    db: DBExtension,
+    db: AxumDBExtansion,
     JsonWithValidation(payload): JsonWithValidation<types::ContactUsPayload>,
 ) -> HandlerResult {
-    let _ =
-        inserts::new_contact_us_request(&db, payload.email, payload.message, payload.reason).await;
+    db.insert_new_contact_us_form(payload, None).await?;
 
     Ok(ResponseBuilder::<u16>::success(None, None, None).into_response())
 }
 
 pub async fn get_contact_us(
-    db: DBExtension,
+    db: AxumDBExtansion,
     pagination: Pagination,
     sorting: OptionalSorting<String>,
     _: OnlyInDev,
@@ -29,7 +29,7 @@ pub async fn get_contact_us(
 }
 
 pub async fn update_status(
-    db: DBExtension,
+    db: AxumDBExtansion,
     _: OnlyInDev,
     Path(form_id): Path<ObjectId>,
     Json(payload): Json<types::UpdateContactUsPayload>,

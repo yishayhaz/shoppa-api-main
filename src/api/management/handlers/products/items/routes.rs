@@ -1,12 +1,22 @@
 use super::types;
 use crate::{
-    db::{models::EmbeddedDocument, populate::ProductsPopulate, queries, updates},
-    prelude::{handlers::*, *},
+    db::{AdminProductFunctions, AxumDBExtansion},
+    prelude::*,
 };
+use axum::{extract::Path, response::IntoResponse};
+use bson::oid::ObjectId;
 use mongodb::options::FindOneAndUpdateOptions;
+use shoppa_core::{
+    db::{
+        models::EmbeddedDocument,
+        populate::{FieldPopulate, ProductsPopulate},
+    },
+    extractors::JsonWithValidation,
+    ResponseBuilder,
+};
 
 pub async fn add_product_item(
-    db: DBExtension,
+    db: AxumDBExtansion,
     Path(product_id): Path<ObjectId>,
     JsonWithValidation(payload): JsonWithValidation<types::AddProductItemPayload>,
 ) -> HandlerResult {
@@ -14,12 +24,18 @@ pub async fn add_product_item(
         store: false,
         categories: FieldPopulate::None,
         variants: true,
+        options: None,
     };
 
-    let product = queries::get_product_by_id(&db, &product_id, Some(populate), None).await?;
+    let product = db
+        .get_product_by_id(&product_id, None, Some(populate))
+        .await?;
 
     if product.is_none() {
-        return Ok(ResponseBuilder::not_found_error("product", &product_id).into_response());
+        return Ok(
+            ResponseBuilder::error("", Some(""), Some("product not found"), Some(404))
+                .into_response(),
+        );
     };
 
     let mut product = product.unwrap();
@@ -29,39 +45,46 @@ pub async fn add_product_item(
         payload.in_storage,
         payload.variants,
         payload.name,
-        payload.images_refs,
+        payload.assets_refs,
     )?;
 
-    updates::add_product_item(&db, &product_id, &new_item, None).await?;
+    db.add_product_item(&product_id, &new_item, None).await?;
 
-    Ok(().into_response())
+    Ok(ResponseBuilder::success(
+        Some(new_item),
+        Some("Product item added successfully"),
+        None,
+    )
+    .into_response())
 }
 
 pub async fn edit_product_item(
-    db: DBExtension,
+    db: AxumDBExtansion,
     Path((product_id, item_id)): Path<(ObjectId, ObjectId)>,
     JsonWithValidation(payload): JsonWithValidation<types::EditProductItemPayload>,
 ) -> HandlerResult {
-    let product = queries::get_product_by_id(&db, &product_id, None, None).await?;
+    let product = db.get_product_by_id(&product_id, None, None).await?;
 
     if product.is_none() {
-        return Ok(ResponseBuilder::not_found_error("product", &product_id).into_response());
+        return Ok(
+            ResponseBuilder::error("", Some(""), Some("product not found"), Some(404))
+                .into_response(),
+        );
     };
 
     let product = product.unwrap();
 
     if !product.items.iter().any(|item| item.id() == &item_id) {
-        return Ok(ResponseBuilder::not_found_error("product.item", &item_id).into_response());
+        return Ok(
+            ResponseBuilder::error("", Some(""), Some("product item not found"), Some(404))
+                .into_response(),
+        );
     }
 
-    if let Some(images) = &payload.images_refs {
-        let images_ids = product
-            .images
-            .iter()
-            .map(|i| i.id.clone())
-            .collect::<Vec<_>>();
+    if let Some(images) = &payload.assets_refs {
+        let assets_ids = product.assets.iter().map(|i| *i.id()).collect::<Vec<_>>();
 
-        if !images.iter().all(|i| images_ids.contains(i)) {
+        if !images.iter().all(|i| assets_ids.contains(i)) {
             // not all images are in the product
             return Err(Error::Static("TODO"));
         }
@@ -71,17 +94,17 @@ pub async fn edit_product_item(
         .return_document(Some(mongodb::options::ReturnDocument::After))
         .build();
 
-    let prouct = updates::edit_product_item(
-        &db,
-        &product_id,
-        &item_id,
-        payload.price,
-        payload.in_storage,
-        payload.name,
-        payload.images_refs,
-        Some(options),
-    )
-    .await?;
+    let prouct = db
+        .edit_product_item(
+            &product_id,
+            &item_id,
+            payload.price,
+            payload.in_storage,
+            payload.name,
+            payload.assets_refs,
+            Some(options),
+        )
+        .await?;
 
     Ok(
         ResponseBuilder::success(prouct, Some("Product item edited successfully"), None)
