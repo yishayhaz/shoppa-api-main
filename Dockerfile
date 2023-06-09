@@ -9,5 +9,6 @@ RUN cargo build --release
 
 FROM debian:bullseye-slim
 COPY --from=build /api/target/release/shoppa-api .
+RUN apt-get install ca-certificates
 
 CMD ["./shoppa-api"]
