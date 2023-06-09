@@ -1,8 +1,5 @@
-use crate::{
-    db::models::{constans, VariantType, VariantValue},
-    helpers::parser::deserialize_query_array,
-    prelude::types::*,
-};
+use crate::prelude::types::*;
+use shoppa_core::{db::models::VariantType, parser::deserialize_query_array};
 
 #[derive(Deserialize, Serialize, Debug, Clone, Validate)]
 pub struct CreateVariantPayload {

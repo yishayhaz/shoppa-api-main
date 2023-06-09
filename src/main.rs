@@ -3,7 +3,6 @@ use dotenv::dotenv;
 use shoppa_api::{
     api, db,
     helpers::{env::ENV_VARS, security::get_cors_layer, setup},
-    services::file_storage
 };
 use std::net::SocketAddr;
 use std::sync::Arc;

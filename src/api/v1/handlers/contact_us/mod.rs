@@ -1,10 +1,8 @@
 use axum::{routing, Router};
-mod manage;
+mod routes;
 mod types;
 
 pub fn router() -> Router {
     Router::new()
-    .route("/", routing::post(manage::contact_us_request))
-    .route("/", routing::get(manage::get_contact_us))
-    .route("/:oid", routing::put(manage::update_status))
+    .route("/", routing::post(routes::contact_us_request))
 }

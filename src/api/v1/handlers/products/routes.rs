@@ -1,15 +1,15 @@
 use super::types;
 use crate::{
-    db::{ProductFunctions, ProductSortBy, AxumDBExtansion},
+    db::{AxumDBExtansion, ProductFunctions, ProductSortBy},
     prelude::*,
 };
 use axum::{
-    extract::{Extension, Path, Query},
+    extract::{Path, Query},
     response::IntoResponse,
 };
 use bson::oid::ObjectId;
 use shoppa_core::{
-    db::{DBConection, OptionalSorter, Pagination},
+    db::{OptionalSorter, Pagination},
     ResponseBuilder,
 };
 
@@ -41,10 +41,7 @@ pub async fn get_products(
     Ok(ResponseBuilder::paginated_response(&products).into_response())
 }
 
-pub async fn get_product(
-    db: AxumDBExtansion,
-    Path(product_id): Path<ObjectId>,
-) -> HandlerResult {
+pub async fn get_product(db: AxumDBExtansion, Path(product_id): Path<ObjectId>) -> HandlerResult {
     let product = db.get_one_product_for_extarnel(&product_id, None).await?;
 
     if product.is_none() {

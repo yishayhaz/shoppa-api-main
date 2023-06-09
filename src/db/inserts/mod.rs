@@ -1,4 +1,3 @@
-mod categories;
 mod contact_us;
 mod news_letter;
 mod prelude;
@@ -7,7 +6,6 @@ mod sites_visite;
 mod users;
 mod variants;
 
-pub use categories::*;
 pub use contact_us::*;
 pub use news_letter::*;
 pub use products::*;

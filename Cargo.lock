@@ -2360,25 +2360,19 @@ dependencies = [
 name = "shoppa-api"
 version = "0.1.0"
 dependencies = [
- "argon2",
- "async-trait",
- "aws-config",
  "aws-sdk-s3",
  "axum",
  "bson",
  "bytes",
  "chrono",
  "dotenv",
- "futures-util",
  "http",
  "lazy_static",
  "mongodb",
- "rand 0.8.5",
  "rusty_paseto",
  "serde",
  "serde_json",
  "serde_repr",
- "serde_with",
  "shoppa-core",
  "strum",
  "strum_macros",
@@ -2397,6 +2391,8 @@ version = "0.1.0"
 dependencies = [
  "shoppa-core-private",
  "shoppa-db",
+ "shoppa-file-storage",
+ "shoppa-security",
 ]
 
 [[package]]
@@ -2434,6 +2430,28 @@ dependencies = [
  "strum",
  "strum_macros",
  "validator",
+]
+
+[[package]]
+name = "shoppa-file-storage"
+version = "0.1.0"
+dependencies = [
+ "aws-config",
+ "aws-sdk-s3",
+ "bytes",
+ "lazy_static",
+ "shoppa-core-private",
+ "strum",
+ "strum_macros",
+ "validator",
+]
+
+[[package]]
+name = "shoppa-security"
+version = "0.1.0"
+dependencies = [
+ "argon2",
+ "shoppa-core-private",
 ]
 
 [[package]]
