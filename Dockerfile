@@ -3,8 +3,7 @@ FROM rust:1.60 as build
 RUN USER=root
 WORKDIR /api
 
-COPY ./Cargo.lock ./Cargo.lock
-COPY ./Cargo.toml ./Cargo.toml
+COPY . .
 RUN cargo build --release
 
 RUN rm src/*.rs

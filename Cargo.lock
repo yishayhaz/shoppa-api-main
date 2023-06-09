@@ -2388,6 +2388,7 @@ dependencies = [
 [[package]]
 name = "shoppa-core"
 version = "0.1.0"
+source = "git+https://github.com/yishayhaz/shoppa-core#1946a2e2be1159a94a440ba616555dc219828f8a"
 dependencies = [
  "shoppa-core-private",
  "shoppa-db",
@@ -2398,6 +2399,7 @@ dependencies = [
 [[package]]
 name = "shoppa-core-private"
 version = "0.1.0"
+source = "git+https://github.com/yishayhaz/shoppa-core#1946a2e2be1159a94a440ba616555dc219828f8a"
 dependencies = [
  "argon2",
  "aws-sdk-s3",
@@ -2414,6 +2416,7 @@ dependencies = [
 [[package]]
 name = "shoppa-db"
 version = "0.1.0"
+source = "git+https://github.com/yishayhaz/shoppa-core#1946a2e2be1159a94a440ba616555dc219828f8a"
 dependencies = [
  "async-trait",
  "axum",
@@ -2435,6 +2438,7 @@ dependencies = [
 [[package]]
 name = "shoppa-file-storage"
 version = "0.1.0"
+source = "git+https://github.com/yishayhaz/shoppa-core#1946a2e2be1159a94a440ba616555dc219828f8a"
 dependencies = [
  "aws-config",
  "aws-sdk-s3",
@@ -2449,6 +2453,7 @@ dependencies = [
 [[package]]
 name = "shoppa-security"
 version = "0.1.0"
+source = "git+https://github.com/yishayhaz/shoppa-core#1946a2e2be1159a94a440ba616555dc219828f8a"
 dependencies = [
  "argon2",
  "shoppa-core-private",

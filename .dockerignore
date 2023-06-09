@@ -1,0 +1,6 @@
+/target
+/.git
+/nginx
+/.vscode
+/.idea
+.gitignore
