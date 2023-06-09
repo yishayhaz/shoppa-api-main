@@ -1,4 +1,4 @@
-FROM rust:1.60 as build
+FROM rust:1.67 as build
 
 RUN USER=root
 WORKDIR /api
@@ -6,13 +6,8 @@ WORKDIR /api
 COPY . .
 RUN cargo build --release
 
-RUN rm src/*.rs
-COPY ./src ./src
 
-RUN rm ./target/release/deps/api*
-RUN cargo build --release
+FROM debian:bullseye-slim
+COPY --from=build /api/target/release/shoppa-api .
 
-FROM debian:buster-slim
-COPY --from=build /api/target/release/api .
-
-CMD ["./api"]
+CMD ["./shoppa-api"]

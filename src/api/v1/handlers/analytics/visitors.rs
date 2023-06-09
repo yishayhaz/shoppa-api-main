@@ -22,7 +22,7 @@ pub async fn add_new_visitor_to_counter(
                 true,
             );
 
-            db.insert_new_site_visit(ip, None).await;
+            db.insert_new_site_visit(ip, None).await?;
 
             cookies.add(cookie);
         }
