@@ -39,6 +39,7 @@ pub struct CreateStorePayload {
     pub legal_id: String,
     pub legal_name: String,
     pub business_type: StoreBusinessType,
+    pub min_order: Option<u64>,
 }
 
 #[derive(Validate)]
@@ -82,6 +83,7 @@ pub struct UpdateStorePayload {
     pub legal_id: Option<String>,
     pub business_name: Option<String>,
     pub business_type: Option<StoreBusinessType>,
+    pub min_order: Option<u64>,
 }
 
 #[derive(Debug, Validate, Deserialize, Serialize)]
@@ -185,6 +187,7 @@ impl Into<Store> for CreateStorePayload {
             self.legal_id,
             self.business_type,
             self.legal_name,
+            self.min_order
         )
     }
 }

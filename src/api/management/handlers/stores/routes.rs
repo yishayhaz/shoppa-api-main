@@ -117,7 +117,7 @@ pub async fn update_store_assets(
     };
 
     db.update_store_base_data(
-        &store_id, logo_doc, banner_doc, None, None, None, None, None, None, None, None, None,
+        &store_id, logo_doc, banner_doc, None, None, None, None, None, None, None, None, None, None
     )
     .await?;
 
@@ -148,6 +148,7 @@ pub async fn update_store(
             payload.legal_id,
             payload.business_type,
             payload.business_name,
+            payload.min_order,
             None,
         )
         .await?;

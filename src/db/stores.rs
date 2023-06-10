@@ -82,6 +82,7 @@ pub trait AdminStoreFunctions {
         legal_id: Option<String>,
         business_type: Option<models::StoreBusinessType>,
         business_name: Option<String>,
+        min_order: Option<u64>,
         option: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Store>>;
 }
@@ -361,6 +362,7 @@ impl AdminStoreFunctions for DBConection {
         legal_id: Option<String>,
         business_type: Option<models::StoreBusinessType>,
         business_name: Option<String>,
+        min_order: Option<u64>,
         option: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Store>> {
         let mut update = doc! {};
@@ -418,6 +420,10 @@ impl AdminStoreFunctions for DBConection {
 
         if let Some(business_name) = business_name {
             update.insert(Store::fields().legal_information(true).name, business_name);
+        }
+
+        if let Some(min_order) = min_order {
+            update.insert(Store::fields().min_order, min_order as i64);
         }
 
         let update = doc! {
