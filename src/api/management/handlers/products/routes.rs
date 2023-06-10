@@ -1,13 +1,13 @@
-use super::types::{CreateProductPayload, UploadProductImagePayload};
+use super::types::{CreateProductPayload, UploadProductImagePayload, EditProductPayload};
 use crate::{
-    db::{AdminProductFunctions, AxumDBExtansion, CategoriesFunctions},
+    db::{AdminProductFunctions, AxumDBExtansion},
     helpers::types::AxumStorgeClientExtension,
     prelude::*,
 };
 use axum::{extract::Path, response::IntoResponse};
 use bson::oid::ObjectId;
 use shoppa_core::{
-    db::models::{FileDocument, FileTypes, Product},
+    db::models::{FileDocument, FileTypes, Product, ProductStatus},
     extractors::{JsonWithValidation, MultipartFormWithValidation},
     ResponseBuilder,
 };
@@ -82,4 +82,51 @@ pub async fn upload_product_images(
     upload.fire().await;
 
     Ok(ResponseBuilder::success(Some(asset), None, None).into_response())
+}
+
+pub async fn edit_product(
+    db: AxumDBExtansion,
+    Path(product_id): Path<ObjectId>,
+    JsonWithValidation(payload): JsonWithValidation<EditProductPayload>,
+) -> HandlerResult {
+    
+    let res = db.edit_product_by_id(
+        &product_id,
+        payload.name,
+        payload.keywords,
+        payload.brand,
+        payload.description,
+        payload.feature_bullet_points,
+        payload.warranty,
+        None,
+        None,
+    ).await?;
+
+    if res.is_none() {
+        return Ok(ResponseBuilder::<u16>::error("", None, Some("product not found"), Some(404)).into_response());
+    }
+
+    Ok(ResponseBuilder::success(Some(res), None, None).into_response())
+
+}
+
+pub async fn delete_product(db: AxumDBExtansion, Path(product_id): Path<ObjectId>) -> HandlerResult {
+    // TODO if the product in draft status, delete it, else change status to deleted
+    let res = db.edit_product_by_id(
+        &product_id,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        Some(ProductStatus::Deleted),
+        None,
+    ).await?;
+
+    if res.is_none() {
+        return Ok(ResponseBuilder::<u16>::error("", None, Some("product not found"), Some(404)).into_response());
+    }
+
+    Ok(ResponseBuilder::success(Some(res), None, None).into_response())
 }

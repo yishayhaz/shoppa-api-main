@@ -11,5 +11,7 @@ pub fn router() -> Router {
             "/:product_id/upload-files",
             routing::put(routes::upload_product_images),
         )
+        .route("/:product_id", routing::patch(routes::edit_product))
+        .route("/:product_id", routing::delete(routes::delete_product))
         .route("/", routing::post(routes::create_new_product))
 }

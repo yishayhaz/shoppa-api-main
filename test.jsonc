@@ -23,19 +23,19 @@
         "description": "Delete an item for a product",
         "detils": "soft delete"
     },
-    "todo": "for each product item have a status same as product status",
-    "route5": {
-        "path": "/product/:id/",
-        "method": "PUT",
-        "body": "models.product",
-        "description": "Update a product"
-    },
-    "route6": {
-        "path": "/product/:id/",
-        "method": "DELETE",
-        "description": "Delete a product",
-        "detils": "soft delete"
-    },
+    // "todo": "for each product item have a status same as product status",
+    // "route5": {
+    //     "path": "/product/:id/",
+    //     "method": "PUT",
+    //     "body": "models.product",
+    //     "description": "Update a product"
+    // },
+    // "route6": {
+    //     "path": "/product/:id/",
+    //     "method": "DELETE",
+    //     "description": "Delete a product",
+    //     "detils": "soft delete"
+    // },
     "route7": {
         "path": "/product/:id/",
         "method": "GET",

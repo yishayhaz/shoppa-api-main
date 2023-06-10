@@ -50,6 +50,25 @@ pub struct GetProductsCountQueryParams {
     pub category_id: Option<ObjectId>,
 }
 
+#[derive(Deserialize, Debug, Clone, Validate)]
+pub struct EditProductPayload {
+    #[validate(length(
+        min = "constans::PRODUCT_NAME_MIN_LENGTH",
+        max = "constans::PRODUCT_NAME_MAX_LENGTH"
+    ))]
+    pub name: Option<String>,
+    pub keywords: Option<Vec<String>>,
+    pub brand: Option<String>,
+    #[validate(length(
+        min = "constans::PRODUCT_DESCRIPTION_MIN_LENGTH",
+        max = "constans::PRODUCT_DESCRIPTION_MAX_LENGTH"
+    ))]
+    pub description: Option<String>,
+    pub feature_bullet_points: Option<Vec<String>>,
+    pub warranty: Option<f32>,
+}
+
+
 #[derive(Debug, Clone, Validate)]
 pub struct UploadProductImagePayload {
     #[validate(length(max = "MAX_IMAGE_SIZE"), custom = "image_file_field_validator")]
