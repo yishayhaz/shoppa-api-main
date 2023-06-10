@@ -1,4 +1,4 @@
-use super::types::{CreateProductPayload, UploadProductImagePayload, EditProductPayload};
+use super::types::{CreateProductPayload, EditProductPayload, UploadProductImagePayload};
 use crate::{
     db::{AdminProductFunctions, AxumDBExtansion},
     helpers::types::AxumStorgeClientExtension,
@@ -7,7 +7,10 @@ use crate::{
 use axum::{extract::Path, response::IntoResponse};
 use bson::oid::ObjectId;
 use shoppa_core::{
-    db::models::{FileDocument, FileTypes, Product, ProductStatus},
+    db::{
+        models::{FileDocument, FileTypes, Product, ProductStatus},
+        populate::{FieldPopulate, ProductsPopulate},
+    },
     extractors::{JsonWithValidation, MultipartFormWithValidation},
     ResponseBuilder,
 };
@@ -26,7 +29,9 @@ pub async fn create_new_product(
 
     let store = store.unwrap();
 
-    let categories = db.get_nested_ids_categories(&payload.categories, None, None).await?;
+    let categories = db
+        .get_nested_ids_categories(&payload.categories, None, None)
+        .await?;
 
     let new_product = Product::new(
         &store,
@@ -89,43 +94,78 @@ pub async fn edit_product(
     Path(product_id): Path<ObjectId>,
     JsonWithValidation(payload): JsonWithValidation<EditProductPayload>,
 ) -> HandlerResult {
-    
-    let res = db.edit_product_by_id(
-        &product_id,
-        payload.name,
-        payload.keywords,
-        payload.brand,
-        payload.description,
-        payload.feature_bullet_points,
-        payload.warranty,
-        None,
-        None,
-    ).await?;
+    let res = db
+        .edit_product_by_id(
+            &product_id,
+            payload.name,
+            payload.keywords,
+            payload.brand,
+            payload.description,
+            payload.feature_bullet_points,
+            payload.warranty,
+            None,
+            None,
+        )
+        .await?;
 
     if res.is_none() {
-        return Ok(ResponseBuilder::<u16>::error("", None, Some("product not found"), Some(404)).into_response());
+        return Ok(
+            ResponseBuilder::<u16>::error("", None, Some("product not found"), Some(404))
+                .into_response(),
+        );
     }
 
     Ok(ResponseBuilder::success(Some(res), None, None).into_response())
-
 }
 
-pub async fn delete_product(db: AxumDBExtansion, Path(product_id): Path<ObjectId>) -> HandlerResult {
+pub async fn delete_product(
+    db: AxumDBExtansion,
+    Path(product_id): Path<ObjectId>,
+) -> HandlerResult {
     // TODO if the product in draft status, delete it, else change status to deleted
-    let res = db.edit_product_by_id(
-        &product_id,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        Some(ProductStatus::Deleted),
-        None,
-    ).await?;
+    let res = db
+        .edit_product_by_id(
+            &product_id,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            Some(ProductStatus::Deleted),
+            None,
+        )
+        .await?;
 
     if res.is_none() {
-        return Ok(ResponseBuilder::<u16>::error("", None, Some("product not found"), Some(404)).into_response());
+        return Ok(
+            ResponseBuilder::<u16>::error("", None, Some("product not found"), Some(404))
+                .into_response(),
+        );
+    }
+
+    Ok(ResponseBuilder::success(Some(res), None, None).into_response())
+}
+
+pub async fn get_product(db: AxumDBExtansion, Path(product_id): Path<ObjectId>) -> HandlerResult {
+    let res = db
+        .get_product_by_id(
+            &product_id,
+            None,
+            Some(ProductsPopulate {
+                store: true,
+                categories: FieldPopulate::None,
+                variants: true,
+                options: None,
+            }),
+        )
+        .await?;
+
+    if res.is_none() {
+        return Ok(
+            ResponseBuilder::<u16>::error("", None, Some("product not found"), Some(404))
+                .into_response(),
+        );
     }
 
     Ok(ResponseBuilder::success(Some(res), None, None).into_response())

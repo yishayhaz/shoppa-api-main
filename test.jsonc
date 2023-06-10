@@ -41,11 +41,11 @@
         "method": "GET",
         "description": "Get a product with all items"
     },
-    "route8": {
-        "path": "/manage/product/:id/",
-        "method": "GET",
-        "description": "Get a product for managers and stores owners"
-    },
+    // "route8": {
+    //     "path": "/manage/product/:id/",
+    //     "method": "GET",
+    //     "description": "Get a product for managers and stores owners"
+    // },
     "route9": {
         "path": "/manage/store-users/",
         "method": "POST",
