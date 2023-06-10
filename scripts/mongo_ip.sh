@@ -15,8 +15,8 @@ mongo_api_base_url='https://cloud.mongodb.com/api/atlas/v1.0'
 check_for_deps() {
   deps=(
     bash
-    curl
     jq
+    curl
   )
 
  for dep in "${deps[@]}"; do
@@ -82,19 +82,18 @@ whitelist_service_ip() {
                   \"comment\" : \"$comment\",
                   \"ipAddress\": \"$current_service_ip\"
                 }
-              ]" \
-              | jq -r 'if .error then . else empty end'
+              ]"
             )
 
-  if [[ -n "$response" ]];
+  if [[ $response == *$current_service_ip* ]];
   then
-    echo 'API error whitelisting service'
-    echo "$response"
-    exit 1
-  else
     echo "whitelist request successful"
     echo "waiting 60s for whitelist to propagate to cluster"
     sleep 60
+  else
+    echo 'API error whitelisting service'
+    echo "$response"
+    exit 1
   fi 
 }
 
