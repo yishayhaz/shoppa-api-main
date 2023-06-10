@@ -96,7 +96,7 @@ pub fn get_cors_layer() -> CorsLayer {
         header::X_DNS_PREFETCH_CONTROL,
         header::X_FRAME_OPTIONS,
         header::X_XSS_PROTECTION,
-        HeaderName::from_static("do_connecting-ip"),
+        HeaderName::from_static("do-connecting-ip"),
     ];
 
     CorsLayer::new()
