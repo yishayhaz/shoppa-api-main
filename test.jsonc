@@ -1,10 +1,10 @@
 {
-    "route1": {
-        "path": "/product/",
-        "method": "POST",
-        "body": "models.product",
-        "description": "Create a new product"
-    },
+    // "route1": {
+    //     "path": "/product/",
+    //     "method": "POST",
+    //     "body": "models.product",
+    //     "description": "Create a new product"
+    // },
     "route2": {
         "path": "/product/:id/items/",
         "method": "POST",
@@ -73,7 +73,7 @@
         "method": "POST",
         "description": "Logout for store manager"
     },
-    "todo2": "move all servers to digital ocean",
+    // "todo2": "move all servers to digital ocean",
     "todo3": "fix search indexes",
     "route13": {
         "path": "/search/log",

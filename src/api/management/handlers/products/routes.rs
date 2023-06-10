@@ -1,13 +1,13 @@
 use super::types::{CreateProductPayload, UploadProductImagePayload};
 use crate::{
-    db::{AdminProductFunctions, AxumDBExtansion},
+    db::{AdminProductFunctions, AxumDBExtansion, CategoriesFunctions},
     helpers::types::AxumStorgeClientExtension,
     prelude::*,
 };
 use axum::{extract::Path, response::IntoResponse};
 use bson::oid::ObjectId;
 use shoppa_core::{
-    db::models::{FileDocument, FileTypes},
+    db::models::{FileDocument, FileTypes, Product},
     extractors::{JsonWithValidation, MultipartFormWithValidation},
     ResponseBuilder,
 };
@@ -16,46 +16,34 @@ pub async fn create_new_product(
     db: AxumDBExtansion,
     JsonWithValidation(payload): JsonWithValidation<CreateProductPayload>,
 ) -> HandlerResult {
-    todo!("create_new_product");
-    // let categories = db
-    //     .get_nested_categories(
-    //         &payload.categories[0],
-    //         &payload.categories[1],
-    //         &payload.categories[2],
-    //         None,
-    //     )
-    //     .await?;
+    let store = db.get_store_by_id(&payload.store, None, None).await?;
 
-    // if categories.is_none() {
-    //     return Ok(ResponseBuilder::<u16>::error("", None, Some("categories not found"), None).into_response());
-    // }
+    if store.is_none() {
+        return Ok(
+            ResponseBuilder::<u16>::error("", None, Some("store not found"), None).into_response(),
+        );
+    }
 
-    // let (category, inner_category, inner_inner_category) = categories.unwrap();
+    let store = store.unwrap();
 
-    // let store = db.get_store_by_id(&payload.store, None, None).await?;
+    let categories = db.get_nested_ids_categories(&payload.categories, None, None).await?;
 
-    // if store.is_none() {
-    //     return Ok(ResponseBuilder::<u16>::error("", None, Some("store not found"), None).into_response());
-    // }
+    let new_product = Product::new(
+        &store,
+        payload.brand,
+        payload.description,
+        payload.keywords,
+        payload.name,
+        &categories,
+        payload.variants,
+        payload.feature_bullet_points,
+        payload.warranty,
+        None,
+    )?;
 
-    // let store = store.unwrap();
+    let product = db.insert_new_product(new_product, None).await?;
 
-    // let new_product = Product::new(
-    //     &store,
-    //     payload.brand,
-    //     payload.description,
-    //     payload.keywords,
-    //     payload.name,
-    //     &category,
-    //     &inner_category,
-    //     &inner_inner_category,
-    //     payload.variants,
-    //     payload.feature_bullet_points,
-    // )?;
-
-    // let product = db.insert_new_product(new_product, None).await?;
-
-    // Ok(ResponseBuilder::success(Some(product), None, None).into_response())
+    Ok(ResponseBuilder::success(Some(product), None, None).into_response())
 }
 
 pub async fn upload_product_images(

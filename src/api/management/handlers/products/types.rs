@@ -15,8 +15,10 @@ pub struct CreateProductPayload {
         max = "constans::PRODUCT_NAME_MAX_LENGTH"
     ))]
     pub name: String,
-    // 3 categories must be provided
-    pub categories: [ObjectId; 3],
+    #[validate(length(
+        min = 1,
+    ))]
+    pub categories: Vec<Vec<ObjectId>>,
     pub variants: Option<Vec<ObjectId>>,
     pub store: ObjectId,
     pub keywords: Option<Vec<String>>,
@@ -27,6 +29,7 @@ pub struct CreateProductPayload {
     ))]
     pub description: String,
     pub feature_bullet_points: Option<Vec<String>>,
+    pub warranty: Option<f32>,
 }
 
 #[derive(Deserialize, Debug, Clone, Validate)]
