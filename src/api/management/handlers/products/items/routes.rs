@@ -38,24 +38,14 @@ pub async fn add_product_item(
         );
     };
 
-    let mut product = product.unwrap();
+    let product = product.unwrap();
 
-    let new_item = product.add_item(
-        payload.price,
-        payload.in_storage,
-        payload.variants,
-        payload.name,
-        payload.assets_refs,
-    )?;
+    db.add_item_to_product(&product, payload).await?;
 
-    db.add_product_item(&product_id, &new_item, None).await?;
-
-    Ok(ResponseBuilder::success(
-        Some(new_item),
-        Some("Product item added successfully"),
-        None,
+    Ok(
+        ResponseBuilder::success(None::<()>, Some("Product item added successfully"), None)
+            .into_response(),
     )
-    .into_response())
 }
 
 pub async fn edit_product_item(

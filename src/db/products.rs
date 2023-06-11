@@ -56,12 +56,6 @@ pub trait ProductFunctions {
 
 #[async_trait]
 pub trait AdminProductFunctions {
-    async fn add_product_item(
-        &self,
-        product_id: &ObjectId,
-        item: &ProductItem,
-        options: Option<FindOneAndUpdateOptions>,
-    ) -> Result<Option<Product>>;
 
     async fn add_asset_to_product(
         &self,
@@ -312,21 +306,6 @@ impl ProductFunctions for DBConection {
 
 #[async_trait]
 impl AdminProductFunctions for DBConection {
-    async fn add_product_item(
-        &self,
-        product_id: &ObjectId,
-        item: &ProductItem,
-        options: Option<FindOneAndUpdateOptions>,
-    ) -> Result<Option<Product>> {
-        let update = doc! {
-            "$push": {
-                "items": item.into_bson()?
-            }
-        };
-
-        self.find_and_update_product_by_id(product_id, update, options)
-            .await
-    }
 
     async fn add_asset_to_product(
         &self,
