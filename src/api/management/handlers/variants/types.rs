@@ -1,5 +1,10 @@
 use crate::prelude::types::*;
-use shoppa_core::{db::models::VariantType, parser::deserialize_query_array};
+use shoppa_core::{
+    constans,
+    db::models::{VariantType, VariantValue, Variants},
+    parser::deserialize_query_array,
+};
+use validator::Validate;
 
 #[derive(Deserialize, Serialize, Debug, Clone, Validate)]
 pub struct CreateVariantPayload {
@@ -48,4 +53,14 @@ pub struct GetVariantsByIdsQuery {
     #[serde(deserialize_with = "deserialize_query_array")]
     #[validate(length(min = 1, max = "constans::PRODUCT_MAX_VARIANTS"))]
     pub variants_ids: Vec<ObjectId>,
+}
+
+impl Into<Variants> for CreateVariantPayload {
+    fn into(self) -> Variants {
+        Variants::new(
+            self.name,
+            self.values.into_iter().map(|v| v.into()).collect(),
+            self.type_,
+        )
+    }
 }
