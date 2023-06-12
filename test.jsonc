@@ -5,12 +5,12 @@
     //     "body": "models.product",
     //     "description": "Create a new product"
     // },
-    "route2": {
-        "path": "/product/:id/items/",
-        "method": "POST",
-        "body": "models.product.items",
-        "description": "Create a new item for a product"
-    },
+    // "route2": {
+    //     "path": "/product/:id/items/",
+    //     "method": "POST",
+    //     "body": "models.product.items",
+    //     "description": "Create a new item for a product"
+    // },
     "route3": {
         "path": "/product/:id/items/:itemId",
         "method": "PUT",
