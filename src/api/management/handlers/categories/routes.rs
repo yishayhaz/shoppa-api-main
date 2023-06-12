@@ -1,14 +1,37 @@
 use super::types::CreateCatgoryPayload;
 use crate::{db::AxumDBExtansion, prelude::*};
 use axum::{extract::Json, response::IntoResponse};
-use shoppa_core::{db::models::Category, ResponseBuilder};
+use bson::doc;
+use shoppa_core::{
+    db::models::{Category, Variants},
+    ResponseBuilder,
+};
 
 pub async fn create_new_catagory(
     db: AxumDBExtansion,
     Json(payload): Json<CreateCatgoryPayload>,
 ) -> HandlerResult {
-    if let Some(_) = &payload.variants {
-        todo!("validate variants ids")
+    if let Some(variants) = &payload.variants {
+        let count = db
+            .count_variants(
+                Some(doc! {
+                    Variants::fields().id: {
+                        "$in": variants
+                    }
+                }),
+                None,
+            )
+            .await?;
+
+        if count != variants.len() as u64 {
+            return Ok(ResponseBuilder::<u16>::error(
+                "",
+                None,
+                Some("One or more variants doesnt exist"),
+                Some(404),
+            )
+            .into_response());
+        }
     }
 
     let parent = match &payload.parent {
