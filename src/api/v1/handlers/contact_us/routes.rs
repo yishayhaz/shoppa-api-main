@@ -1,9 +1,6 @@
 use super::types;
-use crate::{api::v1::middlewares::*, db::AxumDBExtansion, prelude::*};
-use axum::{
-    extract::{Json, Path, Query},
-    response::IntoResponse,
-};
+use crate::{db::AxumDBExtansion, prelude::*};
+use axum::response::IntoResponse;
 use shoppa_core::{extractors::JsonWithValidation, ResponseBuilder};
 
 pub async fn contact_us_request(

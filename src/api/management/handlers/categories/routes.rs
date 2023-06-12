@@ -3,11 +3,11 @@ use crate::{db::AxumDBExtansion, prelude::*};
 use axum::{extract::Json, response::IntoResponse};
 use shoppa_core::{db::models::Category, ResponseBuilder};
 
-pub async fn create_new_catagorie(
+pub async fn create_new_catagory(
     db: AxumDBExtansion,
     Json(payload): Json<CreateCatgoryPayload>,
 ) -> HandlerResult {
-    if let Some(variants_ids) = &payload.variants {
+    if let Some(_) = &payload.variants {
         todo!("validate variants ids")
     }
 

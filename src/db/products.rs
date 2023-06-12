@@ -7,7 +7,7 @@ use shoppa_core::{
     constans,
     db::{
         aggregations::{self, ProjectIdOptions},
-        models::{EmbeddedDocument, FileDocument, Product, ProductItem, ProductStatus},
+        models::{EmbeddedDocument, FileDocument, Product, ProductStatus},
         DBConection, Pagination, Sorter,
     },
 };
@@ -56,7 +56,6 @@ pub trait ProductFunctions {
 
 #[async_trait]
 pub trait AdminProductFunctions {
-
     async fn add_asset_to_product(
         &self,
         product_id: &ObjectId,
@@ -306,7 +305,6 @@ impl ProductFunctions for DBConection {
 
 #[async_trait]
 impl AdminProductFunctions for DBConection {
-
     async fn add_asset_to_product(
         &self,
         product_id: &ObjectId,
@@ -460,7 +458,10 @@ impl AdminProductFunctions for DBConection {
         }
 
         if let Some(feature_bullet_points) = feature_bullet_points {
-            update.insert(Product::fields().feature_bullet_points, feature_bullet_points);
+            update.insert(
+                Product::fields().feature_bullet_points,
+                feature_bullet_points,
+            );
         }
 
         if let Some(warranty) = warranty {

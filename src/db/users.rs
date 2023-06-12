@@ -1,16 +1,8 @@
 use crate::prelude::*;
 use axum::async_trait;
-use bson::{doc, oid::ObjectId, Document};
+use bson::{doc, oid::ObjectId};
 use mongodb::options::{FindOneAndUpdateOptions, FindOneOptions};
-use shoppa_core::{
-    constans,
-    db::{
-        aggregations::{self, ProjectIdOptions},
-        models::User,
-        populate::UsersPopulate,
-        DBConection, Pagination,
-    },
-};
+use shoppa_core::db::{models::User, populate::UsersPopulate, DBConection};
 
 #[async_trait]
 pub trait UserFunctions {
