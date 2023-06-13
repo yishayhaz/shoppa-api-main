@@ -1,29 +1,21 @@
-use super::types::CreateCatgoryPayload;
-use crate::{db::AxumDBExtansion, prelude::*};
-use axum::{extract::Json, response::IntoResponse};
-use bson::doc;
-use shoppa_core::{
-    db::models::{Category, Variants},
-    ResponseBuilder,
+use super::types::{CreateCatgoryPayload, EditCatetoryPayload};
+use crate::{
+    db::{AdminVariantsFunctions, AxumDBExtansion},
+    prelude::*,
 };
+use axum::{
+    extract::{Json, Path},
+    response::IntoResponse,
+};
+use shoppa_core::{db::models::Category, extractors::JsonWithValidation, ResponseBuilder};
+use bson::oid::ObjectId;
 
 pub async fn create_new_catagory(
     db: AxumDBExtansion,
     Json(payload): Json<CreateCatgoryPayload>,
 ) -> HandlerResult {
     if let Some(variants) = &payload.variants {
-        let count = db
-            .count_variants(
-                Some(doc! {
-                    Variants::fields().id: {
-                        "$in": variants
-                    }
-                }),
-                None,
-            )
-            .await?;
-
-        if count != variants.len() as u64 {
+        if !db.validate_variants_exist(variants).await? {
             return Ok(ResponseBuilder::<u16>::error(
                 "",
                 None,
@@ -58,4 +50,24 @@ pub async fn create_new_catagory(
     let new_category = db.insert_new_category(new_category, None).await?;
 
     Ok(ResponseBuilder::success(Some(new_category), None, Some(200)).into_response())
+}
+
+pub async fn edit_category(
+    db: AxumDBExtansion,
+    Path(category_id): Path<ObjectId>,
+    JsonWithValidation(payload): JsonWithValidation<EditCatetoryPayload>,
+) -> HandlerResult {
+    if let Some(variants) = &payload.variants {
+        if !db.validate_variants_exist(variants).await? {
+            return Ok(ResponseBuilder::<u16>::error(
+                "",
+                None,
+                Some("One or more variants doesnt exist"),
+                Some(404),
+            )
+            .into_response());
+        }
+    }
+
+    todo!()
 }

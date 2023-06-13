@@ -40,7 +40,7 @@ pub async fn add_product_item(
 
     let product = product.unwrap();
 
-    db.add_item_to_product(&product, payload).await?;
+    db.add_item_to_product(&product, payload, None).await?;
 
     Ok(
         ResponseBuilder::success(None::<()>, Some("Product item added successfully"), None)

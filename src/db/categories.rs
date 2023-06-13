@@ -8,6 +8,11 @@ pub trait CategoriesFunctions {
     async fn get_categories_for_external(&self, parent: Option<ObjectId>) -> Result<Vec<Document>>;
 }
 
+// #[async_trait]
+// pub trait AdminCategoriesFunctions {
+// }
+
+
 #[async_trait]
 impl CategoriesFunctions for DBConection {
     async fn get_categories_for_external(&self, parent: Option<ObjectId>) -> Result<Vec<Document>> {

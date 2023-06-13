@@ -102,7 +102,7 @@ impl ProductFunctions for DBConection {
             }
         };
 
-        self.find_and_update_product_by_id(product_id, update, options)
+        self.find_and_update_product_by_id(product_id, update, options, None)
             .await
     }
 
@@ -349,7 +349,7 @@ impl AdminProductFunctions for DBConection {
             "$push": push
         };
 
-        self.find_and_update_product_by_id(product_id, update, options.into())
+        self.find_and_update_product_by_id(product_id, update, options.into(), None)
             .await
     }
 
@@ -422,7 +422,7 @@ impl AdminProductFunctions for DBConection {
             "$set": update
         };
 
-        self.find_and_update_product(filters, update, options).await
+        self.find_and_update_product(filters, update, options, None).await
     }
 
     async fn edit_product_by_id(
@@ -476,7 +476,7 @@ impl AdminProductFunctions for DBConection {
             "$set": update
         };
 
-        self.find_and_update_product_by_id(product_id, update, options)
+        self.find_and_update_product_by_id(product_id, update, options, None)
             .await
     }
 }
