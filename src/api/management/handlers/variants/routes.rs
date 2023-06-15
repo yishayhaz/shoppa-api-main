@@ -39,7 +39,7 @@ pub async fn create_new_variant(
     db: AxumDBExtansion,
     JsonWithValidation(payload): JsonWithValidation<types::CreateVariantPayload>,
 ) -> HandlerResult {
-    let variant = db.insert_new_variant(payload, None).await?;
+    let variant = db.insert_new_variant(payload, None, None).await?;
 
     Ok(ResponseBuilder::success(Some(variant), None, None).into_response())
 }

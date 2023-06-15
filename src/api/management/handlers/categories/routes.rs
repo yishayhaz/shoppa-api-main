@@ -28,7 +28,7 @@ pub async fn create_new_catagory(
 
     let parent = match &payload.parent {
         Some(parent_id) => {
-            let p = db.get_category_by_id(parent_id, None, None).await?;
+            let p = db.get_category_by_id(parent_id, None, None, None).await?;
 
             if p.is_none() {
                 return Ok(ResponseBuilder::<u16>::error(

@@ -12,7 +12,7 @@ pub async fn change_password(
     Level2Access(token_data): Level2Access,
     JsonWithValidation(payload): JsonWithValidation<ChangePasswordPayload>,
 ) -> HandlerResult {
-    let user = match db.get_user_by_id(&token_data.user_id, None, None).await? {
+    let user = match db.get_user_by_id(&token_data.user_id, None, None, None).await? {
         Some(v) => v,
         None => {
             return Ok(

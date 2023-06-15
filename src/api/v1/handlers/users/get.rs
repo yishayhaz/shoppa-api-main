@@ -13,7 +13,7 @@ pub async fn get_me(
     cookies: Cookies,
     GetTokenForGetMe(token_data): GetTokenForGetMe,
 ) -> HandlerResult {
-    let user = db.get_user_by_id(&token_data.user_id, None, None).await?;
+    let user = db.get_user_by_id(&token_data.user_id, None, None, None).await?;
 
     match user {
         Some(user) => {

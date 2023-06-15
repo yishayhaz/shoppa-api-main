@@ -5,19 +5,12 @@ use shoppa_core::db::{models::Variants, DBConection};
 
 #[async_trait]
 pub trait AdminVariantsFunctions {
-    async fn validate_variants_exist(
-        &self,
-        ids: &Vec<ObjectId>,
-    ) -> Result<bool>;
+    async fn validate_variants_exist(&self, ids: &Vec<ObjectId>) -> Result<bool>;
 }
 
 #[async_trait]
 impl AdminVariantsFunctions for DBConection {
-    async fn validate_variants_exist(
-        &self,
-        ids: &Vec<ObjectId>,
-    ) -> Result<bool> {
-
+    async fn validate_variants_exist(&self, ids: &Vec<ObjectId>) -> Result<bool> {
         if ids.is_empty() {
             return Ok(true);
         }
@@ -29,6 +22,7 @@ impl AdminVariantsFunctions for DBConection {
                         "$in": ids
                     }
                 }),
+                None,
                 None,
             )
             .await?;

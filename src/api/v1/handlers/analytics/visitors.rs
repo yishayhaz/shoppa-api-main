@@ -22,7 +22,7 @@ pub async fn add_new_visitor_to_counter(
                 true,
             );
 
-            db.insert_new_site_visit(ip, None).await?;
+            db.insert_new_site_visit(ip, None, None).await?;
 
             cookies.add(cookie);
         }
@@ -32,7 +32,7 @@ pub async fn add_new_visitor_to_counter(
 }
 
 pub async fn get_views_count(db: AxumDBExtansion) -> HandlerResult {
-    let views_count = db.count_site_visits(None, None).await?;
+    let views_count = db.count_site_visits(None, None, None).await?;
 
     Ok(ResponseBuilder::success(Some(views_count), None, None).into_response())
 }

@@ -43,7 +43,7 @@ impl UserFunctions for DBConection {
     ) -> Result<Option<User>> {
         let filters = doc! { User::fields().email: email };
 
-        self.get_user(filters, options, populate).await
+        self.get_user(filters, options, populate, None).await
     }
 
     async fn update_user_password(
@@ -54,7 +54,7 @@ impl UserFunctions for DBConection {
     ) -> Result<Option<User>> {
         let update = doc! { "$set": { User::fields().password: new_password } };
 
-        self.find_and_update_user_by_id(user_id, update, options)
+        self.find_and_update_user_by_id(user_id, update, options, None)
             .await
     }
     async fn update_user_to_level_2(
@@ -79,6 +79,6 @@ impl UserFunctions for DBConection {
             }
         };
 
-        self.find_and_update_user(filters, update, options).await
+        self.find_and_update_user(filters, update, options, None).await
     }
 }

@@ -36,6 +36,6 @@ impl CategoriesFunctions for DBConection {
             ),
         ];
 
-        self.aggregate_categories(pipeline, None).await
+        self.aggregate_categories(pipeline, None, None).await
     }
 }

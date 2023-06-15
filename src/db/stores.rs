@@ -98,7 +98,7 @@ impl StoreFunctions for DBConection {
             aggregations::project(ProjectIdOptions::Keep, [models::Store::fields().name], None),
         ];
 
-        self.aggregate_stores(pipeline, options).await
+        self.aggregate_stores(pipeline, options, None).await
     }
 
     async fn get_stores_names_for_autocomplete(
@@ -114,7 +114,7 @@ impl StoreFunctions for DBConection {
             aggregations::project(ProjectIdOptions::Keep, [models::Store::fields().name], None),
         ];
 
-        self.aggregate_stores(pipeline, options).await
+        self.aggregate_stores(pipeline, options, None).await
     }
 
     async fn get_many_stores_for_extarnel(
@@ -151,7 +151,7 @@ impl StoreFunctions for DBConection {
             ),
         ];
 
-        let stores = self.aggregate_stores(pipeline, options).await?;
+        let stores = self.aggregate_stores(pipeline, options, None).await?;
 
         let count = stores.len();
 
@@ -159,7 +159,7 @@ impl StoreFunctions for DBConection {
             return Ok((stores, pagination.calculate_total(count)));
         }
 
-        Ok((stores, self.count_stores(None, None).await?))
+        Ok((stores, self.count_stores(None, None, None).await?))
     }
 
     async fn get_store_for_extarnel(
@@ -197,7 +197,7 @@ impl StoreFunctions for DBConection {
             ),
         ];
 
-        let store = self.aggregate_stores(pipeline, options).await?;
+        let store = self.aggregate_stores(pipeline, options, None).await?;
 
         let store = store.get(0).map(|s| s.to_owned());
 
@@ -229,7 +229,7 @@ impl AdminStoreFunctions for DBConection {
             ),
         ];
 
-        let stores = self.aggregate_stores(pipeline, options).await?;
+        let stores = self.aggregate_stores(pipeline, options, None).await?;
 
         let count = stores.len();
 
@@ -237,7 +237,7 @@ impl AdminStoreFunctions for DBConection {
             return Ok((stores, pagination.calculate_total(count)));
         }
 
-        Ok((stores, self.count_stores(None, None).await?))
+        Ok((stores, self.count_stores(None, None, None).await?))
     }
 
     async fn add_store_location(
@@ -260,7 +260,8 @@ impl AdminStoreFunctions for DBConection {
             }
         };
 
-        self.find_and_update_store(filters, update, options).await
+        self.find_and_update_store(filters, update, options, None)
+            .await
     }
 
     async fn update_store_location(
@@ -328,7 +329,8 @@ impl AdminStoreFunctions for DBConection {
             "$set": update
         };
 
-        self.find_and_update_store(filters, update, options).await
+        self.find_and_update_store(filters, update, options, None)
+            .await
     }
 
     async fn delete_store_location(
@@ -345,7 +347,7 @@ impl AdminStoreFunctions for DBConection {
             }
         };
 
-        self.find_and_update_store_by_id(store_id, update, options)
+        self.find_and_update_store_by_id(store_id, update, options, None)
             .await
     }
 
@@ -430,7 +432,7 @@ impl AdminStoreFunctions for DBConection {
             "$set": update
         };
 
-        self.find_and_update_store_by_id(store_id, update, option)
+        self.find_and_update_store_by_id(store_id, update, option, None)
             .await
     }
 }

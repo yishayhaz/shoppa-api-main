@@ -28,7 +28,7 @@ pub async fn add_product_item(
     };
 
     let product = db
-        .get_product_by_id(&product_id, None, Some(populate))
+        .get_product_by_id(&product_id, None, Some(populate), None)
         .await?;
 
     if product.is_none() {
@@ -53,7 +53,7 @@ pub async fn edit_product_item(
     Path((product_id, item_id)): Path<(ObjectId, ObjectId)>,
     JsonWithValidation(payload): JsonWithValidation<types::EditProductItemPayload>,
 ) -> HandlerResult {
-    let product = db.get_product_by_id(&product_id, None, None).await?;
+    let product = db.get_product_by_id(&product_id, None, None, None).await?;
 
     if product.is_none() {
         return Ok(

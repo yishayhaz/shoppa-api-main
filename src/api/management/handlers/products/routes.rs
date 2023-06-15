@@ -19,7 +19,7 @@ pub async fn create_new_product(
     db: AxumDBExtansion,
     JsonWithValidation(payload): JsonWithValidation<CreateProductPayload>,
 ) -> HandlerResult {
-    let store = db.get_store_by_id(&payload.store, None, None).await?;
+    let store = db.get_store_by_id(&payload.store, None, None, None).await?;
 
     if store.is_none() {
         return Ok(
@@ -30,7 +30,7 @@ pub async fn create_new_product(
     let store = store.unwrap();
 
     let categories = db
-        .get_nested_ids_categories(&payload.categories, None, None)
+        .get_nested_ids_categories(&payload.categories, None, None, None)
         .await?;
 
     let new_product = Product::new(
@@ -46,7 +46,7 @@ pub async fn create_new_product(
         None,
     )?;
 
-    let product = db.insert_new_product(new_product, None).await?;
+    let product = db.insert_new_product(new_product, None, None).await?;
 
     Ok(ResponseBuilder::success(Some(product), None, None).into_response())
 }
@@ -57,7 +57,7 @@ pub async fn upload_product_images(
     Path(product_id): Path<ObjectId>,
     MultipartFormWithValidation(payload): MultipartFormWithValidation<UploadProductImagePayload>,
 ) -> HandlerResult {
-    let product = db.get_product_by_id(&product_id, None, None).await?;
+    let product = db.get_product_by_id(&product_id, None, None, None).await?;
 
     if product.is_none() {
         return Ok(ResponseBuilder::<u16>::success(None, None, None).into_response());
@@ -158,6 +158,7 @@ pub async fn get_product(db: AxumDBExtansion, Path(product_id): Path<ObjectId>) 
                 variants: true,
                 options: None,
             }),
+            None,
         )
         .await?;
 

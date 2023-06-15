@@ -153,7 +153,7 @@ impl ProductFunctions for DBConection {
             ),
         ];
 
-        self.aggregate_products(pipeline, options).await
+        self.aggregate_products(pipeline, options, None).await
     }
 
     async fn get_one_product_for_extarnel(
@@ -192,7 +192,7 @@ impl ProductFunctions for DBConection {
             ),
         ];
 
-        let products = self.aggregate_products(pipeline, options).await?;
+        let products = self.aggregate_products(pipeline, options, None).await?;
 
         Ok(products.into_iter().next())
     }
@@ -284,7 +284,9 @@ impl ProductFunctions for DBConection {
             ),
         ];
 
-        let products = self.aggregate_products(pipeline, options.clone()).await?;
+        let products = self
+            .aggregate_products(pipeline, options.clone(), None)
+            .await?;
 
         let count = products.len();
 
@@ -296,6 +298,7 @@ impl ProductFunctions for DBConection {
             .count_products_with_aggregation(
                 [aggregations::search_products(&free_text, &filters, Some(1))],
                 options,
+                None,
             )
             .await?;
 
@@ -422,7 +425,8 @@ impl AdminProductFunctions for DBConection {
             "$set": update
         };
 
-        self.find_and_update_product(filters, update, options, None).await
+        self.find_and_update_product(filters, update, options, None)
+            .await
     }
 
     async fn edit_product_by_id(
