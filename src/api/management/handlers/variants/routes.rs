@@ -1,5 +1,8 @@
 use super::types;
-use crate::{db::AxumDBExtansion, prelude::*};
+use crate::{
+    db::{AdminVariantsFunctions, AxumDBExtansion},
+    prelude::*,
+};
 use axum::{extract::Path, response::IntoResponse};
 use bson::oid::ObjectId;
 use shoppa_core::{
@@ -19,20 +22,18 @@ pub async fn get_variants_by_ids(
     db: AxumDBExtansion,
     QueryWithValidation(query): QueryWithValidation<types::GetVariantsByIdsQuery>,
 ) -> HandlerResult {
-    todo!("validate variants ids");
-    // let variants = db.get_variants_by_ids(&db, &query.variants_ids).await?;
+    let variants = db.get_variants_by_ids(&query.variants_ids).await?;
 
-    // Ok(ResponseBuilder::success(Some(variants), None, None).into_response())
+    Ok(ResponseBuilder::success(Some(variants), None, None).into_response())
 }
 
 pub async fn get_variant_by_id(
     db: AxumDBExtansion,
     Path(variant_id): Path<ObjectId>,
 ) -> HandlerResult {
-    todo!("validate variant id");
-    // let variant = queries::get_variant_by_id(&db, &variant_id).await?;
+    let variant = db.get_variant_by_id(&variant_id, None, None, None).await?;
 
-    // Ok(ResponseBuilder::success(Some(variant), None, None).into_response())
+    Ok(ResponseBuilder::success(Some(variant), None, None).into_response())
 }
 
 pub async fn create_new_variant(
