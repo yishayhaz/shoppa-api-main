@@ -17,7 +17,7 @@ pub fn router() -> Router {
         .route("/:variant_id", routing::delete(routes::delete_variant))
         .route(
             "/:variant_id/value/:value_id",
-            routing::put(routes::update_variant_value),
+            routing::patch(routes::update_variant_value),
         )
         .route(
             "/:variant_id/value/:value_id",
