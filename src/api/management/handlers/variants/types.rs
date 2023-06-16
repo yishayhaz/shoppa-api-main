@@ -43,7 +43,7 @@ pub struct CreateVariantValuePayload {
     pub label: String,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, Validate)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct UpdateVariantValuePayload {
     pub value: Option<String>,
     pub label: Option<String>,
@@ -66,3 +66,25 @@ impl Into<Variants> for CreateVariantPayload {
     }
 }
 
+impl Validate for UpdateVariantValuePayload {
+    fn validate(&self) -> Result<(), ValidationErrors> {
+        let mut errors = ValidationErrors::new();
+
+        if self.value.is_none() && self.label.is_none() {
+            errors.add(
+                "value",
+                ValidationError::new("value or label must be provided"),
+            );
+            errors.add(
+                "label",
+                ValidationError::new("value or label must be provided"),
+            );
+        }
+
+        if !errors.is_empty() {
+            return Err(errors);
+        }
+
+        Ok(())
+    }
+}

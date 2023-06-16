@@ -25,6 +25,13 @@ pub trait AdminVariantsFunctions {
         type_: &Option<VariantType>,
         new_values: &Option<Vec<VariantValue>>,
     ) -> Result<Option<Variants>>;
+    async fn update_variant_value(
+        &self,
+        variant_id: &ObjectId,
+        value_id: &ObjectId,
+        value: Option<String>,
+        label: Option<String>,
+    ) -> Result<Option<Variants>>;
 }
 
 #[async_trait]
@@ -243,6 +250,50 @@ impl AdminVariantsFunctions for DBConection {
             .build();
 
         self.find_and_update_variant_by_id(variant_id, update, Some(options), None)
+            .await
+    }
+
+    async fn update_variant_value(
+        &self,
+        variant_id: &ObjectId,
+        value_id: &ObjectId,
+        value: Option<String>,
+        label: Option<String>,
+    ) -> Result<Option<Variants>> {
+        let filters = doc! {
+            Variants::fields().id: variant_id,
+            Variants::fields().values(true).id: value_id
+        };
+
+        let mut set = doc! {};
+
+        if let Some(value) = value {
+            set.insert(
+                format!(
+                    "{}.$.{}",
+                    Variants::fields().values,
+                    Variants::fields().values(false).value
+                ),
+                value,
+            );
+        }
+
+        if let Some(label) = label {
+            set.insert(
+                format!(
+                    "{}.$.{}",
+                    Variants::fields().values,
+                    Variants::fields().values(false).label
+                ),
+                label,
+            );
+        }
+
+        let update = doc! {
+            "$set": set
+        };
+
+        self.find_and_update_variant(filters, update, None, None)
             .await
     }
 }

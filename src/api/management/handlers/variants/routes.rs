@@ -73,12 +73,15 @@ pub async fn update_variant_value(
     Path(value_id): Path<ObjectId>,
     JsonWithValidation(payload): JsonWithValidation<types::UpdateVariantValuePayload>,
 ) -> HandlerResult {
-    todo!()
-    // let _ =
-    //     updates::update_variant_value(&db, &variant_id, &value_id, &payload.label, &payload.value)
-    //         .await;
+    let variant = db
+        .update_variant_value(&variant_id, &value_id, payload.value, payload.label)
+        .await?;
 
-    // Ok(().into_response())
+    if variant.is_none() {
+        return Ok(ResponseBuilder::<()>::error("", None, None, Some(404)).into_response());
+    }
+
+    Ok(ResponseBuilder::success(Some(variant.unwrap()), None, None).into_response())
 }
 
 pub async fn delete_variant(
