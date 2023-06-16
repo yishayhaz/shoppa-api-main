@@ -228,7 +228,11 @@ impl AdminVariantsFunctions for DBConection {
             set.insert(Variants::fields().type_, type_);
         }
 
-        let mut update = doc! {};
+        let mut update = doc! {
+            "$currentDate": {
+                Variants::fields().updated_at: true
+            }
+        };
 
         if set.is_empty() & push.is_empty() {
             return Err(Error::ApiErrorWithCode(
@@ -290,7 +294,12 @@ impl AdminVariantsFunctions for DBConection {
         }
 
         let update = doc! {
-            "$set": set
+            "$set": set,
+            "$currentDate": {
+                format!("{}.$.{}", 
+                Variants::fields().values, 
+                Variants::fields().values(false).updated_at): true
+            }
         };
 
         self.find_and_update_variant(filters, update, None, None)

@@ -422,7 +422,13 @@ impl AdminProductFunctions for DBConection {
         update.insert(update_at_field, chrono::Utc::now());
 
         let update = doc! {
-            "$set": update
+            "$set": update,
+            "$currentDate": {
+                format!("{}.$.{}",
+                Product::fields().items,
+                Product::fields().items(false).updated_at
+            ): true
+            }
         };
 
         self.find_and_update_product(filters, update, options, None)
@@ -477,7 +483,10 @@ impl AdminProductFunctions for DBConection {
         }
 
         let update = doc! {
-            "$set": update
+            "$set": update,
+            "$currentDate": {
+                Product::fields().updated_at: true
+            }
         };
 
         self.find_and_update_product_by_id(product_id, update, options, None)

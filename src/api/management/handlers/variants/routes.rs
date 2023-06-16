@@ -89,14 +89,21 @@ pub async fn delete_variant(
     Path(variant_id): Path<ObjectId>,
 ) -> HandlerResult {
     if db.check_if_variant_is_in_use(&variant_id).await? {
-        return Ok(ResponseBuilder::<()>::error("", None, None, Some(400)).into_response());
+        return Ok(
+            ResponseBuilder::<()>::error("", None, Some("variant is in use"), Some(400))
+                .into_response(),
+        );
     }
 
-    // TODO: omer
-    // 1. check if any category uses it
-    // 2. if so - return error
+    let variant = db
+        .find_and_delete_variant_by_id(&variant_id, None, None)
+        .await?;
 
-    Ok(().into_response())
+    if variant.is_none() {
+        return Ok(ResponseBuilder::<()>::error("", None, None, Some(404)).into_response());
+    }
+
+    Ok(ResponseBuilder::success(variant, None, None).into_response())
 }
 
 pub async fn delete_variant_value(
@@ -104,7 +111,9 @@ pub async fn delete_variant_value(
     Path(variant_id): Path<ObjectId>,
     Path(value_id): Path<ObjectId>,
 ) -> HandlerResult {
-    // TODO: omer
+    if !db.check_if_variant_is_in_use(&variant_id).await? {
+        todo!("just delete the value")
+    }
 
     // 1. check if any category uses `variant_id`
     // 2. if not -> go ahead and perform the delete
