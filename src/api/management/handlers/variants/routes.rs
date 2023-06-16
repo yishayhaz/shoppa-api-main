@@ -49,11 +49,22 @@ pub async fn update_variant(
     Path(variant_id): Path<ObjectId>,
     JsonWithValidation(payload): JsonWithValidation<types::UpdateVariantBasicInfoPayload>,
 ) -> HandlerResult {
-    todo!();
-    // let _ =
-    //     updates::update_variant_basic_info(&db, &variant_id, &payload.name, &payload.type_).await;
+    let variant = db
+        .update_variant_basic(
+            &variant_id,
+            &payload.name,
+            &payload.type_,
+            &payload
+                .new_values
+                .map(|values| values.into_iter().map(|v| v.into()).collect()),
+        )
+        .await?;
 
-    // Ok(().into_response())
+    if variant.is_none() {
+        return Ok(ResponseBuilder::<()>::error("", None, None, Some(404)).into_response());
+    }
+
+    Ok(ResponseBuilder::success(Some(variant), None, None).into_response())
 }
 
 pub async fn update_variant_value(
@@ -101,4 +112,4 @@ pub async fn delete_variant_value(
     Ok(().into_response())
 }
 
-pub async fn get_variants_by_categories(){}
+pub async fn get_variants_by_categories() {}

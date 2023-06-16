@@ -1,9 +1,10 @@
 use crate::prelude::*;
 use axum::async_trait;
 use bson::{doc, oid::ObjectId, Document};
+use mongodb::options::{FindOneAndUpdateOptions, ReturnDocument};
 use shoppa_core::db::{
     aggregations,
-    models::{Category, Variants},
+    models::{Category, VariantType, VariantValue, Variants},
     DBConection, Pagination,
 };
 
@@ -17,6 +18,13 @@ pub trait AdminVariantsFunctions {
         pagination: Option<Pagination>,
     ) -> Result<(Vec<Document>, u64)>;
     async fn get_variant_for_extarnel(&self, id: &ObjectId) -> Result<Option<Document>>;
+    async fn update_variant_basic(
+        &self,
+        variant_id: &ObjectId,
+        name: &Option<String>,
+        type_: &Option<VariantType>,
+        new_values: &Option<Vec<VariantValue>>,
+    ) -> Result<Option<Variants>>;
 }
 
 #[async_trait]
@@ -84,11 +92,14 @@ impl AdminVariantsFunctions for DBConection {
                 Variants::fields().id,
                 Category::fields().allowed_variants,
                 "categories",
-                Some(vec![aggregations::project(
-                    aggregations::ProjectIdOptions::Keep,
-                    vec![Category::fields().name],
-                    None,
-                )]),
+                Some(vec![
+                    aggregations::limit(3),
+                    aggregations::project(
+                        aggregations::ProjectIdOptions::Keep,
+                        vec![Category::fields().name],
+                        None,
+                    ),
+                ]),
                 None,
             ),
             aggregations::project(
@@ -180,5 +191,58 @@ impl AdminVariantsFunctions for DBConection {
         // we can use pop because we are sure that we have only one variant
         // since we are using id as a filter
         Ok(variant.pop())
+    }
+
+    async fn update_variant_basic(
+        &self,
+        variant_id: &ObjectId,
+        name: &Option<String>,
+        type_: &Option<VariantType>,
+        new_values: &Option<Vec<VariantValue>>,
+    ) -> Result<Option<Variants>> {
+        let mut push = doc! {};
+
+        let mut set = doc! {};
+
+        if !new_values.is_some() & !new_values.as_ref().unwrap().is_empty() {
+            push.insert(
+                Variants::fields().values,
+                doc! {
+                    "$each": new_values
+                },
+            );
+        }
+
+        if let Some(name) = name {
+            set.insert(Variants::fields().name, name);
+        }
+
+        if let Some(type_) = type_ {
+            set.insert(Variants::fields().type_, type_);
+        }
+
+        let mut update = doc! {};
+
+        if set.is_empty() & push.is_empty() {
+            return Err(Error::ApiErrorWithCode(
+                "Please provide values to update",
+                400,
+            ));
+        }
+
+        if !set.is_empty() {
+            update.insert("$set", set);
+        }
+
+        if !push.is_empty() {
+            update.insert("$push", push);
+        }
+
+        let options = FindOneAndUpdateOptions::builder()
+            .return_document(ReturnDocument::After)
+            .build();
+
+        self.find_and_update_variant_by_id(variant_id, update, Some(options), None)
+            .await
     }
 }
