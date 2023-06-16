@@ -221,7 +221,7 @@ impl AdminVariantsFunctions for DBConection {
 
         let mut set = doc! {};
 
-        if !new_values.is_some() & !new_values.as_ref().unwrap().is_empty() {
+        if new_values.is_some() & !new_values.as_ref().unwrap().is_empty() {
             push.insert(
                 Variants::fields().values,
                 doc! {
