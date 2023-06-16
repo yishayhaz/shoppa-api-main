@@ -69,8 +69,7 @@ pub async fn update_variant(
 
 pub async fn update_variant_value(
     db: AxumDBExtansion,
-    Path(variant_id): Path<ObjectId>,
-    Path(value_id): Path<ObjectId>,
+    Path((variant_id, value_id)): Path<(ObjectId, ObjectId)>,
     JsonWithValidation(payload): JsonWithValidation<types::UpdateVariantValuePayload>,
 ) -> HandlerResult {
     let variant = db
@@ -108,8 +107,7 @@ pub async fn delete_variant(
 
 pub async fn delete_variant_value(
     db: AxumDBExtansion,
-    Path(variant_id): Path<ObjectId>,
-    Path(value_id): Path<ObjectId>,
+    Path((variant_id, value_id)): Path<(ObjectId, ObjectId)>,
 ) -> HandlerResult {
     let delete_res;
 
