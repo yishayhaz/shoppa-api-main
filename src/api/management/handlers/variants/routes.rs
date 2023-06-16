@@ -86,6 +86,17 @@ pub async fn delete_variant(
     db: AxumDBExtansion,
     Path(variant_id): Path<ObjectId>,
 ) -> HandlerResult {
+
+    if db.check_if_variant_is_in_use(&variant_id).await? {
+        return Ok(ResponseBuilder::<()>::error(
+            "",
+            None,
+            None,
+            Some(400),
+        )
+        .into_response());
+    }
+
     // TODO: omer
     // 1. check if any category uses it
     // 2. if so - return error
