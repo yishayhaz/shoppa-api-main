@@ -13,9 +13,9 @@ use shoppa_core::{
 
 pub async fn get_variants(db: AxumDBExtansion, pagination: Pagination) -> HandlerResult {
     todo!();
-    // let variants = queries::get_variants_for_extarnel(&db, Some(pagination)).await?;
+    let variants = db.get_variants_for_extarnel(Some(pagination)).await?;
 
-    // Ok(ResponseBuilder::paginated_response(&variants).into_response())
+    Ok(ResponseBuilder::paginated_response(&variants).into_response())
 }
 
 pub async fn get_variants_by_ids(
@@ -86,15 +86,8 @@ pub async fn delete_variant(
     db: AxumDBExtansion,
     Path(variant_id): Path<ObjectId>,
 ) -> HandlerResult {
-
     if db.check_if_variant_is_in_use(&variant_id).await? {
-        return Ok(ResponseBuilder::<()>::error(
-            "",
-            None,
-            None,
-            Some(400),
-        )
-        .into_response());
+        return Ok(ResponseBuilder::<()>::error("", None, None, Some(400)).into_response());
     }
 
     // TODO: omer

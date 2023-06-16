@@ -1,9 +1,10 @@
 use crate::prelude::*;
 use axum::async_trait;
-use bson::{doc, oid::ObjectId};
+use bson::{doc, oid::ObjectId, Document};
 use shoppa_core::db::{
+    aggregations,
     models::{Category, Variants},
-    DBConection,
+    DBConection, Pagination,
 };
 
 #[async_trait]
@@ -11,6 +12,10 @@ pub trait AdminVariantsFunctions {
     async fn validate_variants_exist(&self, ids: &Vec<ObjectId>) -> Result<bool>;
     async fn get_variants_by_ids(&self, ids: &Vec<ObjectId>) -> Result<Vec<Variants>>;
     async fn check_if_variant_is_in_use(&self, id: &ObjectId) -> Result<bool>;
+    async fn get_variants_for_extarnel(
+        &self,
+        pagination: Option<Pagination>,
+    ) -> Result<(Vec<Document>, u64)>;
 }
 
 #[async_trait]
@@ -64,44 +69,45 @@ impl AdminVariantsFunctions for DBConection {
 
         Ok(count > 0)
     }
-    // async fn get_variants_for_extarnel(
-    //     db: &DBExtension,
-    //     pagination: Option<Pagination>,
-    // ) -> PaginatedResult<Document> {
-    //     let pagination = pagination.unwrap_or_default();
 
-    //     let pipeline = [
-    //         aggregations::skip(pagination.offset),
-    //         aggregations::limit(pagination.amount),
-    //         aggregations::project(
-    //             ProjectIdOptions::Keep,
-    //             vec![Variants::fields().name, Variants::fields().values, "type"],
-    //             None,
-    //         ),
-    //     ];
+    async fn get_variants_for_extarnel(
+        &self,
+        pagination: Option<Pagination>,
+    ) -> Result<(Vec<Document>, u64)> {
+        let pagination = pagination.unwrap_or_default();
 
-    //     let cursor = db
-    //         .variants
-    //         .aggregate(pipeline, None)
-    //         .await
-    //         .map_err(|e| Error::DBError(("variants", e)))?;
+        let pipeline = [
+            aggregations::skip(pagination.offset),
+            aggregations::limit(pagination.amount),
+            aggregations::project(
+                ProjectIdOptions::Keep,
+                vec![Variants::fields().name, Variants::fields().values, "type"],
+                None,
+            ),
+        ];
 
-    //     let variants = cursor.consume().await?;
+        let cursor = db
+            .variants
+            .aggregate(pipeline, None)
+            .await
+            .map_err(|e| Error::DBError(("variants", e)))?;
 
-    //     let mut count = variants.len() as i64;
+        let variants = cursor.consume().await?;
 
-    //     if count < pagination.amount {
-    //         count += pagination.offset;
+        let mut count = variants.len() as i64;
 
-    //         return Ok((variants, count as u64));
-    //     }
+        if count < pagination.amount {
+            count += pagination.offset;
 
-    //     let count = db
-    //         .variants
-    //         .count_documents(doc! {}, None)
-    //         .await
-    //         .map_err(|e| Error::DBError(("variants", e)))?;
+            return Ok((variants, count as u64));
+        }
 
-    //     Ok((variants, count))
-    // }
+        let count = db
+            .variants
+            .count_documents(doc! {}, None)
+            .await
+            .map_err(|e| Error::DBError(("variants", e)))?;
+
+        Ok((variants, count))
+    }
 }
