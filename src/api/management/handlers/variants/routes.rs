@@ -12,7 +12,6 @@ use shoppa_core::{
 };
 
 pub async fn get_variants(db: AxumDBExtansion, pagination: Pagination) -> HandlerResult {
-    todo!();
     let variants = db.get_variants_for_extarnel(Some(pagination)).await?;
 
     Ok(ResponseBuilder::paginated_response(&variants).into_response())

@@ -79,34 +79,54 @@ impl AdminVariantsFunctions for DBConection {
         let pipeline = [
             aggregations::skip(pagination.offset),
             aggregations::limit(pagination.amount),
-            aggregations::project(
-                ProjectIdOptions::Keep,
-                vec![Variants::fields().name, Variants::fields().values, "type"],
+            aggregations::lookup::<Category>(
+                Variants::fields().id,
+                Category::fields().allowed_variants,
+                "categories",
+                Some(vec![aggregations::project(
+                    aggregations::ProjectIdOptions::Keep,
+                    vec![Category::fields().name],
+                    None,
+                )]),
                 None,
+            ),
+            aggregations::project(
+                aggregations::ProjectIdOptions::Keep,
+                vec![
+                    Variants::fields().name,
+                    Variants::fields().values,
+                    "type",
+                    "categories",
+                ],
+                Some(doc! {
+                    "deletable": {
+                        "$cond": {
+                            "if": {
+                                "$eq": [
+                                    // No need to use safe array access because we are using $lookup
+                                    {
+                                        "$size": "$categories"
+                                    },
+                                    0
+                                ]
+                            },
+                            "then": true,
+                            "else": false
+                        }
+                    }
+                }),
             ),
         ];
 
-        let cursor = db
-            .variants
-            .aggregate(pipeline, None)
-            .await
-            .map_err(|e| Error::DBError(("variants", e)))?;
+        let variants = self.aggregate_variants(pipeline, None, None).await?;
 
-        let variants = cursor.consume().await?;
+        let count = variants.len();
 
-        let mut count = variants.len() as i64;
-
-        if count < pagination.amount {
-            count += pagination.offset;
-
-            return Ok((variants, count as u64));
+        if !pagination.need_count(count) {
+            return Ok((variants, pagination.calculate_total(count)));
         }
 
-        let count = db
-            .variants
-            .count_documents(doc! {}, None)
-            .await
-            .map_err(|e| Error::DBError(("variants", e)))?;
+        let count = self.count_variants(None, None, None).await?;
 
         Ok((variants, count))
     }
