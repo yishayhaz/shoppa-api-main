@@ -32,6 +32,16 @@ pub trait AdminVariantsFunctions {
         value: Option<String>,
         label: Option<String>,
     ) -> Result<Option<Variants>>;
+    async fn delete_variant_value(
+        &self,
+        variant_id: &ObjectId,
+        value_id: &ObjectId,
+    ) -> Result<Option<Variants>>;
+    async fn check_if_variant_value_is_in_use(
+        &self,
+        variant_id: &ObjectId,
+        value_id: &ObjectId,
+    ) -> Result<bool>;
 }
 
 #[async_trait]
@@ -304,5 +314,44 @@ impl AdminVariantsFunctions for DBConection {
 
         self.find_and_update_variant(filters, update, None, None)
             .await
+    }
+
+    async fn delete_variant_value(
+        &self,
+        variant_id: &ObjectId,
+        value_id: &ObjectId,
+    ) -> Result<Option<Variants>> {
+
+        let filters = doc! {
+            Variants::fields().id: variant_id,
+            Variants::fields().values(true).id: value_id
+        };
+
+        let update = doc! {
+            "$pull": {
+                Variants::fields().values: {
+                    Variants::fields().values(false).id: value_id
+                }
+            },
+            "$currentDate": {
+                Variants::fields().updated_at: true
+            }
+        };
+
+        self.find_and_update_variant(filters, update, None, None)
+            .await
+    }
+
+    async fn check_if_variant_value_is_in_use(
+        &self,
+        variant_id: &ObjectId,
+        value_id: &ObjectId,
+    ) -> Result<bool> {
+
+
+        // TODO
+
+
+        Ok(true)
     }
 }
