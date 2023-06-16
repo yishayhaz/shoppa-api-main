@@ -34,6 +34,7 @@ pub struct UpdateVariantBasicInfoPayload {
     pub name: Option<String>,
     #[serde(rename = "type")]
     pub type_: Option<VariantType>,
+    pub new_values: Option<Vec<CreateVariantsValues>>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, Validate)]

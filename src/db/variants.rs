@@ -16,6 +16,7 @@ pub trait AdminVariantsFunctions {
         &self,
         pagination: Option<Pagination>,
     ) -> Result<(Vec<Document>, u64)>;
+    async fn get_variant_for_extarnel(&self, id: &ObjectId) -> Result<Option<Document>>;
 }
 
 #[async_trait]
@@ -129,5 +130,55 @@ impl AdminVariantsFunctions for DBConection {
         let count = self.count_variants(None, None, None).await?;
 
         Ok((variants, count))
+    }
+
+    async fn get_variant_for_extarnel(&self, id: &ObjectId) -> Result<Option<Document>> {
+        let pipeline = [
+            aggregations::match_query(&doc! {
+                Variants::fields().id: id
+            }),
+            aggregations::lookup::<Category>(
+                Variants::fields().id,
+                Category::fields().allowed_variants,
+                "categories",
+                Some(vec![aggregations::project(
+                    aggregations::ProjectIdOptions::Keep,
+                    vec![Category::fields().name],
+                    None,
+                )]),
+                None,
+            ),
+            aggregations::project(
+                aggregations::ProjectIdOptions::Keep,
+                vec![
+                    Variants::fields().name,
+                    Variants::fields().values,
+                    "type",
+                    "categories",
+                ],
+                Some(doc! {
+                    "deletable": {
+                        "$cond": {
+                            "if": {
+                                "$eq": [
+                                    // No need to use safe array access because we are using $lookup
+                                    {
+                                        "$size": "$categories"
+                                    },
+                                    0
+                                ]
+                            },
+                            "then": true,
+                            "else": false
+                        }
+                    }
+                }),
+            ),
+        ];
+
+        let mut variant = self.aggregate_variants(pipeline, None, None).await?;
+        // we can use pop because we are sure that we have only one variant
+        // since we are using id as a filter
+        Ok(variant.pop())
     }
 }

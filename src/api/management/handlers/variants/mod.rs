@@ -7,14 +7,14 @@ pub fn router() -> Router {
     Router::new()
         .route("/", routing::get(routes::get_variants))
         .route("/by-ids", routing::get(routes::get_variants_by_ids))
+        .route(
+            "/by-categories",
+            routing::get(routes::get_variants_by_categories),
+        )
         .route("/", routing::post(routes::create_new_variant))
         .route("/:variant_id", routing::get(routes::get_variant_by_id))
-        .route("/:variant_id", routing::put(routes::update_variant))
+        .route("/:variant_id", routing::patch(routes::update_variant))
         .route("/:variant_id", routing::delete(routes::delete_variant))
-        .route(
-            "/:variant_id/value",
-            routing::post(routes::add_value_to_variant),
-        )
         .route(
             "/:variant_id/value/:value_id",
             routing::put(routes::update_variant_value),

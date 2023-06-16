@@ -30,7 +30,7 @@ pub async fn get_variant_by_id(
     db: AxumDBExtansion,
     Path(variant_id): Path<ObjectId>,
 ) -> HandlerResult {
-    let variant = db.get_variant_by_id(&variant_id, None, None, None).await?;
+    let variant = db.get_variant_for_extarnel(&variant_id).await?;
 
     Ok(ResponseBuilder::success(Some(variant), None, None).into_response())
 }
@@ -52,17 +52,6 @@ pub async fn update_variant(
     todo!();
     // let _ =
     //     updates::update_variant_basic_info(&db, &variant_id, &payload.name, &payload.type_).await;
-
-    // Ok(().into_response())
-}
-
-pub async fn add_value_to_variant(
-    db: AxumDBExtansion,
-    Path(variant_id): Path<ObjectId>,
-    JsonWithValidation(payload): JsonWithValidation<types::CreateVariantValuePayload>,
-) -> HandlerResult {
-    todo!()
-    // let _ = inserts::add_variant_value(&db, &variant_id, &payload.label, &payload.value).await;
 
     // Ok(().into_response())
 }
@@ -111,3 +100,5 @@ pub async fn delete_variant_value(
 
     Ok(().into_response())
 }
+
+pub async fn get_variants_by_categories(){}
