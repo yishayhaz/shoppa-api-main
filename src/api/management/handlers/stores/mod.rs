@@ -1,10 +1,12 @@
-use shoppa_core::constans::MAX_IMAGE_SIZE;
 use axum::{extract::DefaultBodyLimit, routing, Router};
+use shoppa_core::constans::MAX_IMAGE_SIZE;
 mod routes;
 mod types;
+mod users;
 
 pub fn router() -> Router {
     Router::new()
+        .nest("/users", users::router())
         .route(
             "/:store_oid/assets",
             routing::put(routes::update_store_assets),
