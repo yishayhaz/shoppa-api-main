@@ -71,3 +71,22 @@ pub async fn edit_category(
 
     todo!()
 }
+
+pub async fn get_category(
+    db: AxumDBExtansion,
+    Path(category_id): Path<ObjectId>,
+) -> HandlerResult {
+    let c = db.get_category_by_id(&category_id, None, None, None).await?;
+
+    if c.is_none() {
+        return Ok(ResponseBuilder::<u16>::error(
+            "",
+            None,
+            Some("The provided category doesnt exist"),
+            Some(404),
+        )
+        .into_response());
+    }
+
+    Ok(ResponseBuilder::success(Some(c.unwrap()), None, Some(200)).into_response())
+}
