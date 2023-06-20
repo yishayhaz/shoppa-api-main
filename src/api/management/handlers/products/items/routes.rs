@@ -71,12 +71,18 @@ pub async fn edit_product_item(
         );
     }
 
-    if let Some(images) = &payload.assets_refs {
+    if let Some(assets) = &payload.assets_refs {
         let assets_ids = product.assets.iter().map(|i| *i.id()).collect::<Vec<_>>();
 
-        if !images.iter().all(|i| assets_ids.contains(i)) {
+        if !assets.iter().all(|i| assets_ids.contains(i)) {
             // not all images are in the product
-            return Err(Error::Static("TODO"));
+            return Ok(ResponseBuilder::<()>::error(
+                "",
+                None,
+                Some("some of the provided assets dont exists"),
+                Some(404),
+            )
+            .into_response());
         }
     }
 

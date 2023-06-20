@@ -23,6 +23,12 @@ pub enum ProductSortBy {
     Relevance,
 }
 
+impl Default for ProductSortBy {
+    fn default() -> Self {
+        Self::Relevance
+    }
+}
+
 #[async_trait]
 pub trait ProductFunctions {
     async fn add_view_to_product(
@@ -207,36 +213,26 @@ impl ProductFunctions for DBConection {
         options: Option<AggregateOptions>,
     ) -> Result<(Vec<Document>, u64)> {
         let pagination = pagination.unwrap_or_default();
+        let sorting = sorting.unwrap_or_default();
 
-        let sort_stage = match sorting {
-            None => {
+        let sort_stage = match sorting.sort_by {
+            ProductSortBy::Date => aggregations::sort(doc! {
+                Product::fields().created_at: &sorting.direction
+            }),
+            ProductSortBy::Popularity => aggregations::sort(doc! {
+                Product::fields().analytics(true).views: &sorting.direction
+            }),
+            ProductSortBy::Relevance => {
                 if free_text.is_some() {
-                    aggregations::sort_by_score()
+                    aggregations::sort(doc! {
+                        "score": &sorting.direction
+                    })
                 } else {
                     aggregations::sort(doc! {
                         Product::fields().created_at: -1
                     })
                 }
             }
-            Some(sort) => match sort.sort_by {
-                ProductSortBy::Date => aggregations::sort(doc! {
-                    Product::fields().created_at: &sort.direction
-                }),
-                ProductSortBy::Popularity => aggregations::sort(doc! {
-                    Product::fields().analytics(true).views: &sort.direction
-                }),
-                ProductSortBy::Relevance => {
-                    if free_text.is_some() {
-                        aggregations::sort(doc! {
-                            "score": &sort.direction
-                        })
-                    } else {
-                        aggregations::sort(doc! {
-                            Product::fields().created_at: -1
-                        })
-                    }
-                }
-            },
         };
 
         let filters = {
@@ -254,7 +250,7 @@ impl ProductFunctions for DBConection {
             if let Some(category_id) = category_id {
                 f.push(doc! {
                     "equals": {
-                        "in": category_id,
+                        "value": category_id,
                         "path": Product::fields().categories(true).ids
                     }
                 });

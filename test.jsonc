@@ -11,12 +11,12 @@
     //     "body": "models.product.items",
     //     "description": "Create a new item for a product"
     // },
-    "route3": {
-        "path": "/product/:id/items/:itemId",
-        "method": "PUT",
-        "body": "models.product.items",
-        "description": "Update an item for a product"
-    },
+    // "route3": {
+    //     "path": "/product/:id/items/:itemId",
+    //     "method": "PUT",
+    //     "body": "models.product.items",
+    //     "description": "Update an item for a product"
+    // },
     "route4": {
         "path": "/product/:id/items/:itemId",
         "method": "DELETE",
@@ -74,7 +74,7 @@
         "description": "Logout for store manager"
     },
     // "todo2": "move all servers to digital ocean",
-    "todo3": "fix search indexes",
+    // "todo3": "fix search indexes",
     "route13": {
         "path": "/search/log",
         "method": "POST",
