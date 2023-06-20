@@ -55,20 +55,27 @@ pub async fn products_autocomplete(
     db: AxumDBExtansion,
     Query(query): Query<types::GetProductsAutoCompleteQueryParams>,
 ) -> HandlerResult {
-    // maybe get random products if there is no free text
-    if query.free_text.is_none() {
-        return Ok(ResponseBuilder::<Vec<u16>>::success(Some(vec![]), None, None).into_response());
-    }
-    todo!()
-    // let products = queries::get_products_names_for_autocomplete(
-    //     &db,
-    //     query.free_text.unwrap(),
-    //     query.store_id,
-    //     query.category_id,
-    // )
-    // .await?;
 
-    // Ok(ResponseBuilder::success(Some(products), None, None).into_response())
+    let products = match query.free_text {
+        Some(free_text) => db
+            .autocomplete_products_search(
+                free_text,
+                query.store_id,
+                query.category_id,
+                None,
+            )
+            .await?,
+        None => db
+            .random_autocomplete_products_search(
+                query.amount,
+                query.store_id,
+                query.category_id,
+                None
+            )
+            .await?,
+    };
+
+    Ok(ResponseBuilder::success(Some(products), None, None).into_response())
 }
 
 pub async fn products_count(

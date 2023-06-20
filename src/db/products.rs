@@ -36,7 +36,7 @@ pub trait ProductFunctions {
         product_id: &ObjectId,
         options: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Product>>;
-    async fn get_products_names_for_autocomplete(
+    async fn autocomplete_products_search(
         &self,
         free_text: String,
         store_id: Option<ObjectId>,
@@ -48,7 +48,6 @@ pub trait ProductFunctions {
         product_id: &ObjectId,
         options: Option<AggregateOptions>,
     ) -> Result<Option<Document>>;
-
     async fn get_products_for_extarnel(
         &self,
         pagination: Option<Pagination>,
@@ -58,6 +57,13 @@ pub trait ProductFunctions {
         category_id: Option<ObjectId>,
         options: Option<AggregateOptions>,
     ) -> Result<(Vec<Document>, u64)>;
+    async fn random_autocomplete_products_search(
+        &self,
+        amount: Option<u8>,
+        store_id: Option<ObjectId>,
+        category_id: Option<ObjectId>,
+        options: Option<AggregateOptions>,
+    ) -> Result<Vec<Document>>;
 }
 
 #[async_trait]
@@ -112,7 +118,7 @@ impl ProductFunctions for DBConection {
             .await
     }
 
-    async fn get_products_names_for_autocomplete(
+    async fn autocomplete_products_search(
         &self,
         free_text: String,
         store_id: Option<ObjectId>,
@@ -132,7 +138,7 @@ impl ProductFunctions for DBConection {
 
         if let Some(category_id) = category_id {
             filters.push(doc! {
-                "in": {
+                "equals": {
                     "value": category_id,
                     "path": Product::fields().categories(true).ids
                 }
@@ -299,6 +305,63 @@ impl ProductFunctions for DBConection {
             .await?;
 
         Ok((products, count))
+    }
+
+    async fn random_autocomplete_products_search(
+        &self,
+        amount: Option<u8>,
+        store_id: Option<ObjectId>,
+        category_id: Option<ObjectId>,
+        options: Option<AggregateOptions>,
+    ) -> Result<Vec<Document>> {
+        let amount = amount.unwrap_or(10) as i64;
+
+        let from_pool = amount * 10;
+
+        let filters = {
+            let mut f = vec![];
+
+            if let Some(store_id) = store_id {
+                f.push(doc! {
+                    "equals": {
+                        "value": store_id,
+                        "path": Product::fields().store(true).id
+                    }
+                });
+            };
+
+            if let Some(category_id) = category_id {
+                f.push(doc! {
+                    "equals": {
+                        "value": category_id,
+                        "path": Product::fields().categories(true).ids
+                    }
+                });
+            }
+            f
+        };
+
+        let pipeline = [
+            aggregations::search_products(&None, &filters, Some(0)),
+            aggregations::sort(doc! {
+                Product::fields().analytics(true).views: -1
+            }),
+            aggregations::limit(from_pool),
+            aggregations::sample(amount),
+            aggregations::project(
+                ProjectIdOptions::Keep,
+                [Product::fields().name],
+                Some(doc! {
+                    "item_id": {
+                        "$first":
+                        format!("${}", Product::fields().items(true).id)
+                    },
+                    "views": format!("${}", Product::fields().analytics(true).views),
+                }),
+            ),
+        ];
+
+        self.aggregate_products(pipeline, options, None).await
     }
 }
 
