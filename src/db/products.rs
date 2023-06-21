@@ -353,8 +353,10 @@ impl ProductFunctions for DBConection {
                 [Product::fields().name],
                 Some(doc! {
                     "item_id": {
-                        "$first":
-                        format!("${}", Product::fields().items(true).id)
+                        "$getField": {
+                            "field": "_id",
+                            "input": aggregations::random_array_element(&format!("${}", Product::fields().items)),
+                        }
                     },
                     "views": format!("${}", Product::fields().analytics(true).views),
                 }),
