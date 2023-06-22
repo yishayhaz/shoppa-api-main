@@ -4,7 +4,11 @@ use shoppa_api::{
     api,
     helpers::{env::ENV_VARS, security::get_cors_layer, setup},
 };
-use shoppa_core::{db::DBConection, file_storage::StorageClient};
+use shoppa_core::{
+    db::DBConection,
+    email_sender::{EmailAddress, EmailClient},
+    file_storage::StorageClient,
+};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tower_cookies::CookieManagerLayer;
@@ -31,13 +35,19 @@ async fn main() {
 
     let storge_client = Arc::new(StorageClient::connect().await);
 
+    let email_client = Arc::new(EmailClient::new(EmailAddress::new(
+        "api@shoppa.co.il".to_string(),
+        Some("Shoppa API".to_string()),
+    )));
+
     let db = Arc::new(DBConection::connect().await.unwrap());
 
     let app = Router::new()
         .nest("/api/v1", api::v1::router())
         .nest("/api/management", api::management::router())
-        .layer(Extension(db))
+        .layer(Extension(email_client))
         .layer(Extension(storge_client))
+        .layer(Extension(db))
         .layer(CookieManagerLayer::new())
         .layer(get_cors_layer())
         .layer(TraceLayer::new_for_http());
