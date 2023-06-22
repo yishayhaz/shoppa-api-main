@@ -1,3 +1,4 @@
+use crate::helpers::env::ENV_VARS;
 use shoppa_core::email_sender::{EmailClient, ShoppaMailBuilder};
 use std::collections::HashMap;
 
@@ -19,7 +20,7 @@ impl AdminEmailFunctions for EmailClient {
         store_logo: String,
         store_name: String,
     ) -> ShoppaMailBuilder {
-        let builder = self.build_mail(None, "ברוכים הבאים לשופ״ה");
+        let builder = self.build_mail(None, "");
 
         let mut args = HashMap::new();
 
@@ -29,7 +30,7 @@ impl AdminEmailFunctions for EmailClient {
         args.insert("store_name".to_string(), store_name);
 
         builder
-            .set_template_id("0e823a84-62b8-4841-a36c-c6d005c7f6e7".to_string())
+            .set_template_id(ENV_VARS.NEW_STORE_USER_TEMPLATE_ID.clone())
             .set_template_args(args)
     }
 }

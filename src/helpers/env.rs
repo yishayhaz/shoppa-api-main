@@ -28,6 +28,7 @@ pub struct EnvVariables {
     pub DIGITAL_OCEAN_SPACE_REGION: String,
     #[validate(length(min = 1))]
     pub BUCKET_NAME: String,
+    pub NEW_STORE_USER_TEMPLATE_ID: String,
 }
 
 impl EnvVariables {
@@ -56,6 +57,15 @@ impl EnvVariables {
             DIGITAL_OCEAN_SPACE_REGION: env::var("DIGITAL_OCEAN_SPACE_REGION")
                 .expect("DIGITAL_OCEAN_SPACE_REGION must be set"),
             BUCKET_NAME: env::var("BUCKET_NAME").expect("BUCKET_NAME must be set"),
+            NEW_STORE_USER_TEMPLATE_ID: env::var("NEW_STORE_USER_TEMPLATE_ID").unwrap_or_else(
+                |_| {
+                    let default_temp_id = "d-de7d34459e32405596a27221f1d191fb".to_string();
+                    println!(
+                        "NEW_STORE_USER_TEMPLATE_ID not set, using default: {&default_temp_id}"
+                    );
+                    default_temp_id
+                },
+            ),
         }
     }
     pub fn is_production(&self) -> bool {

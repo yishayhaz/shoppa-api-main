@@ -30,12 +30,12 @@ pub async fn create_store_user(
             store.logo.map(|l| l.path).unwrap_or_default(),
             store.name,
         )
-        .add_cc((store_user.email.clone(), store_user.name.clone()).into())
+        .add_to((store_user.email.clone(), store_user.name.clone()).into())
         .build();
 
     match email_client.send(email).await {
         Ok(r) => {
-            tracing::info!("Email sent: {:?}", r);
+            tracing::info!("Email sent: {:?}", r.text().await);
         }
         Err(e) => {
             tracing::error!("Failed to send email: {:?}", e);
