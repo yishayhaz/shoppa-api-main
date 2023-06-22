@@ -449,7 +449,7 @@ impl AdminVariantsFunctions for DBConection {
             ],
             false => [
                 filters,
-                
+                aggregations::limit(15)
             ]
         };
 
