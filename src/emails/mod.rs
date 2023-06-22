@@ -18,7 +18,7 @@ impl AdminEmailFunctions for EmailClient {
         store_logo: String,
         store_name: String,
     ) -> ShoppaMailBuilder{
-        let mut builder = self::build_mail(None, "ברוכים הבאים לשופ״ה");
+        let mut builder = self::build_mail(None, "ברוכים הבאים לשופה");
     }
 }
 
