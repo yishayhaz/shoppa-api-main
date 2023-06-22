@@ -8,9 +8,15 @@ pub trait CategoriesFunctions {
     async fn get_categories_for_external(&self, parent: Option<ObjectId>) -> Result<Vec<Document>>;
 }
 
-// #[async_trait]
-// pub trait AdminCategoriesFunctions {
-// }
+#[async_trait]
+pub trait AdminCategoriesFunctions {
+    async fn edit_category(
+        &self,
+        category_id: ObjectId,
+        name: Option<String>,
+        variants: Option<Vec<ObjectId>>,
+    ) -> Result<Option<Document>>;
+}
 
 
 #[async_trait]
@@ -37,5 +43,30 @@ impl CategoriesFunctions for DBConection {
         ];
 
         self.aggregate_categories(pipeline, None, None).await
+    }
+}
+
+
+#[async_trait]
+impl AdminCategoriesFunctions for DBConection {
+    async fn edit_category(
+        &self,
+        category_id: &ObjectId,
+        name: Option<String>,
+        variants: Option<Vec<ObjectId>>,
+    ) -> Result<Option<Document>> {
+
+        if let Some(name) = name {
+            todo!("update all the products that have this category")
+        } else {
+
+            let update = doc! {
+                "$set": {
+                    Category::fields().variants: variants
+                }
+            };
+
+            self.find_and_update_category_by_id(category_id, update, None, None).await
+        }
     }
 }

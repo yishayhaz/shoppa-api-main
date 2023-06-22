@@ -1,6 +1,6 @@
 use super::types::{CreateCatgoryPayload, EditCatetoryPayload};
 use crate::{
-    db::{AdminVariantsFunctions, AxumDBExtansion},
+    db::{AdminVariantsFunctions, AxumDBExtansion, AdminCategoriesFunctions},
     prelude::*,
 };
 use axum::{
@@ -69,7 +69,25 @@ pub async fn edit_category(
         }
     }
 
-    todo!()
+    let c = db
+        .edit_category(
+            &category_id,
+            payload.name,
+            payload.variants,
+        )
+        .await?;
+
+    if c.is_none() {
+        return Ok(ResponseBuilder::<u16>::error(
+            "",
+            None,
+            Some("The provided category doesnt exist"),
+            Some(404),
+        )
+        .into_response());
+    }
+
+    Ok(ResponseBuilder::success(c, None, Some(200)).into_response())
 }
 
 pub async fn get_category(
