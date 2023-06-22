@@ -2,7 +2,7 @@ use crate::prelude::types::*;
 use shoppa_core::{
     constans,
     db::models::{VariantType, VariantValue, Variants},
-    parser::deserialize_query_array,
+    parser::{deserialize_query_array, empty_string_as_none},
 };
 use validator::Validate;
 
@@ -55,6 +55,16 @@ pub struct GetVariantsByIdsQuery {
     #[validate(length(min = 1, max = "constans::PRODUCT_MAX_VARIANTS"))]
     pub variants_ids: Vec<ObjectId>,
 }
+
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct GetVariantsByCategoriesQuery {
+    #[serde(default, deserialize_with = "deserialize_query_array")]
+    pub categories_ids: Vec<ObjectId>,
+    #[serde(default, deserialize_with = "empty_string_as_none")]
+    pub free_text: Option<String>,
+}
+
 
 impl Into<Variants> for CreateVariantPayload {
     fn into(self) -> Variants {

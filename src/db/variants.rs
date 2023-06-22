@@ -4,7 +4,7 @@ use bson::{doc, oid::ObjectId, Document};
 use mongodb::options::{FindOneAndUpdateOptions, ReturnDocument};
 use shoppa_core::db::{
     aggregations,
-    models::{Category, VariantType, VariantValue, Variants},
+    models::{Category, VariantType, VariantValue, Variants, Product},
     DBConection, Pagination,
 };
 
@@ -42,6 +42,12 @@ pub trait AdminVariantsFunctions {
         variant_id: &ObjectId,
         value_id: &ObjectId,
     ) -> Result<bool>;
+    async fn get_variants_by_categories(
+        &self,
+        pagination: Option<Pagination>,
+        categories_ids: Vec<ObjectId>,
+        free_text: Option<String>,
+    ) -> Result<Vec<Document>>;
 }
 
 #[async_trait]
@@ -92,6 +98,18 @@ impl AdminVariantsFunctions for DBConection {
         };
 
         let count = self.count_categories(Some(filters), None, None).await?;
+
+        if count > 0 {
+            return Ok(true);
+        }
+
+        let product_filter = doc! {
+            Product::fields().variants: {
+                "$in": [id]
+            }
+        };
+
+        let count = self.count_products(Some(product_filter), None, None).await?;
 
         Ok(count > 0)
     }
@@ -353,5 +371,39 @@ impl AdminVariantsFunctions for DBConection {
 
 
         Ok(true)
+    }
+
+    async fn get_variants_by_categories(
+        &self,
+        pagination: Option<Pagination>,
+        categories_ids: Vec<ObjectId>,
+        free_text: Option<String>,
+    ) -> Result<Vec<Document>> {
+
+        let pagination = pagination.unwrap_or_default();
+
+        let filters = match free_text {
+            Some(free_text) => aggregations::match_query(&doc! {
+                Variants::fields().name: {
+                    "$regex": free_text,
+                    "$options": "i"
+                }
+            }),
+            None => aggregations::match_query(&doc! {}),
+        };
+
+        let pipeline = match categories_ids.is_empty() {
+            true => [
+                filters,
+                aggregations::limit(15)
+            ],
+            false => [
+                filters,
+                
+            ]
+        };
+
+        self.aggregate_variants(pipeline, None, None).await
+
     }
 }

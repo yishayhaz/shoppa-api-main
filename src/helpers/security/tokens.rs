@@ -44,10 +44,7 @@ pub fn decode_login_token(token: &str) -> Result<LoginTokenData> {
         Err(_) => return Err(Error::Static("TODO")),
     };
 
-    let data = serde_json::from_value::<LoginTokenData>(json!({
-        "level": token_data.get("level"),
-        "user_id":  token_data.get("user_id")
-    }));
+    let data = serde_json::from_value::<LoginTokenData>(token_data);
 
     match data {
         Ok(v) => Ok(v),

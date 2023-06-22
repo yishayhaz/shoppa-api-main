@@ -61,7 +61,8 @@ impl EnvVariables {
                 |_| {
                     let default_temp_id = "d-de7d34459e32405596a27221f1d191fb".to_string();
                     println!(
-                        "NEW_STORE_USER_TEMPLATE_ID not set, using default: {&default_temp_id}"
+                        "NEW_STORE_USER_TEMPLATE_ID not set, using default: {d}",
+                        d = default_temp_id
                     );
                     default_temp_id
                 },
