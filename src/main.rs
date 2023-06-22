@@ -37,7 +37,7 @@ async fn main() {
 
     let email_client = Arc::new(EmailClient::new(EmailAddress::new(
         "api@shoppa.co.il".to_string(),
-        Some("Shoppa API".to_string()),
+        Some("API".to_string()),
     )));
 
     let db = Arc::new(DBConection::connect().await.unwrap());
