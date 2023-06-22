@@ -137,6 +137,20 @@ impl AdminVariantsFunctions for DBConection {
                 ]),
                 None,
             ),
+            aggregations::lookup::<Product>(
+                Variants::fields().id,
+                Product::fields().variants,
+                "products",
+                Some(vec![
+                    aggregations::limit(3),
+                    aggregations::project(
+                        aggregations::ProjectIdOptions::Keep,
+                        vec![Product::fields().name],
+                        None,
+                    ),
+                ]),
+                None
+            ),
             aggregations::project(
                 aggregations::ProjectIdOptions::Keep,
                 vec![
@@ -149,12 +163,23 @@ impl AdminVariantsFunctions for DBConection {
                     "deletable": {
                         "$cond": {
                             "if": {
-                                "$eq": [
-                                    // No need to use safe array access because we are using $lookup
+                                "$and": [
                                     {
-                                        "$size": "$categories"
+                                        "$eq": [
+                                            {
+                                                "$size": "$categories"
+                                            },
+                                            0
+                                        ]
                                     },
-                                    0
+                                    {
+                                        "$eq": [
+                                            {
+                                                "$size": "$products"
+                                            },
+                                            0
+                                        ]
+                                    }
                                 ]
                             },
                             "then": true,
@@ -194,6 +219,20 @@ impl AdminVariantsFunctions for DBConection {
                 )]),
                 None,
             ),
+            aggregations::lookup::<Product>(
+                Variants::fields().id,
+                Product::fields().variants,
+                "products",
+                Some(vec![
+                    aggregations::limit(3),
+                    aggregations::project(
+                        aggregations::ProjectIdOptions::Keep,
+                        vec![Product::fields().name],
+                        None,
+                    ),
+                ]),
+                None
+            ),
             aggregations::project(
                 aggregations::ProjectIdOptions::Keep,
                 vec![
@@ -206,12 +245,23 @@ impl AdminVariantsFunctions for DBConection {
                     "deletable": {
                         "$cond": {
                             "if": {
-                                "$eq": [
-                                    // No need to use safe array access because we are using $lookup
+                                "$and": [
                                     {
-                                        "$size": "$categories"
+                                        "$eq": [
+                                            {
+                                                "$size": "$categories"
+                                            },
+                                            0
+                                        ]
                                     },
-                                    0
+                                    {
+                                        "$eq": [
+                                            {
+                                                "$size": "$products"
+                                            },
+                                            0
+                                        ]
+                                    }
                                 ]
                             },
                             "then": true,
