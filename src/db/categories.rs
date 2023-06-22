@@ -12,10 +12,10 @@ pub trait CategoriesFunctions {
 pub trait AdminCategoriesFunctions {
     async fn edit_category(
         &self,
-        category_id: ObjectId,
+        category_id: &ObjectId,
         name: Option<String>,
         variants: Option<Vec<ObjectId>>,
-    ) -> Result<Option<Document>>;
+    ) -> Result<Option<Category>>;
 }
 
 
@@ -54,7 +54,7 @@ impl AdminCategoriesFunctions for DBConection {
         category_id: &ObjectId,
         name: Option<String>,
         variants: Option<Vec<ObjectId>>,
-    ) -> Result<Option<Document>> {
+    ) -> Result<Option<Category>> {
 
         if let Some(name) = name {
             todo!("update all the products that have this category")
@@ -62,7 +62,7 @@ impl AdminCategoriesFunctions for DBConection {
 
             let update = doc! {
                 "$set": {
-                    Category::fields().variants: variants
+                    Category::fields().allowed_variants: variants
                 }
             };
 
