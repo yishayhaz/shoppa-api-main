@@ -4,7 +4,7 @@ use bson::{doc, oid::ObjectId, Document};
 use mongodb::options::{FindOneAndUpdateOptions, ReturnDocument};
 use shoppa_core::db::{
     aggregations,
-    models::{Category, VariantType, VariantValue, Variants, Product},
+    models::{Category, Product, VariantType, VariantValue, Variants},
     DBConection, Pagination,
 };
 
@@ -42,7 +42,7 @@ pub trait AdminVariantsFunctions {
         variant_id: &ObjectId,
         value_id: &ObjectId,
     ) -> Result<bool>;
-    async fn get_variants_by_categories(
+    async fn autocomplete_variants_search(
         &self,
         pagination: Option<Pagination>,
         categories_ids: Vec<ObjectId>,
@@ -109,7 +109,9 @@ impl AdminVariantsFunctions for DBConection {
             }
         };
 
-        let count = self.count_products(Some(product_filter), None, None).await?;
+        let count = self
+            .count_products(Some(product_filter), None, None)
+            .await?;
 
         Ok(count > 0)
     }
@@ -149,7 +151,7 @@ impl AdminVariantsFunctions for DBConection {
                         None,
                     ),
                 ]),
-                None
+                None,
             ),
             aggregations::project(
                 aggregations::ProjectIdOptions::Keep,
@@ -231,7 +233,7 @@ impl AdminVariantsFunctions for DBConection {
                         None,
                     ),
                 ]),
-                None
+                None,
             ),
             aggregations::project(
                 aggregations::ProjectIdOptions::Keep,
@@ -374,8 +376,8 @@ impl AdminVariantsFunctions for DBConection {
         let update = doc! {
             "$set": set,
             "$currentDate": {
-                format!("{}.$.{}", 
-                Variants::fields().values, 
+                format!("{}.$.{}",
+                Variants::fields().values,
                 Variants::fields().values(false).updated_at): true
             }
         };
@@ -389,7 +391,6 @@ impl AdminVariantsFunctions for DBConection {
         variant_id: &ObjectId,
         value_id: &ObjectId,
     ) -> Result<Option<Variants>> {
-
         let filters = doc! {
             Variants::fields().id: variant_id,
             Variants::fields().values(true).id: value_id
@@ -415,45 +416,71 @@ impl AdminVariantsFunctions for DBConection {
         variant_id: &ObjectId,
         value_id: &ObjectId,
     ) -> Result<bool> {
-        
-
         // TODO
-
 
         Ok(true)
     }
 
-    async fn get_variants_by_categories(
+    async fn autocomplete_variants_search(
         &self,
         pagination: Option<Pagination>,
         categories_ids: Vec<ObjectId>,
         free_text: Option<String>,
     ) -> Result<Vec<Document>> {
-
         let pagination = pagination.unwrap_or_default();
 
-        let filters = match free_text {
+        let filter = match free_text {
             Some(free_text) => aggregations::match_query(&doc! {
                 Variants::fields().name: {
                     "$regex": free_text,
                     "$options": "i"
                 }
             }),
-            None => aggregations::match_query(&doc! {}),
+            None => aggregations::match_all(),
         };
 
-        let pipeline = match categories_ids.is_empty() {
-            true => [
-                filters,
-                aggregations::limit(15)
-            ],
-            false => [
-                filters,
-                aggregations::limit(15)
-            ]
-        };
+        let project_stage = aggregations::project(
+            aggregations::ProjectIdOptions::Keep,
+            vec![Variants::fields().name],
+            None,
+        );
 
-        self.aggregate_variants(pipeline, None, None).await
+        if categories_ids.is_empty() {
+            let pipeline = [
+                filter,
+                aggregations::limit(pagination.amount),
+                project_stage,
+            ];
 
+            return self.aggregate_variants(pipeline, None, None).await;
+        } else {
+            let pipeline = [
+                aggregations::match_query(&doc! {
+                    Category::fields().id: {
+                        "$in": categories_ids
+                    }
+                }),
+                aggregations::unwind(Category::fields().allowed_variants, false),
+                aggregations::group(
+                    doc! {
+                        "_id": format!("${}", Category::fields().allowed_variants),
+                    }
+                ),
+                aggregations::lookup::<Variants>(
+                    "_id",
+                    Variants::fields().id,
+                    "variants",
+                    None,
+                    None
+                ),
+                aggregations::unwind("variants", false),
+                aggregations::replace_root("variants"),
+                filter,
+                aggregations::limit(pagination.amount),
+                project_stage,
+            ];
+
+            return self.aggregate_categories(pipeline, None, None).await;
+        }
     }
 }

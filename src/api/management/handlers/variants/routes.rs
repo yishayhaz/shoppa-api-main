@@ -3,7 +3,10 @@ use crate::{
     db::{AdminVariantsFunctions, AxumDBExtansion},
     prelude::*,
 };
-use axum::{extract::{Path, Query}, response::IntoResponse};
+use axum::{
+    extract::{Path, Query},
+    response::IntoResponse,
+};
 use bson::oid::ObjectId;
 use shoppa_core::{
     db::Pagination,
@@ -137,13 +140,14 @@ pub async fn delete_variant_value(
     Ok(ResponseBuilder::success(delete_res, None, None).into_response())
 }
 
-pub async fn get_variants_by_categories(
+pub async fn autocomplete_variants(
     db: AxumDBExtansion,
     pagination: Pagination,
-    Query(query): Query<types::GetVariantsByCategoriesQuery>,
+    Query(query): Query<types::GetVariantsAutocompleteQuery>,
 ) -> HandlerResult {
-    if query.categories_ids.is_empty() && query.free_text.is_none() {
-        todo!("return random variants")
-    }
-    todo!()
+    let variants = db
+        .autocomplete_variants_search(Some(pagination), query.categories_ids, query.free_text)
+        .await?;
+
+    Ok(ResponseBuilder::success(Some(variants), None, None).into_response())
 }

@@ -8,8 +8,8 @@ pub fn router() -> Router {
         .route("/", routing::get(routes::get_variants))
         .route("/by-ids", routing::get(routes::get_variants_by_ids))
         .route(
-            "/by-categories",
-            routing::get(routes::get_variants_by_categories),
+            "/autocomplete",
+            routing::get(routes::autocomplete_variants),
         )
         .route("/", routing::post(routes::create_new_variant))
         .route("/:variant_id", routing::get(routes::get_variant_by_id))

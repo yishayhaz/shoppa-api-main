@@ -58,7 +58,7 @@ pub struct GetVariantsByIdsQuery {
 
 
 #[derive(Deserialize, Debug, Clone)]
-pub struct GetVariantsByCategoriesQuery {
+pub struct GetVariantsAutocompleteQuery {
     #[serde(default, deserialize_with = "deserialize_query_array")]
     pub categories_ids: Vec<ObjectId>,
     #[serde(default, deserialize_with = "empty_string_as_none")]
