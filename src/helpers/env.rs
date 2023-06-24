@@ -29,6 +29,10 @@ pub struct EnvVariables {
     #[validate(length(min = 1))]
     pub BUCKET_NAME: String,
     pub NEW_STORE_USER_TEMPLATE_ID: String,
+    #[validate(length(equal = 32))]
+    pub STORE_USER_LOGIN_TOKEN_SECRET: String,
+    #[validate(length(equal = 32))]
+    pub STORE_USER_REGISTRATION_TOKEN_SECRET: String,
 }
 
 impl EnvVariables {
@@ -67,6 +71,10 @@ impl EnvVariables {
                     default_temp_id
                 },
             ),
+            STORE_USER_LOGIN_TOKEN_SECRET: env::var("STORE_USER_LOGIN_TOKEN_SECRET")
+                .expect("STORE_USER_LOGIN_TOKEN_SECRET must be set"),
+            STORE_USER_REGISTRATION_TOKEN_SECRET: env::var("STORE_USER_REGISTRATION_TOKEN_SECRET")
+                .expect("STORE_USER_REGISTRATION_TOKEN_SECRET must be set"),
         }
     }
     pub fn is_production(&self) -> bool {

@@ -1,6 +1,4 @@
 pub mod error_code;
-mod responses;
-pub use responses::*;
 use shoppa_core::{file_storage::StorageClient, email_sender::EmailClient};
 use strum_macros::{Display, EnumString};
 

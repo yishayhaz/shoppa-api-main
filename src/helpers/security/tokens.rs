@@ -3,7 +3,6 @@ use bson::oid::ObjectId;
 use chrono::Utc;
 use rusty_paseto::prelude::*;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 use shoppa_core::db::models::{User, DBModel};
 
 lazy_static! {

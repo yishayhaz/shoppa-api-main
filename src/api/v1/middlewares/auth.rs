@@ -1,8 +1,9 @@
 use crate::helpers::{
     cookies::delete_cookie,
     security::{decode_login_token, LoginTokenData},
-    types::{Cookeys, ResponseBuilder},
+    types::{Cookeys},
 };
+use shoppa_core::ResponseBuilder;
 use axum::{
     async_trait,
     extract::FromRequestParts,
