@@ -15,9 +15,7 @@ pub struct CreateProductPayload {
         max = "constans::PRODUCT_NAME_MAX_LENGTH"
     ))]
     pub name: String,
-    #[validate(length(
-        min = 1,
-    ))]
+    #[validate(length(min = 1,))]
     pub categories: Vec<Vec<ObjectId>>,
     pub variants: Option<Vec<ObjectId>>,
     pub store: ObjectId,
@@ -68,7 +66,6 @@ pub struct EditProductPayload {
     pub warranty: Option<f32>,
 }
 
-
 #[derive(Debug, Clone, Validate)]
 pub struct UploadProductImagePayload {
     #[validate(length(max = "MAX_IMAGE_SIZE"), custom = "image_file_field_validator")]
@@ -83,7 +80,7 @@ impl FromMultipart for UploadProductImagePayload {
         while let Some(field) = multipart.next_field().await? {
             let name = field.name().unwrap_or_default().to_string();
 
-            if name == "files" {
+            if name == "file" {
                 let file_name = field.file_name().unwrap_or_default().to_string();
                 let content_type = field.content_type().unwrap().to_string();
                 let data = field.bytes().await.unwrap();
