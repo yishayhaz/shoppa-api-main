@@ -45,6 +45,7 @@ async fn main() {
     let app = Router::new()
         .nest("/api/v1", api::v1::router())
         .nest("/api/management", api::management::router())
+        .nest("/api/stores", api::stores::router())
         .layer(Extension(email_client))
         .layer(Extension(storge_client))
         .layer(Extension(db))
