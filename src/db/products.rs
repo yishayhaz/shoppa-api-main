@@ -205,7 +205,7 @@ impl ProductFunctions for DBConection {
                     "analytics.views",
                     "items",
                     "variants",
-                    "images",
+                    "assets",
                 ],
                 None,
             ),
