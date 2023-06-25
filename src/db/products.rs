@@ -7,7 +7,10 @@ use shoppa_core::{
     constans,
     db::{
         aggregations::{self, ProjectIdOptions},
-        models::{EmbeddedDocument, FileDocument, Product, ProductStatus, ProducdBrandField},
+        models::{
+            EmbeddedDocument, FileDocument, ProducdBrandField, Product, ProductItemStatus,
+            ProductStatus, Variants,
+        },
         DBConection, Pagination, Sorter,
     },
 };
@@ -188,26 +191,64 @@ impl ProductFunctions for DBConection {
             aggregations::match_query(&filter),
             aggregations::lookup_product_variants(Some(vec![aggregations::project(
                 ProjectIdOptions::Keep,
-                ["type", "name", "values.label", "values._id", "values.value"],
+                [
+                    Variants::fields().type_,
+                    Variants::fields().name,
+                    Variants::fields().values(true).label,
+                    Variants::fields().values(true).value,
+                    Variants::fields().values(true).id,
+                ],
                 None,
             )])),
             aggregations::project(
                 ProjectIdOptions::Keep,
                 [
-                    "created_at",
-                    "brand",
-                    "name",
-                    "description",
-                    "keywords",
-                    "store",
-                    "categories.name",
-                    "categories._id",
-                    "analytics.views",
-                    "items",
-                    "variants",
-                    "images",
+                    Product::fields().created_at,
+                    Product::fields().brand,
+                    Product::fields().name,
+                    Product::fields().description,
+                    Product::fields().keywords,
+                    Product::fields().store,
+                    Product::fields().categories,
+                    Product::fields().analytics(true).views,
+                    Product::fields().variants,
                 ],
-                None,
+                Some(doc! {
+                    Product::fields().items: {
+                        "$filter": {
+                            "input": format!("${}", Product::fields().items),
+                            "as": "item",
+                            "cond": {
+                                "$in": [
+                                    format!("$$item.{}", Product::fields().items(false).status),
+                                    [ProductItemStatus::Active, ProductItemStatus::SoldOut]
+                                ]
+                            }
+                        }
+                    },
+                    Product::fields().assets: {
+                        "$filter": {
+                            "input": format!("${}", Product::fields().assets),
+                            "as": "asset",
+                            "cond": {
+                                "$and": [
+                                    {
+                                        "$eq": [
+                                            format!("$$asset.{}", Product::fields().assets(false).hidden),
+                                            false
+                                        ]
+                                    },
+                                    {
+                                        "$eq": [
+                                            format!("$$asset.{}", Product::fields().assets(false).public),
+                                            true
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                }),
             ),
         ];
 
@@ -567,7 +608,6 @@ impl AdminProductFunctions for DBConection {
         file_id: &ObjectId,
         options: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Product>> {
-
         let filters = doc! {
             Product::fields().id: product_id,
             Product::fields().assets(true).id: file_id
@@ -583,6 +623,5 @@ impl AdminProductFunctions for DBConection {
 
         self.find_and_update_product(filters, update, options, None)
             .await
-
     }
 }
