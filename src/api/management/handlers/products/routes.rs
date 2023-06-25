@@ -1,15 +1,21 @@
-use super::types::{CreateProductPayload, EditProductPayload, UploadProductImagePayload};
+use super::types::{
+    CreateProductPayload, EditProductPayload, GetProductsQueryParams, UploadProductImagePayload,
+};
 use crate::{
-    db::{AdminProductFunctions, AxumDBExtansion},
+    db::{AdminProductFunctions, AxumDBExtansion, ProductSortBy},
     helpers::types::AxumStorgeClientExtension,
     prelude::*,
 };
-use axum::{extract::Path, response::IntoResponse};
+use axum::{
+    extract::{Path, Query},
+    response::IntoResponse,
+};
 use bson::oid::ObjectId;
 use shoppa_core::{
     db::{
         models::{EmbeddedDocument, FileDocument, FileTypes, Product, ProductStatus},
         populate::{FieldPopulate, ProductsPopulate},
+        OptionalSorter, Pagination,
     },
     extractors::{JsonWithValidation, MultipartFormWithValidation},
     ResponseBuilder,
@@ -196,4 +202,25 @@ pub async fn delete_product_file(
     storage_client.delete_files([file.path]).await;
 
     Ok(ResponseBuilder::<()>::success(None, None, None).into_response())
+}
+
+pub async fn get_products(
+    db: AxumDBExtansion,
+    pagination: Pagination,
+    OptionalSorter(sorting): OptionalSorter<ProductSortBy>,
+    Query(query): Query<GetProductsQueryParams>,
+) -> HandlerResult {
+    let products = db
+        .get_products_for_admins(
+            Some(pagination),
+            sorting,
+            query.free_text,
+            query.store_id,
+            query.category_id,
+            query.status,
+            None,
+        )
+        .await?;
+
+    Ok(ResponseBuilder::paginated_response(&products).into_response())
 }

@@ -109,6 +109,17 @@ pub trait AdminProductFunctions {
         file_id: &ObjectId,
         options: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Product>>;
+
+    async fn get_products_for_admins(
+        &self,
+        pagination: Option<Pagination>,
+        sorting: Option<Sorter<ProductSortBy>>,
+        free_text: Option<String>,
+        store_id: Option<ObjectId>,
+        category_id: Option<ObjectId>,
+        status: Option<ProductStatus>,
+        options: Option<AggregateOptions>,
+    ) -> Result<(Vec<Document>, u64)>;
 }
 
 #[async_trait]
@@ -730,5 +741,100 @@ impl AdminProductFunctions for DBConection {
 
         self.find_and_update_product(filters, update, options, None)
             .await
+    }
+
+    async fn get_products_for_admins(
+        &self,
+        pagination: Option<Pagination>,
+        sorting: Option<Sorter<ProductSortBy>>,
+        free_text: Option<String>,
+        store_id: Option<ObjectId>,
+        category_id: Option<ObjectId>,
+        status: Option<ProductStatus>,
+        options: Option<AggregateOptions>,
+    ) -> Result<(Vec<Document>, u64)> {
+        let pagination = pagination.unwrap_or_default();
+        let sorting = sorting.unwrap_or_default();
+
+        let sort_stage = match sorting.sort_by {
+            ProductSortBy::Date => aggregations::sort(doc! {
+                Product::fields().created_at: &sorting.direction
+            }),
+            ProductSortBy::Popularity => aggregations::sort(doc! {
+                Product::fields().analytics(true).views: &sorting.direction
+            }),
+            ProductSortBy::Relevance => {
+                if free_text.is_some() {
+                    aggregations::sort(doc! {
+                        "score": &sorting.direction
+                    })
+                } else {
+                    aggregations::sort(doc! {
+                        Product::fields().created_at: -1
+                    })
+                }
+            }
+        };
+
+        let filters = {
+            let mut f = vec![];
+
+            if let Some(store_id) = store_id {
+                f.push(doc! {
+                    "equals": {
+                        "value": store_id,
+                        "path": Product::fields().store(true).id
+                    }
+                });
+            };
+
+            if let Some(category_id) = category_id {
+                f.push(doc! {
+                    "equals": {
+                        "value": category_id,
+                        "path": Product::fields().categories(true).ids
+                    }
+                });
+            }
+
+            if let Some(status) = status {
+                f.push(doc! {
+                    "text": {
+                        "query": status,
+                        "path": Product::fields().status
+                    }
+                });
+            }
+
+            f
+        };
+
+        let pipeline = [
+            aggregations::search_products(&free_text, &filters, Some(1)),
+            aggregations::add_score_meta(),
+            sort_stage,
+            aggregations::skip(pagination.offset),
+            aggregations::limit(pagination.amount),
+        ];
+
+        let products = self
+            .aggregate_products(pipeline, options.clone(), None)
+            .await?;
+
+        let count = products.len();
+
+        if !pagination.need_count(count) {
+            return Ok((products, pagination.calculate_total(count)));
+        }
+
+        let count = self
+            .count_products_with_aggregation(
+                [aggregations::search_products(&free_text, &filters, Some(1))],
+                options,
+                None,
+            )
+            .await?;
+
+        Ok((products, count))
     }
 }

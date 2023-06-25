@@ -24,13 +24,13 @@ pub async fn get_products_infinite(
 pub async fn get_products(
     db: AxumDBExtansion,
     pagination: Pagination,
-    sorting: OptionalSorter<ProductSortBy>,
+    OptionalSorter(sorting): OptionalSorter<ProductSortBy>,
     Query(query): Query<types::GetProductQueryParams>,
 ) -> HandlerResult {
     let products = db
         .get_products_for_extarnel(
             Some(pagination),
-            sorting.0,
+            sorting,
             query.free_text,
             query.store_id,
             query.category_id,

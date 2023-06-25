@@ -19,4 +19,5 @@ pub fn router() -> Router {
         .route("/:product_id", routing::delete(routes::delete_product))
         .route("/:product_id", routing::get(routes::get_product))
         .route("/", routing::post(routes::create_new_product))
+        .route("/", routing::get(routes::get_products))
 }
