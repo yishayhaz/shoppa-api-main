@@ -135,7 +135,27 @@ impl ProductFunctions for DBConection {
         category_id: Option<ObjectId>,
         options: Option<AggregateOptions>,
     ) -> Result<Vec<Document>> {
-        let mut filters = vec![];
+        let mut filters = vec![
+            doc! {
+                "text": {
+                    "path": Product::fields().status,
+                    "query": [
+                        ProductItemStatus::Active,
+                        ProductItemStatus::SoldOut
+                    ]
+                }
+
+            },
+            doc! {
+                "text": {
+                    "path": Product::fields().items(true).status,
+                    "query": [
+                        ProductItemStatus::Active,
+                        ProductItemStatus::SoldOut
+                    ]
+                }
+            }
+        ];
 
         if let Some(store_id) = store_id {
             filters.push(doc! {
@@ -183,12 +203,40 @@ impl ProductFunctions for DBConection {
         product_id: &ObjectId,
         options: Option<AggregateOptions>,
     ) -> Result<Option<Document>> {
-        let filter = doc! {
-            Product::fields().id: product_id,
-        };
+        let filter = vec![
+            doc! {
+                "equals": {
+                    "path": Product::fields().id,
+                    "value": product_id,
+                }
+            },
+            doc! {
+                "text": {
+                    "path": Product::fields().status,
+                    "query": [
+                        ProductItemStatus::Active,
+                        ProductItemStatus::SoldOut
+                    ]
+                }
+
+            },
+            doc! {
+                "text": {
+                    "path": Product::fields().items(true).status,
+                    "query": [
+                        ProductItemStatus::Active,
+                        ProductItemStatus::SoldOut
+                    ]
+                }
+            },
+        ];
 
         let pipeline = [
-            aggregations::match_query(&filter),
+            aggregations::search(doc! {
+                "compound": {
+                    "filter": filter
+                }
+            }),
             aggregations::lookup_product_variants(Some(vec![aggregations::project(
                 ProjectIdOptions::Keep,
                 [
@@ -200,6 +248,44 @@ impl ProductFunctions for DBConection {
                 ],
                 None,
             )])),
+            aggregations::add_fields(doc! {
+                // only items that are active or sold out
+                Product::fields().items: {
+                    "$filter": {
+                        "input": format!("${}", Product::fields().items),
+                        "as": "item",
+                        "cond": {
+                            "$in": [
+                                format!("$$item.{}", Product::fields().items(false).status),
+                                [ProductItemStatus::Active, ProductItemStatus::SoldOut]
+                            ]
+                        }
+                    }
+                },
+                // only assets that are public and not hidden
+                Product::fields().assets: {
+                    "$filter": {
+                        "input": format!("${}", Product::fields().assets),
+                        "as": "asset",
+                        "cond": {
+                            "$and": [
+                                {
+                                    "$eq": [
+                                        format!("$$asset.{}", Product::fields().assets(false).hidden),
+                                        false
+                                    ]
+                                },
+                                {
+                                    "$eq": [
+                                        format!("$$asset.{}", Product::fields().assets(false).public),
+                                        true
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                },
+            }),
             aggregations::project(
                 ProjectIdOptions::Keep,
                 [
@@ -210,45 +296,26 @@ impl ProductFunctions for DBConection {
                     Product::fields().keywords,
                     Product::fields().store,
                     Product::fields().categories,
-                    Product::fields().analytics(true).views,
                     Product::fields().variants,
+                    Product::fields().analytics(true).views,
+                    // Product items fields to return
+                    Product::fields().items(true).id,
+                    Product::fields().items(true).price,
+                    Product::fields().items(true).in_storage,
+                    Product::fields().items(true).variants,
+                    Product::fields().items(true).name,
+                    Product::fields().items(true).assets_refs,
+                    Product::fields().items(true).sku,
+                    Product::fields().items(true).info,
+                    Product::fields().items(true).status,
+                    // Product assets fields to return
+                    Product::fields().assets(true).file_name,
+                    Product::fields().assets(true).path,
+                    Product::fields().assets(true).size,
+                    Product::fields().assets(true).mime_type,
+                    Product::fields().assets(true).file_type,
                 ],
-                Some(doc! {
-                    Product::fields().items: {
-                        "$filter": {
-                            "input": format!("${}", Product::fields().items),
-                            "as": "item",
-                            "cond": {
-                                "$in": [
-                                    format!("$$item.{}", Product::fields().items(false).status),
-                                    [ProductItemStatus::Active, ProductItemStatus::SoldOut]
-                                ]
-                            }
-                        }
-                    },
-                    Product::fields().assets: {
-                        "$filter": {
-                            "input": format!("${}", Product::fields().assets),
-                            "as": "asset",
-                            "cond": {
-                                "$and": [
-                                    {
-                                        "$eq": [
-                                            format!("$$asset.{}", Product::fields().assets(false).hidden),
-                                            false
-                                        ]
-                                    },
-                                    {
-                                        "$eq": [
-                                            format!("$$asset.{}", Product::fields().assets(false).public),
-                                            true
-                                        ]
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                }),
+                None,
             ),
         ];
 
@@ -290,7 +357,27 @@ impl ProductFunctions for DBConection {
         };
 
         let filters = {
-            let mut f = vec![];
+            let mut f = vec![
+                doc! {
+                    "text": {
+                        "path": Product::fields().status,
+                        "query": [
+                            ProductItemStatus::Active,
+                            ProductItemStatus::SoldOut
+                        ]
+                    }
+    
+                },
+                doc! {
+                    "text": {
+                        "path": Product::fields().items(true).status,
+                        "query": [
+                            ProductItemStatus::Active,
+                            ProductItemStatus::SoldOut
+                        ]
+                    }
+                }
+            ];
 
             if let Some(store_id) = store_id {
                 f.push(doc! {
@@ -367,7 +454,27 @@ impl ProductFunctions for DBConection {
         let from_pool = amount * 10;
 
         let filters = {
-            let mut f = vec![];
+            let mut f = vec![
+                doc! {
+                    "text": {
+                        "path": Product::fields().status,
+                        "query": [
+                            ProductItemStatus::Active,
+                            ProductItemStatus::SoldOut
+                        ]
+                    }
+    
+                },
+                doc! {
+                    "text": {
+                        "path": Product::fields().items(true).status,
+                        "query": [
+                            ProductItemStatus::Active,
+                            ProductItemStatus::SoldOut
+                        ]
+                    }
+                }
+            ];
 
             if let Some(store_id) = store_id {
                 f.push(doc! {
