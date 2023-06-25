@@ -99,6 +99,13 @@ pub trait AdminProductFunctions {
         status: Option<ProductStatus>,
         options: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Product>>;
+
+    async fn delete_product_file(
+        &self,
+        product_id: &ObjectId,
+        file_id: &ObjectId,
+        options: Option<FindOneAndUpdateOptions>,
+    ) -> Result<Option<Product>>;
 }
 
 #[async_trait]
@@ -552,5 +559,30 @@ impl AdminProductFunctions for DBConection {
 
         self.find_and_update_product_by_id(product_id, update, options, None)
             .await
+    }
+
+    async fn delete_product_file(
+        &self,
+        product_id: &ObjectId,
+        file_id: &ObjectId,
+        options: Option<FindOneAndUpdateOptions>,
+    ) -> Result<Option<Product>> {
+
+        let filters = doc! {
+            Product::fields().id: product_id,
+            Product::fields().assets(true).id: file_id
+        };
+
+        let update = doc! {
+            "$pull": {
+                Product::fields().assets: {
+                    Product::fields().assets(false).id: file_id
+                }
+            }
+        };
+
+        self.find_and_update_product(filters, update, options, None)
+            .await
+
     }
 }

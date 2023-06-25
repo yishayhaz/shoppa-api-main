@@ -8,7 +8,7 @@ use axum::{extract::Path, response::IntoResponse};
 use bson::oid::ObjectId;
 use shoppa_core::{
     db::{
-        models::{FileDocument, FileTypes, Product, ProductStatus},
+        models::{EmbeddedDocument, FileDocument, FileTypes, Product, ProductStatus},
         populate::{FieldPopulate, ProductsPopulate},
     },
     extractors::{JsonWithValidation, MultipartFormWithValidation},
@@ -170,4 +170,30 @@ pub async fn get_product(db: AxumDBExtansion, Path(product_id): Path<ObjectId>) 
     }
 
     Ok(ResponseBuilder::success(Some(res), None, None).into_response())
+}
+
+pub async fn delete_product_file(
+    db: AxumDBExtansion,
+    storage_client: AxumStorgeClientExtension,
+    Path((product_id, file_id)): Path<(ObjectId, ObjectId)>,
+) -> HandlerResult {
+    let product = db.delete_product_file(&product_id, &file_id, None).await?;
+
+    if product.is_none() {
+        return Ok(
+            ResponseBuilder::<()>::error("", None, Some("product not found"), Some(404))
+                .into_response(),
+        );
+    }
+
+    let product = product.unwrap();
+
+    let file = product
+        .assets
+        .into_iter()
+        .find(|asset| asset.id() == &file_id).expect("The query above will return the product if the file exists - so this should never happen");
+
+    storage_client.delete_files([file.path]).await;
+
+    Ok(ResponseBuilder::<()>::success(None, None, None).into_response())
 }
