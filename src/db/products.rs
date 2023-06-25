@@ -7,7 +7,7 @@ use shoppa_core::{
     constans,
     db::{
         aggregations::{self, ProjectIdOptions},
-        models::{EmbeddedDocument, FileDocument, Product, ProductStatus},
+        models::{EmbeddedDocument, FileDocument, Product, ProductStatus, ProducdBrandField},
         DBConection, Pagination, Sorter,
     },
 };
@@ -528,7 +528,7 @@ impl AdminProductFunctions for DBConection {
         if let Some(brand) = brand {
             // In the future when the brand is a reference to a brand document
             // this will need to be changed
-            update.insert(Product::fields().brand(true).name, brand);
+            update.insert(Product::fields().brand, ProducdBrandField::new(brand));
         }
 
         if let Some(description) = description {
