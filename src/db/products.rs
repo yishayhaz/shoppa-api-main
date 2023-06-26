@@ -646,8 +646,6 @@ impl AdminProductFunctions for DBConection {
             Product::fields().items(false).updated_at
         );
 
-        update.insert(update_at_field, chrono::Utc::now());
-
         let update = doc! {
             "$set": update,
             "$currentDate": {

@@ -22,6 +22,8 @@ pub struct EditProductItemPayload {
     pub in_storage: Option<u64>,
     pub name: Option<String>,
     pub assets_refs: Option<Vec<ObjectId>>,
+    pub sku: Option<String>, // OMER MAKE IT WORK
+    pub info: Option<String>,
 }
 
 impl Into<ProductItem> for AddProductItemPayload {
