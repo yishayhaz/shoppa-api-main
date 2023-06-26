@@ -110,4 +110,31 @@ pub async fn edit_product_item(
     )
 }
 
-pub async fn delete_product_item(){}
+pub async fn delete_product_item(
+    db: AxumDBExtansion,
+    Path((product_id, item_id)): Path<(ObjectId, ObjectId)>,
+) -> HandlerResult {
+    let res = db.delete_product_item(&product_id, &item_id, None).await?;
+
+    if res.matched_count == 0 {
+        return Ok(
+            ResponseBuilder::error("", Some(""), Some("product item not found"), Some(404))
+                .into_response(),
+        );
+    }
+
+    if res.modified_count == 0 {
+        return Ok(ResponseBuilder::error(
+            "",
+            Some(""),
+            Some("product item not deleted"),
+            Some(500),
+        )
+        .into_response());
+    }
+
+    Ok(
+        ResponseBuilder::<()>::success(None, Some("Product item deleted successfully"), None)
+            .into_response(),
+    )
+}

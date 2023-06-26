@@ -1,7 +1,10 @@
 use crate::prelude::*;
 use axum::async_trait;
 use bson::{doc, oid::ObjectId, Document};
-use mongodb::options::{AggregateOptions, FindOneAndUpdateOptions};
+use mongodb::{
+    options::{AggregateOptions, FindOneAndUpdateOptions, UpdateOptions},
+    results::UpdateResult,
+};
 use serde::Deserialize;
 use shoppa_core::{
     constans,
@@ -122,6 +125,13 @@ pub trait AdminProductFunctions {
         status: Option<ProductStatus>,
         options: Option<AggregateOptions>,
     ) -> Result<(Vec<Document>, u64)>;
+
+    async fn delete_product_item(
+        &self,
+        product_id: &ObjectId,
+        item_id: &ObjectId,
+        options: Option<UpdateOptions>,
+    ) -> Result<UpdateResult>;
 }
 
 #[async_trait]
@@ -167,7 +177,7 @@ impl ProductFunctions for DBConection {
                         ProductItemStatus::SoldOut
                     ]
                 }
-            }
+            },
         ];
 
         if let Some(store_id) = store_id {
@@ -379,7 +389,7 @@ impl ProductFunctions for DBConection {
                             ProductItemStatus::SoldOut
                         ]
                     }
-    
+
                 },
                 doc! {
                     "text": {
@@ -389,7 +399,7 @@ impl ProductFunctions for DBConection {
                             ProductItemStatus::SoldOut
                         ]
                     }
-                }
+                },
             ];
 
             if let Some(store_id) = store_id {
@@ -476,7 +486,7 @@ impl ProductFunctions for DBConection {
                             ProductItemStatus::SoldOut
                         ]
                     }
-    
+
                 },
                 doc! {
                     "text": {
@@ -486,7 +496,7 @@ impl ProductFunctions for DBConection {
                             ProductItemStatus::SoldOut
                         ]
                     }
-                }
+                },
             ];
 
             if let Some(store_id) = store_id {
@@ -861,5 +871,28 @@ impl AdminProductFunctions for DBConection {
             .await?;
 
         Ok((products, count))
+    }
+
+    async fn delete_product_item(
+        &self,
+        product_id: &ObjectId,
+        item_id: &ObjectId,
+        options: Option<UpdateOptions>,
+    ) -> Result<UpdateResult> {
+        let filters = doc! {
+            Product::fields().id: product_id,
+            Product::fields().items(true).id: item_id
+        };
+
+        let update = doc! {
+            "$set": {
+                format!("{}.$.{}", Product::fields().items, Product::fields().items(false).status): ProductItemStatus::Deleted
+            },
+            "$currentDate": {
+                format!("{}.$.{}", Product::fields().items, Product::fields().items(false).updated_at): true
+            }
+        };
+
+        self.update_product(filters, update, options, None).await
     }
 }
