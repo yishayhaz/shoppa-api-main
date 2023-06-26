@@ -87,6 +87,8 @@ pub trait AdminProductFunctions {
         in_storage: Option<u64>,
         name: Option<String>,
         images_refs: Option<Vec<ObjectId>>,
+        sku: Option<String>,
+        info: Option<String>,
         options: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Product>>;
 
@@ -591,6 +593,8 @@ impl AdminProductFunctions for DBConection {
         in_storage: Option<u64>,
         name: Option<String>,
         assets_refs: Option<Vec<ObjectId>>,
+        sku: Option<String>,
+        info: Option<String>,
         options: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Product>> {
         let filters = doc! {
@@ -640,6 +644,32 @@ impl AdminProductFunctions for DBConection {
             update.insert(field, assets_refs);
         }
 
+        if let Some(sku) = sku {
+            let field = format!(
+                "{}.$.{}",
+                Product::fields().items,
+                Product::fields().items(false).sku
+            );
+            if sku == constans::DELETE_FIELD_KEY_OPETATOR {
+                update.insert::<_, Option<String>>(field, None);
+            } else {
+                update.insert(field, sku);
+            }
+        }
+
+        if let Some(info) = info {
+            let field = format!(
+                "{}.$.{}",
+                Product::fields().items,
+                Product::fields().items(false).info
+            );
+            if info == constans::DELETE_FIELD_KEY_OPETATOR {
+                update.insert::<_, Option<String>>(field, None);
+            } else {
+                update.insert(field, info);
+            }
+        }
+
         let update_at_field = format!(
             "{}.$.{}",
             Product::fields().items,
@@ -649,10 +679,7 @@ impl AdminProductFunctions for DBConection {
         let update = doc! {
             "$set": update,
             "$currentDate": {
-                format!("{}.$.{}",
-                Product::fields().items,
-                Product::fields().items(false).updated_at
-            ): true
+                update_at_field: true
             }
         };
 

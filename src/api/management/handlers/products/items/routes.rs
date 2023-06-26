@@ -98,6 +98,8 @@ pub async fn edit_product_item(
             payload.in_storage,
             payload.name,
             payload.assets_refs,
+            payload.info,
+            payload.sku,
             Some(options),
         )
         .await?;
@@ -107,3 +109,5 @@ pub async fn edit_product_item(
             .into_response(),
     )
 }
+
+pub async fn delete_product_item(){}

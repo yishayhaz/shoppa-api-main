@@ -16,13 +16,11 @@ pub struct AddProductItemPayload {
 
 #[derive(Deserialize, Validate)]
 pub struct EditProductItemPayload {
-    // the store will come from the product id in the url
-    #[validate(range(min = 13.98))]
     pub price: Option<f64>,
     pub in_storage: Option<u64>,
     pub name: Option<String>,
     pub assets_refs: Option<Vec<ObjectId>>,
-    pub sku: Option<String>, // OMER MAKE IT WORK
+    pub sku: Option<String>,
     pub info: Option<String>,
 }
 
