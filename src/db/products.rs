@@ -456,7 +456,7 @@ impl ProductFunctions for DBConection {
 
         let count = self
             .count_products_with_aggregation(
-                [aggregations::search_products(&free_text, &filters, Some(1))],
+                [aggregations::search_products(&free_text, &filters, Some(1)), "add it here"],
                 options,
                 None,
             )
