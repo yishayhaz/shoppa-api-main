@@ -1,4 +1,5 @@
 mod handlers;
+mod middlewares;
 use axum::Router;
 
 pub fn router() -> Router {
