@@ -1,4 +1,4 @@
-use super::types::CompleteRegistrationPayload;
+use super::types::{CompleteRegistrationPayload, ValidateRegistrationTokenPayload};
 use crate::{
     db::{AxumDBExtansion, StoreUserFunctions},
     helpers::{cookies::create_cookie, types::Cookeys},
@@ -6,6 +6,7 @@ use crate::{
     tokens::{STORE_USER_REGISTRATION_TOKEN_MANAGER, STORE_USER_TOKEN_MANAGER},
 };
 use axum::response::IntoResponse;
+use serde_json::json;
 use shoppa_core::{extractors::JsonWithValidation, security, ResponseBuilder};
 use tower_cookies::Cookies;
 
@@ -70,6 +71,24 @@ pub async fn complete_registration(
         Some(user),
         Some("registration completed successfully"),
         Some(201),
+    )
+    .into_response())
+}
+
+pub async fn validate_registration_token(
+    JsonWithValidation(payload): JsonWithValidation<ValidateRegistrationTokenPayload>,
+) -> HandlerResult {
+    // TODO set a cookie that will be used to complete the registration
+    let token_data = STORE_USER_REGISTRATION_TOKEN_MANAGER.decode_token(payload.token.as_str())?;
+
+    Ok(ResponseBuilder::success(
+        Some(json!(
+            {
+                "username": token_data.name,
+            }
+        )),
+        None,
+        None,
     )
     .into_response())
 }

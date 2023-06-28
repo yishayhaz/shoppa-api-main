@@ -11,3 +11,9 @@ pub struct CompleteRegistrationPayload {
     #[validate(custom = "validators::username_validator")]
     pub name: Option<String>,
 }
+
+#[derive(Deserialize, Serialize, Debug, Clone, Validate)]
+pub struct ValidateRegistrationTokenPayload {
+    #[validate(length(min = 1))]
+    pub token: String,
+}
