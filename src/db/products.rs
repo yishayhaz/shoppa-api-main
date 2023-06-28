@@ -423,7 +423,26 @@ impl ProductFunctions for DBConection {
                     Product::fields().store,
                     Product::fields().assets,
                 ],
-                None,
+                // In the future return the most relevant item
+                Some(doc! {
+                    "item": {
+                        "$arrayElemAt": [
+                            {
+                            "$filter": {
+                                "input": format!("${}", Product::fields().items),
+                                "as": "item",
+                                "cond": {
+                                    "$eq": [
+                                        format!("$$item.{}", Product::fields().items(false).status),
+                                        ProductItemStatus::Active
+                                    ]
+                                }
+                            }
+                        },
+                            0
+                        ]
+                    }
+                }),
             ),
         ];
 
@@ -630,7 +649,7 @@ impl AdminProductFunctions for DBConection {
             );
             update.insert(field, assets_refs);
         }
-        
+
         if FieldPatch::Missing != sku {
             let field = format!(
                 "{}.$.{}",
@@ -842,7 +861,10 @@ impl AdminProductFunctions for DBConection {
 
         let count = self
             .count_products_with_aggregation(
-                [aggregations::search_products(&free_text, &filters, Some(1)), aggregations::count("count")],
+                [
+                    aggregations::search_products(&free_text, &filters, Some(1)),
+                    aggregations::count("count"),
+                ],
                 options,
                 None,
             )

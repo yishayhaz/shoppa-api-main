@@ -1,7 +1,5 @@
-use crate::prelude::{types::*, *};
-use shoppa_core::{
-    validators,
-};
+use crate::prelude::types::*;
+use shoppa_core::validators;
 use validator::Validate;
 
 #[derive(Deserialize, Serialize, Debug, Clone, Validate)]
@@ -11,5 +9,5 @@ pub struct CompleteRegistrationPayload {
     #[validate(custom = "validators::password_validator")]
     pub password: String,
     #[validate(custom = "validators::username_validator")]
-    pub name: Option<String>
+    pub name: Option<String>,
 }

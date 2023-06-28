@@ -50,7 +50,7 @@ pub async fn complete_registration(
             payload.name,
         )
         .await?;
-
+    tracing::info!("user2: {:?}", user);
     if user.is_none() {
         return Ok(ResponseBuilder::error("error_code", Some(()), None, Some(404)).into_response());
     }
