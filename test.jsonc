@@ -1,83 +1,83 @@
 {
-    // "route1": {
-    //     "path": "/product/",
-    //     "method": "POST",
-    //     "body": "models.product",
-    //     "description": "Create a new product"
-    // },
-    // "route2": {
-    //     "path": "/product/:id/items/",
-    //     "method": "POST",
-    //     "body": "models.product.items",
-    //     "description": "Create a new item for a product"
-    // },
-    // "route3": {
-    //     "path": "/product/:id/items/:itemId",
-    //     "method": "PUT",
-    //     "body": "models.product.items",
-    //     "description": "Update an item for a product"
-    // },
-    "route4": {
-        "path": "/product/:id/items/:itemId",
-        "method": "DELETE",
-        "description": "Delete an item for a product",
-        "detils": "soft delete"
-    },
-    // "todo": "for each product item have a status same as product status",
-    // "route5": {
-    //     "path": "/product/:id/",
-    //     "method": "PUT",
-    //     "body": "models.product",
-    //     "description": "Update a product"
-    // },
-    // "route6": {
-    //     "path": "/product/:id/",
-    //     "method": "DELETE",
-    //     "description": "Delete a product",
-    //     "detils": "soft delete"
-    // },
-    "route7": {
-        "path": "/product/:id/",
-        "method": "GET",
-        "description": "Get a product with all items"
-    },
-    // "route8": {
-    //     "path": "/manage/product/:id/",
-    //     "method": "GET",
-    //     "description": "Get a product for managers and stores owners"
-    // },
-    "route9": {
-        "path": "/manage/store-users/",
-        "method": "POST",
-        "body": "models.storeUsers",
-        "description": "Create a new store user"
-    },
-    "route10": {
-        "path": "/manage/store-users/:id",
-        "method": "PUT",
-        "body": "models.storeUsers",
-        "description": "Update a store user"
-    },
-    "route11": {
-        "path": "/store-manager/login/",
-        "method": "POST",
-        "body": "models.storeManagerLogin",
-        "description": "Login for store manager",
-        "comments": [
-            "In the future make 2fa option for user",
-            "In the future store tokens, and where they are used and add option to delete them"
-        ]
-    },
-    "route12": {
-        "path": "/store-manager/logout/",
-        "method": "POST",
-        "description": "Logout for store manager"
-    },
-    // "todo2": "move all servers to digital ocean",
-    // "todo3": "fix search indexes",
-    "route13": {
-        "path": "/search/log",
-        "method": "POST",
-        "description": "Log search"
-    }
+  // "route1": {
+  //     "path": "/product/",
+  //     "method": "POST",
+  //     "body": "models.product",
+  //     "description": "Create a new product"
+  // },
+  // "route2": {
+  //     "path": "/product/:id/items/",
+  //     "method": "POST",
+  //     "body": "models.product.items",
+  //     "description": "Create a new item for a product"
+  // },
+  // "route3": {
+  //     "path": "/product/:id/items/:itemId",
+  //     "method": "PUT",
+  //     "body": "models.product.items",
+  //     "description": "Update an item for a product"
+  // },
+  // "route4": {
+  //     "path": "/product/:id/items/:itemId",
+  //     "method": "DELETE",
+  //     "description": "Delete an item for a product",
+  //     "detils": "soft delete"
+  // },
+  // "todo": "for each product item have a status same as product status",
+  // "route5": {
+  //     "path": "/product/:id/",
+  //     "method": "PUT",
+  //     "body": "models.product",
+  //     "description": "Update a product"
+  // },
+  // "route6": {
+  //     "path": "/product/:id/",
+  //     "method": "DELETE",
+  //     "description": "Delete a product",
+  //     "detils": "soft delete"
+  // },
+  "route7": {
+    "path": "/product/:id/",
+    "method": "GET",
+    "description": "Get a product with all items"
+  },
+  // "route8": {
+  //     "path": "/manage/product/:id/",
+  //     "method": "GET",
+  //     "description": "Get a product for managers and stores owners"
+  // },
+  //   "route9": {
+  //     "path": "/manage/store-users/",
+  //     "method": "POST",
+  //     "body": "models.storeUsers",
+  //     "description": "Create a new store user"
+  //   },
+  "route10": {
+    "path": "/manage/store-users/:id",
+    "method": "PUT",
+    "body": "models.storeUsers",
+    "description": "Update a store user"
+  },
+  "route11": {
+    "path": "/store-manager/login/",
+    "method": "POST",
+    "body": "models.storeManagerLogin",
+    "description": "Login for store manager",
+    "comments": [
+      "In the future make 2fa option for user",
+      "In the future store tokens, and where they are used and add option to delete them"
+    ]
+  },
+  "route12": {
+    "path": "/store-manager/logout/",
+    "method": "POST",
+    "description": "Logout for store manager"
+  },
+  // "todo2": "move all servers to digital ocean",
+  // "todo3": "fix search indexes",
+  "route13": {
+    "path": "/search/log",
+    "method": "POST",
+    "description": "Log search"
+  }
 }
