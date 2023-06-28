@@ -66,13 +66,13 @@ pub struct EditProductPayload {
 }
 
 #[derive(Debug, Clone, Validate)]
-pub struct UploadProductImagePayload {
+pub struct UploadProductAssetPayload {
     #[validate(length(max = "MAX_IMAGE_SIZE"), custom = "image_file_field_validator")]
     pub file: FileFieldstr,
 }
 
 #[async_trait]
-impl FromMultipart for UploadProductImagePayload {
+impl FromMultipart for UploadProductAssetPayload {
     async fn from_multipart(mut multipart: Multipart) -> Result<Self> {
         let mut file: Option<FileFieldstr> = None;
 
