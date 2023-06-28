@@ -100,6 +100,7 @@ pub async fn edit_product_item(
             payload.assets_refs,
             payload.sku,
             payload.info,
+            payload.status,
             Some(options),
         )
         .await?;

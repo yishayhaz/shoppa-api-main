@@ -5,7 +5,7 @@ use shoppa_core::{
     db::models::{Store, StoreBusinessType, StoreLocation},
     validators::{image_file_field_validator, number_string_validator, phone_number_validator},
     extractors::{FileFieldstr, FromMultipart},
-    parser::empty_string_as_none,
+    parser::{empty_string_as_none, FieldPatch},
 };
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -65,11 +65,12 @@ pub struct UpdateStorePayload {
         max = "constans::STORE_NAME_MAX_LENGTH"
     ))]
     pub name: Option<String>, // store name
+    #[serde(default)]
     #[validate(length(
         min = "constans::STORE_SLOGAN_MIN_LENGTH",
         max = "constans::STORE_SLOGAN_MAX_LENGTH"
     ))]
-    pub slogan: Option<String>,
+    pub slogan: FieldPatch<String>,
     #[validate(length(
         min = "constans::STORE_DESCRIPTION_MIN_LENGTH",
         max = "constans::STORE_DESCRIPTION_MAX_LENGTH"
@@ -103,10 +104,11 @@ pub struct UpdateStoreLocationPayload {
         max = "constans::STREET_NUMBER_MAX_LENGTH"
     ))]
     pub street_number: Option<String>,
+    #[serde(default)]
     #[validate(length(
         max = "constans::LOCATION_FREE_TEXT_MAX_LENGTH"
     ))]
-    pub free_text: Option<String>,
+    pub free_text: FieldPatch<String>,
     #[validate(custom = "number_string_validator")]
     pub phone: Option<String>,
 }

@@ -3,12 +3,12 @@ use axum::async_trait;
 use bson::{doc, oid::ObjectId, Document};
 use mongodb::options::{AggregateOptions, FindOneAndUpdateOptions};
 use shoppa_core::{
-    constans,
     db::{
         aggregations::{self, ProjectIdOptions},
         models::{self, EmbeddedDocument, Store},
         DBConection, Pagination,
     },
+    parser::FieldPatch,
 };
 
 #[async_trait]
@@ -57,7 +57,7 @@ pub trait AdminStoreFunctions {
         city: &Option<String>,
         street: &Option<String>,
         street_number: &Option<String>,
-        free_text: &Option<String>,
+        free_text: FieldPatch<String>,
         phone: &Option<String>,
         options: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Store>>;
@@ -76,7 +76,7 @@ pub trait AdminStoreFunctions {
         store_banner: Option<Option<models::FileDocument>>,
         name: Option<String>,
         description: Option<String>,
-        slogan: Option<String>,
+        slogan: FieldPatch<String>,
         contact_email: Option<String>,
         contact_phone: Option<String>,
         legal_id: Option<String>,
@@ -271,7 +271,7 @@ impl AdminStoreFunctions for DBConection {
         city: &Option<String>,
         street: &Option<String>,
         street_number: &Option<String>,
-        free_text: &Option<String>,
+        free_text: FieldPatch<String>,
         phone: &Option<String>,
         options: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Store>> {
@@ -304,18 +304,11 @@ impl AdminStoreFunctions for DBConection {
             );
         }
 
-        if let Some(free_text) = free_text {
-            if free_text == constans::DELETE_FIELD_KEY_OPETATOR {
-                update.insert::<_, Option<String>>(
-                    format!("{loca_key_dollar}.{}", locations_fields.free_text),
-                    None,
-                );
-            } else {
-                update.insert(
-                    format!("{loca_key_dollar}.{}", locations_fields.free_text),
-                    free_text,
-                );
-            }
+        if FieldPatch::Missing != free_text {
+            update.insert(
+                format!("{loca_key_dollar}.{}", locations_fields.free_text),
+                free_text.into_option(),
+            );
         }
 
         if let Some(phone) = phone {
@@ -358,7 +351,7 @@ impl AdminStoreFunctions for DBConection {
         store_banner: Option<Option<models::FileDocument>>,
         name: Option<String>,
         description: Option<String>,
-        slogan: Option<String>,
+        slogan: FieldPatch<String>,
         contact_email: Option<String>,
         contact_phone: Option<String>,
         legal_id: Option<String>,
@@ -393,12 +386,8 @@ impl AdminStoreFunctions for DBConection {
             update.insert(Store::fields().description, description);
         }
 
-        if let Some(slogan) = slogan {
-            if slogan == constans::DELETE_FIELD_KEY_OPETATOR {
-                update.insert::<_, Option<String>>(Store::fields().slogan, None);
-            } else {
-                update.insert(Store::fields().slogan, slogan);
-            }
+        if FieldPatch::Missing != slogan {
+            update.insert(Store::fields().slogan, slogan.into_option());
         }
 
         if let Some(contact_email) = contact_email {

@@ -7,7 +7,6 @@ use mongodb::{
 };
 use serde::Deserialize;
 use shoppa_core::{
-    constans,
     db::{
         aggregations::{self, ProjectIdOptions},
         models::{
@@ -16,6 +15,7 @@ use shoppa_core::{
         },
         DBConection, Pagination, Sorter,
     },
+    parser::FieldPatch,
 };
 use strum_macros::EnumString;
 
@@ -88,10 +88,11 @@ pub trait AdminProductFunctions {
         item_id: &ObjectId,
         price: Option<f64>,
         in_storage: Option<u64>,
-        name: Option<String>,
+        name: FieldPatch<String>,
         images_refs: Option<Vec<ObjectId>>,
-        sku: Option<String>,
-        info: Option<String>,
+        sku: FieldPatch<String>,
+        info: FieldPatch<String>,
+        status: Option<ProductItemStatus>,
         options: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Product>>;
 
@@ -162,20 +163,14 @@ impl ProductFunctions for DBConection {
             doc! {
                 "text": {
                     "path": Product::fields().status,
-                    "query": [
-                        ProductItemStatus::Active,
-                        ProductItemStatus::SoldOut
-                    ]
+                    "query": ProductStatus::Active
                 }
 
             },
             doc! {
                 "text": {
                     "path": Product::fields().items(true).status,
-                    "query": [
-                        ProductItemStatus::Active,
-                        ProductItemStatus::SoldOut
-                    ]
+                    "query": ProductItemStatus::Active
                 }
             },
         ];
@@ -236,20 +231,14 @@ impl ProductFunctions for DBConection {
             doc! {
                 "text": {
                     "path": Product::fields().status,
-                    "query": [
-                        ProductItemStatus::Active,
-                        ProductItemStatus::SoldOut
-                    ]
+                    "query": ProductStatus::Active
                 }
 
             },
             doc! {
                 "text": {
                     "path": Product::fields().items(true).status,
-                    "query": [
-                        ProductItemStatus::Active,
-                        ProductItemStatus::SoldOut
-                    ]
+                    "query": ProductItemStatus::Active
                 }
             },
         ];
@@ -278,9 +267,9 @@ impl ProductFunctions for DBConection {
                         "input": format!("${}", Product::fields().items),
                         "as": "item",
                         "cond": {
-                            "$in": [
+                            "$eq": [
                                 format!("$$item.{}", Product::fields().items(false).status),
-                                [ProductItemStatus::Active, ProductItemStatus::SoldOut]
+                                ProductItemStatus::Active
                             ]
                         }
                     }
@@ -384,20 +373,14 @@ impl ProductFunctions for DBConection {
                 doc! {
                     "text": {
                         "path": Product::fields().status,
-                        "query": [
-                            ProductItemStatus::Active,
-                            ProductItemStatus::SoldOut
-                        ]
+                        "query": ProductStatus::Active
                     }
 
                 },
                 doc! {
                     "text": {
                         "path": Product::fields().items(true).status,
-                        "query": [
-                            ProductItemStatus::Active,
-                            ProductItemStatus::SoldOut
-                        ]
+                        "query": ProductItemStatus::Active
                     }
                 },
             ];
@@ -484,20 +467,14 @@ impl ProductFunctions for DBConection {
                 doc! {
                     "text": {
                         "path": Product::fields().status,
-                        "query": [
-                            ProductItemStatus::Active,
-                            ProductItemStatus::SoldOut
-                        ]
+                        "query": ProductStatus::Active
                     }
 
                 },
                 doc! {
                     "text": {
                         "path": Product::fields().items(true).status,
-                        "query": [
-                            ProductItemStatus::Active,
-                            ProductItemStatus::SoldOut
-                        ]
+                        "query": ProductItemStatus::Active
                     }
                 },
             ];
@@ -604,10 +581,11 @@ impl AdminProductFunctions for DBConection {
         item_id: &ObjectId,
         price: Option<f64>,
         in_storage: Option<u64>,
-        name: Option<String>,
+        name: FieldPatch<String>,
         assets_refs: Option<Vec<ObjectId>>,
-        sku: Option<String>,
-        info: Option<String>,
+        sku: FieldPatch<String>,
+        info: FieldPatch<String>,
+        status: Option<ProductItemStatus>,
         options: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Product>> {
         let filters = doc! {
@@ -635,17 +613,13 @@ impl AdminProductFunctions for DBConection {
             update.insert(field, in_storage as i64);
         }
 
-        if let Some(name) = name {
+        if FieldPatch::Missing != name {
             let field = format!(
                 "{}.$.{}",
                 Product::fields().items,
                 Product::fields().items(false).name
             );
-            if name == constans::DELETE_FIELD_KEY_OPETATOR {
-                update.insert::<_, Option<String>>(field, None);
-            } else {
-                update.insert(field, name);
-            }
+            update.insert(field, name.into_option());
         }
 
         if let Some(assets_refs) = assets_refs {
@@ -656,31 +630,32 @@ impl AdminProductFunctions for DBConection {
             );
             update.insert(field, assets_refs);
         }
-
-        if let Some(sku) = sku {
+        
+        if FieldPatch::Missing != sku {
             let field = format!(
                 "{}.$.{}",
                 Product::fields().items,
                 Product::fields().items(false).sku
             );
-            if sku == constans::DELETE_FIELD_KEY_OPETATOR {
-                update.insert::<_, Option<String>>(field, None);
-            } else {
-                update.insert(field, sku);
-            }
+            update.insert(field, sku.into_option());
         }
 
-        if let Some(info) = info {
+        if FieldPatch::Missing != info {
             let field = format!(
                 "{}.$.{}",
                 Product::fields().items,
                 Product::fields().items(false).info
             );
-            if info == constans::DELETE_FIELD_KEY_OPETATOR {
-                update.insert::<_, Option<String>>(field, None);
-            } else {
-                update.insert(field, info);
-            }
+            update.insert(field, info.into_option());
+        }
+
+        if let Some(status) = status {
+            let field = format!(
+                "{}.$.{}",
+                Product::fields().items,
+                Product::fields().items(false).status
+            );
+            update.insert(field, status);
         }
 
         let update_at_field = format!(

@@ -1,5 +1,9 @@
 use crate::prelude::types::*;
-use shoppa_core::db::models::{ItemVariants, ProductItem};
+use shoppa_core::{
+    constans,
+    db::models::{ItemVariants, ProductItem, ProductItemStatus},
+    parser::FieldPatch,
+};
 
 #[derive(Deserialize, Validate)]
 pub struct AddProductItemPayload {
@@ -18,10 +22,18 @@ pub struct AddProductItemPayload {
 pub struct EditProductItemPayload {
     pub price: Option<f64>,
     pub in_storage: Option<u64>,
-    pub name: Option<String>,
+    #[serde(default)]
+    #[validate(length(
+        min = "constans::PRODUCT_NAME_MIN_LENGTH",
+        max = "constans::PRODUCT_NAME_MAX_LENGTH"
+    ))]
+    pub name: FieldPatch<String>,
     pub assets_refs: Option<Vec<ObjectId>>,
-    pub sku: Option<String>,
-    pub info: Option<String>,
+    #[serde(default)]
+    pub sku: FieldPatch<String>,
+    #[serde(default)]
+    pub info: FieldPatch<String>,
+    pub status: Option<ProductItemStatus>,
 }
 
 impl Into<ProductItem> for AddProductItemPayload {

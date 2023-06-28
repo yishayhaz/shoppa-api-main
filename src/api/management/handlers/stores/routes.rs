@@ -13,6 +13,7 @@ use shoppa_core::{
     },
     extractors::{JsonWithValidation, MultipartFormWithValidation},
     ResponseBuilder,
+    parser::FieldPatch,
 };
 
 pub async fn create_new_store(
@@ -117,7 +118,7 @@ pub async fn update_store_assets(
     };
 
     db.update_store_base_data(
-        &store_id, logo_doc, banner_doc, None, None, None, None, None, None, None, None, None, None,
+        &store_id, logo_doc, banner_doc, None, None, FieldPatch::Missing, None, None, None, None, None, None, None,
     )
     .await?;
 
@@ -203,7 +204,7 @@ pub async fn update_store_location(
             &payload.city,
             &payload.street,
             &payload.street_number,
-            &payload.free_text,
+            payload.free_text,
             &payload.phone,
             None,
         )
