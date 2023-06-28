@@ -98,8 +98,8 @@ pub async fn edit_product_item(
             payload.in_storage,
             payload.name,
             payload.assets_refs,
-            payload.info,
             payload.sku,
+            payload.info,
             Some(options),
         )
         .await?;
