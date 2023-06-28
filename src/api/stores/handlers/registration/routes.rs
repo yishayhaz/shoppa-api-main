@@ -51,7 +51,7 @@ pub async fn complete_registration(
             payload.name,
         )
         .await?;
-    tracing::info!("user2: {:?}", user);
+
     if user.is_none() {
         return Ok(ResponseBuilder::error("error_code", Some(()), None, Some(404)).into_response());
     }
@@ -63,7 +63,7 @@ pub async fn complete_registration(
     cookies.add(create_cookie(
         &Cookeys::StoreUserAccessToken,
         access_token,
-        3600.0,
+        90.0 * 24.0 * 60.0 * 60.0,
         true,
     ));
 

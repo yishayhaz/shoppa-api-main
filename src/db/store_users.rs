@@ -13,6 +13,12 @@ pub trait StoreUserFunctions {
         password: String,
         name: Option<String>,
     ) -> Result<Option<StoreUser>>;
+
+    async fn get_store_user_by_email(
+        &self,
+        email: &str,
+        registration_completed: bool,
+    ) -> Result<Option<StoreUser>>;
 }
 
 #[async_trait]
@@ -48,5 +54,18 @@ impl StoreUserFunctions for DBConection {
 
         self.find_and_update_store_user(filters, update, Some(options), None)
             .await
+    }
+
+    async fn get_store_user_by_email(
+        &self,
+        email: &str,
+        registration_completed: bool,
+    ) -> Result<Option<StoreUser>> {
+        let filters = doc! {
+            StoreUser::fields().email: email,
+            StoreUser::fields().registration_completed: registration_completed,
+        };
+
+        self.get_store_user(filters, None, None, None).await
     }
 }
