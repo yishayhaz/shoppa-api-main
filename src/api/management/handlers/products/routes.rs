@@ -109,7 +109,7 @@ pub async fn edit_product(
             payload.description,
             payload.feature_bullet_points,
             payload.warranty,
-            None,
+            payload.status,
             None,
         )
         .await?;

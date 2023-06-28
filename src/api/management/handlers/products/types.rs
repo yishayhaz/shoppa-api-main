@@ -67,6 +67,7 @@ pub struct EditProductPayload {
     pub description: Option<String>,
     pub feature_bullet_points: Option<Vec<String>>,
     pub warranty: Option<f32>,
+    pub status: Option<ProductStatus>,
 }
 
 #[derive(Debug, Clone, Validate)]
