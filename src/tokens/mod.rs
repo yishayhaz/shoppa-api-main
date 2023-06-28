@@ -15,6 +15,7 @@ pub struct StoreUserTokenData {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct StoreUserRegistrationTokenData {
     pub user_id: ObjectId,
+    pub name: String,
     pub secret: String,
 }
 
@@ -39,9 +40,10 @@ impl StoreUserTokenData {
 }
 
 impl StoreUserRegistrationTokenData {
-    pub fn new(user_id: ObjectId) -> Self {
+    pub fn new(user_id: ObjectId, name: String) -> Self {
         Self {
             user_id,
+            name,
             secret: random_string(64),
         }
     }
@@ -55,6 +57,6 @@ impl Into<StoreUserTokenData> for &StoreUser {
 
 impl Into<StoreUserRegistrationTokenData> for &StoreUser {
     fn into(self) -> StoreUserRegistrationTokenData {
-        StoreUserRegistrationTokenData::new(self.id().unwrap().clone())
+        StoreUserRegistrationTokenData::new(self.id().unwrap().clone(), self.name.clone())
     }
 }

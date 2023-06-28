@@ -3,12 +3,14 @@ mod products;
 mod stores;
 mod users;
 mod variants;
+mod store_users;
 
 pub use categories::*;
 pub use products::*;
 pub use stores::*;
 pub use users::*;
 pub use variants::*;
+pub use store_users::*;
 
 use axum::extract::Extension;
 use shoppa_core::db::DBConection;
