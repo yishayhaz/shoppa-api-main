@@ -40,7 +40,7 @@ async fn main() {
         Some("API".to_string()),
     )));
 
-    let db = Arc::new(DBConection::connect().await.unwrap());
+    let db = Arc::new(DBConection::connect().await.expect("Failed to connect to DB"));
 
     let app = Router::new()
         .nest("/api/v1", api::v1::router())
