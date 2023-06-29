@@ -321,6 +321,7 @@ impl ProductFunctions for DBConection {
                     Product::fields().items(true).info,
                     Product::fields().items(true).status,
                     // Product assets fields to return
+                    Product::fields().assets(true).id,
                     Product::fields().assets(true).file_name,
                     Product::fields().assets(true).path,
                     Product::fields().assets(true).size,
