@@ -2,7 +2,7 @@ use crate::helpers::env::ENV_VARS;
 use bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 use shoppa_core::{
-    db::models::{DBModel, StoreUser},
+    db::models::{DBModel, RefrenceField, StoreUser},
     random::random_string,
     security::TokenManager,
 };
@@ -10,6 +10,9 @@ use shoppa_core::{
 #[derive(Debug, Serialize, Deserialize)]
 pub struct StoreUserTokenData {
     pub user_id: ObjectId,
+    #[serde(rename = "secret")]
+    pub token_secret: String,
+    pub store_id: ObjectId,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -34,8 +37,12 @@ lazy_static! {
 }
 
 impl StoreUserTokenData {
-    pub fn new(user_id: ObjectId) -> Self {
-        Self { user_id }
+    pub fn new(user_id: ObjectId, store_id: ObjectId) -> Self {
+        Self {
+            user_id,
+            token_secret: random_string(32),
+            store_id,
+        }
     }
 }
 
@@ -51,7 +58,11 @@ impl StoreUserRegistrationTokenData {
 
 impl Into<StoreUserTokenData> for &StoreUser {
     fn into(self) -> StoreUserTokenData {
-        StoreUserTokenData::new(self.id().unwrap().clone())
+        let store_id = match &self.store {
+            RefrenceField::Populated(store) => store.id().unwrap().clone(),
+            RefrenceField::NotPopulated(store_id) => store_id.clone(),
+        };
+        StoreUserTokenData::new(self.id().unwrap().clone(), store_id)
     }
 }
 

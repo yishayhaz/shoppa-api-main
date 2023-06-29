@@ -8,9 +8,14 @@ use axum::{
 };
 use shoppa_core::ResponseBuilder;
 use tower_cookies::Cookies;
+use bson::oid::ObjectId;
 
-#[derive(Clone)]
-struct CurrentUser {/* ... */}
+
+pub struct CurrentUser {
+    pub user_id: ObjectId,
+    pub token_secret: String,
+    pub store_id: ObjectId,
+}
 
 pub async fn login_required<B>(mut req: Request<B>, next: Next<B>) -> Result<Response, Response> {
     let cookies = req.extensions().get::<Cookies>().ok_or(
@@ -24,8 +29,13 @@ pub async fn login_required<B>(mut req: Request<B>, next: Next<B>) -> Result<Res
 
     let token_data = STORE_USER_TOKEN_MANAGER.decode_token(access_cookie.value());
 
-    if let Ok(_) = token_data {
-        req.extensions_mut().insert(CurrentUser { /* ... */ });
+    if let Ok(data) = token_data {
+
+        req.extensions_mut().insert(CurrentUser { 
+            user_id: data.user_id,
+            token_secret: data.token_secret,
+            store_id: data.store_id,
+        });
 
         Ok(next.run(req).await)
     } else {

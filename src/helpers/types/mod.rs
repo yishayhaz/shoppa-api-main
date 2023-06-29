@@ -18,7 +18,7 @@ pub enum Cookeys {
     VisitIndicator,
     #[strum(to_string = "lab_pigeon")]
     DebugingCookie,
-    #[strum(to_string = "want_to_be_a_pigeon")]
+    #[strum(to_string = "government_pigeon")]
     StoreUserAccessToken,
 }
 
