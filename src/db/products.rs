@@ -1011,16 +1011,14 @@ impl StoreProductFunctions for DBConection {
             options.array_filters = Some(array_filter);
         }
 
-        let set = doc! {
-            Product::fields().status: product_status_update()
-        };
-
         let update = vec![
             doc! {
                 "$push": push
             },
             doc! {
-                "$set": set
+                "$set": {
+                    Product::fields().status: product_status_update()
+                }
             },
         ];
 
@@ -1182,6 +1180,7 @@ impl StoreProductFunctions for DBConection {
         }
 
         if let Some(status) = status {
+            //TODO check the status is valid
             update.insert(Product::fields().status, status);
         }
 
@@ -1216,7 +1215,11 @@ impl StoreProductFunctions for DBConection {
         let filters = doc! {
             Product::fields().id: product_id,
             Product::fields().store(true).id: store_id,
-            Product::fields().assets(true).id: file_id
+            Product::fields().assets(true).id: file_id,
+            // we want to make sure that the product has at least one asset
+            format!("{}.1", Product::fields().assets): {
+                "$exists": true
+            }
         };
 
         let update = doc! {
@@ -1272,7 +1275,7 @@ impl StoreProductFunctions for DBConection {
                     "path": Product::fields().store(true).id
                 },
                 "text": {
-                    "query": [ProductStatus::Active, ProductStatus::Draft, ProductStatus::Pending, ProductStatus::InActive],
+                    "query": [ProductStatus::Active, ProductStatus::Draft, ProductStatus::Pending, ProductStatus::InActive, ProductStatus::Banned],
                     "path": Product::fields().status
                 }
             }];

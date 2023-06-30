@@ -117,7 +117,7 @@ pub async fn delete_product_asset(
                 .into_response(),
         );
     }
-
+    
     let product = product.unwrap();
 
     let file = product
