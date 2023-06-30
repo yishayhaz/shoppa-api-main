@@ -3,7 +3,7 @@ use super::types::{
     CreateProductPayload, EditProductPayload, GetProductsQueryParams, UploadProductAssetPayload,
 };
 use crate::{
-    db::{AdminProductFunctions, AxumDBExtansion, ProductSortBy},
+    db::{AxumDBExtansion, ProductSortBy, StoreProductFunctions},
     helpers::types::AxumStorgeClientExtension,
     prelude::*,
 };
@@ -27,8 +27,10 @@ pub async fn create_new_product(
     current_user: CurrentUser,
     JsonWithValidation(payload): JsonWithValidation<CreateProductPayload>,
 ) -> HandlerResult {
-    let store = db.get_store_by_id(&current_user.store_id, None, None, None).await?;
-    
+    let store = db
+        .get_store_by_id(&current_user.store_id, None, None, None)
+        .await?;
+
     // TODO delete user cookie if store not found
     if store.is_none() {
         return Ok(
@@ -65,7 +67,9 @@ pub async fn upload_product_asset(
     current_user: CurrentUser,
     storage_client: AxumStorgeClientExtension,
     Path(product_id): Path<ObjectId>,
-    MultipartFormWithValidation(mut payload): MultipartFormWithValidation<UploadProductAssetPayload>,
+    MultipartFormWithValidation(mut payload): MultipartFormWithValidation<
+        UploadProductAssetPayload,
+    >,
 ) -> HandlerResult {
     // once user successfully upload file, change status for productId to "pending"
 
@@ -91,14 +95,12 @@ pub async fn upload_product_asset(
         FileTypes::Image,
     );
 
-    db.add_asset_to_product(&product_id, &asset, None, None)
+    db.add_asset_to_product(&product_id, &current_user.store_id, &asset, None, None)
         .await?;
 
     upload.fire().await;
 
-    // Ok(ResponseBuilder::success(Some(asset), None, None).into_response())
-
-    todo!()
+    Ok(ResponseBuilder::success(Some(asset), None, None).into_response())
 }
 
 pub async fn delete_product_asset(
@@ -107,7 +109,25 @@ pub async fn delete_product_asset(
     storage_client: AxumStorgeClientExtension,
     Path((product_id, file_id)): Path<(ObjectId, ObjectId)>,
 ) -> HandlerResult {
-    todo!()
+    let product = db.delete_product_file(&product_id, &current_user.user_id, &file_id, None).await?;
+
+    if product.is_none() {
+        return Ok(
+            ResponseBuilder::<()>::error("", None, Some("product not found"), Some(404))
+                .into_response(),
+        );
+    }
+
+    let product = product.unwrap();
+
+    let file = product
+        .assets
+        .into_iter()
+        .find(|asset| asset.id() == &file_id).expect("The query above will return the product if the file exists - so this should never happen");
+
+    storage_client.delete_files([file.path]).await;
+
+    Ok(ResponseBuilder::<()>::success(None, None, None).into_response())
 }
 
 pub async fn edit_product(
