@@ -65,41 +65,40 @@ pub async fn upload_product_asset(
     current_user: CurrentUser,
     storage_client: AxumStorgeClientExtension,
     Path(product_id): Path<ObjectId>,
-    MultipartFormWithValidation(payload): MultipartFormWithValidation<UploadProductAssetPayload>,
-) {
+    MultipartFormWithValidation(mut payload): MultipartFormWithValidation<UploadProductAssetPayload>,
+) -> HandlerResult {
     // once user successfully upload file, change status for productId to "pending"
 
-    todo!()
-    //     let product = db.get_product_by_id(&product_id, None, None, None).await?;
+    let product = db.get_product_by_id(&product_id, None, None, None).await?;
 
-    // if product.is_none() {s
-    //     return Ok(ResponseBuilder::<u16>::success(None, None, None).into_response());
-    // }
+    if product.is_none() || product.unwrap().store_id() != &current_user.store_id {
+        return Ok(ResponseBuilder::<()>::success(None, None, None).into_response());
+    }
 
-    // let mut image = payload.file;
+    let upload = storage_client.upload_product_image(
+        payload.file.file,
+        &payload.file.content_type,
+        &product_id,
+        &mut payload.file.file_extension,
+    );
 
-    // let upload = storage_client.upload_product_image(
-    //     image.file,
-    //     &image.content_type,
-    //     &product_id,
-    //     &mut image.file_extension,
-    // );
+    let asset = FileDocument::new(
+        true,
+        payload.file.file_name,
+        upload.clone_key(),
+        payload.file.size as u64,
+        payload.file.content_type.clone(),
+        FileTypes::Image,
+    );
 
-    // let asset = FileDocument::new(
-    //     true,
-    //     image.file_name,
-    //     upload.clone_key(),
-    //     image.size as u64,
-    //     image.content_type.clone(),
-    //     FileTypes::Image,
-    // );
+    db.add_asset_to_product(&product_id, &asset, None, None)
+        .await?;
 
-    // db.add_asset_to_product(&product_id, &asset, None, None)
-    //     .await?;
-
-    // upload.fire().await;
+    upload.fire().await;
 
     // Ok(ResponseBuilder::success(Some(asset), None, None).into_response())
+
+    todo!()
 }
 
 pub async fn delete_product_asset(
@@ -107,7 +106,7 @@ pub async fn delete_product_asset(
     current_user: CurrentUser,
     storage_client: AxumStorgeClientExtension,
     Path((product_id, file_id)): Path<(ObjectId, ObjectId)>,
-) {
+) -> HandlerResult {
     todo!()
 }
 
@@ -116,7 +115,7 @@ pub async fn edit_product(
     current_user: CurrentUser,
     Path(product_id): Path<ObjectId>,
     JsonWithValidation(payload): JsonWithValidation<EditProductPayload>,
-) {
+) -> HandlerResult {
     todo!()
 }
 
@@ -124,7 +123,7 @@ pub async fn delete_product(
     db: AxumDBExtansion,
     current_user: CurrentUser,
     Path(product_id): Path<ObjectId>,
-) {
+) -> HandlerResult {
     todo!()
 }
 
@@ -132,7 +131,7 @@ pub async fn get_product(
     db: AxumDBExtansion,
     current_user: CurrentUser,
     Path(product_id): Path<ObjectId>,
-) {
+) -> HandlerResult {
     todo!()
 }
 
@@ -142,6 +141,6 @@ pub async fn get_products(
     pagination: Pagination,
     OptionalSorter(sorting): OptionalSorter<ProductSortBy>,
     Query(query): Query<GetProductsQueryParams>,
-) {
+) -> HandlerResult {
     todo!()
 }
