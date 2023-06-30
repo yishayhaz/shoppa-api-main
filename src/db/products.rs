@@ -3,7 +3,7 @@ use axum::async_trait;
 use bson::{doc, oid::ObjectId, Bson, Document};
 use chrono::Utc;
 use mongodb::{
-    options::{AggregateOptions, FindOneAndUpdateOptions, UpdateOptions},
+    options::{AggregateOptions, FindOneAndUpdateOptions, FindOneOptions, UpdateOptions},
     results::UpdateResult,
 };
 use serde::Deserialize;
@@ -14,6 +14,7 @@ use shoppa_core::{
             EmbeddedDocument, FileDocument, ProducdBrandField, Product, ProductItemStatus,
             ProductStatus, Variants,
         },
+        populate::ProductsPopulate,
         DBConection, Pagination, Sorter,
     },
     parser::FieldPatch,
@@ -202,6 +203,14 @@ pub trait StoreProductFunctions {
         item_id: &ObjectId,
         options: Option<UpdateOptions>,
     ) -> Result<UpdateResult>;
+
+    async fn get_product_by_id_and_store_id(
+        &self,
+        product_id: &ObjectId,
+        store_id: &ObjectId,
+        options: Option<FindOneOptions>,
+        populate: Option<ProductsPopulate>,
+    ) -> Result<Option<Product>>;
 }
 
 #[async_trait]
@@ -1475,6 +1484,27 @@ impl StoreProductFunctions for DBConection {
         };
 
         self.update_product(filters, update, options, None).await
+    }
+
+    async fn get_product_by_id_and_store_id(
+        &self,
+        product_id: &ObjectId,
+        store_id: &ObjectId,
+        options: Option<FindOneOptions>,
+        populate: Option<ProductsPopulate>,
+    ) -> Result<Option<Product>> {
+        let filters = doc! {
+            Product::fields().id: product_id,
+            Product::fields().status: {
+                "$nin": [
+                    ProductStatus::Deleted,
+                    ProductStatus::Banned,
+                ]
+            },
+            Product::fields().store(true).id: store_id
+        };
+
+        self.get_product(filters, options, populate, None).await
     }
 }
 

@@ -30,10 +30,10 @@ pub async fn add_product_item(
     };
 
     let product = db
-        .get_product_by_id(&product_id, None, Some(populate), None)
+        .get_product_by_id_and_store_id(&product_id, &current_user.store_id, None, Some(populate))
         .await?;
 
-    if product.is_none() || product.unwrap().store_id() != &current_user.store_id {
+    if product.is_none() {
         return Ok(
             ResponseBuilder::error("", Some(""), Some("product not found"), Some(404))
                 .into_response(),
@@ -42,20 +42,23 @@ pub async fn add_product_item(
 
     let product = product.unwrap();
 
-    // db.add_item_to_product(&product, payload, None).await?;
-    todo!()
-    // Ok(
-    //     ResponseBuilder::success(None::<()>, Some("Product item added successfully"), None)
-    //         .into_response(),
-    // )
+    db.add_item_to_product(&product, payload, None).await?;
+
+    Ok(
+        ResponseBuilder::success(None::<()>, Some("Product item added successfully"), None)
+            .into_response(),
+    )
 }
 
 pub async fn edit_product_item(
     db: AxumDBExtansion,
+    current_user: CurrentUser,
     Path((product_id, item_id)): Path<(ObjectId, ObjectId)>,
     JsonWithValidation(payload): JsonWithValidation<types::EditProductItemPayload>,
 ) -> HandlerResult {
-    let product = db.get_product_by_id(&product_id, None, None, None).await?;
+    let product = db
+        .get_product_by_id_and_store_id(&product_id, &current_user.store_id, None, None)
+        .await?;
 
     if product.is_none() {
         return Ok(
@@ -92,26 +95,26 @@ pub async fn edit_product_item(
         .return_document(Some(mongodb::options::ReturnDocument::After))
         .build();
 
-    todo!()
-    // let prouct = db
-    //     .edit_product_item(
-    //         &product_id,
-    //         &item_id,
-    //         payload.price,
-    //         payload.in_storage,
-    //         payload.name,
-    //         payload.assets_refs,
-    //         payload.sku,
-    //         payload.info,
-    //         payload.status,
-    //         Some(options),
-    //     )
-    //     .await?;
+    let prouct = db
+        .edit_product_item(
+            &product_id,
+            &current_user.store_id,
+            &item_id,
+            payload.price,
+            payload.in_storage,
+            payload.name,
+            payload.assets_refs,
+            payload.sku,
+            payload.info,
+            payload.status,
+            Some(options),
+        )
+        .await?;
 
-    // Ok(
-    //     ResponseBuilder::success(prouct, Some("Product item edited successfully"), None)
-    //         .into_response(),
-    // )
+    Ok(
+        ResponseBuilder::success(prouct, Some("Product item edited successfully"), None)
+            .into_response(),
+    )
 }
 
 pub async fn delete_product_item(
