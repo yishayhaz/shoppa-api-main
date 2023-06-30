@@ -168,7 +168,29 @@ pub async fn delete_product(
     current_user: CurrentUser,
     Path(product_id): Path<ObjectId>,
 ) -> HandlerResult {
-    todo!()
+    let res = db
+        .edit_product_by_id(
+            &product_id,
+            &current_user.store_id,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            Some(ProductStatus::Deleted),
+            None,
+        )
+        .await?;
+
+    if res.is_none() {
+        return Ok(
+            ResponseBuilder::<u16>::error("", None, Some("product not found"), Some(404))
+                .into_response(),
+        );
+    }
+
+    Ok(ResponseBuilder::success(Some(res), None, None).into_response())
 }
 
 pub async fn get_product(
@@ -186,5 +208,17 @@ pub async fn get_products(
     OptionalSorter(sorting): OptionalSorter<ProductSortBy>,
     Query(query): Query<GetProductsQueryParams>,
 ) -> HandlerResult {
-    todo!()
+    let products = db
+        .get_products_for_store_manager(
+            &current_user.store_id,
+            Some(pagination),
+            sorting,
+            query.free_text,
+            query.category_id,
+            query.status,
+            None,
+        )
+        .await?;
+
+    Ok(ResponseBuilder::paginated_response(&products).into_response())
 }

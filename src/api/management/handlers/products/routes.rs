@@ -128,7 +128,6 @@ pub async fn delete_product(
     db: AxumDBExtansion,
     Path(product_id): Path<ObjectId>,
 ) -> HandlerResult {
-    // TODO if the product in draft status, delete it, else change status to deleted
     let res = db
         .edit_product_by_id(
             &product_id,

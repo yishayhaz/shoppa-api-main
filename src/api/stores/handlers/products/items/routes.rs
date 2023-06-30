@@ -1,6 +1,7 @@
+use super::super::super::super::middlewares::CurrentUser;
 use super::types;
 use crate::{
-    db::{AdminProductFunctions, AxumDBExtansion},
+    db::{AxumDBExtansion, StoreProductFunctions},
     prelude::*,
 };
 use axum::{extract::Path, response::IntoResponse};
@@ -17,6 +18,7 @@ use shoppa_core::{
 
 pub async fn add_product_item(
     db: AxumDBExtansion,
+    current_user: CurrentUser,
     Path(product_id): Path<ObjectId>,
     JsonWithValidation(payload): JsonWithValidation<types::AddProductItemPayload>,
 ) -> HandlerResult {
@@ -31,7 +33,7 @@ pub async fn add_product_item(
         .get_product_by_id(&product_id, None, Some(populate), None)
         .await?;
 
-    if product.is_none() {
+    if product.is_none() || product.unwrap().store_id() != &current_user.store_id {
         return Ok(
             ResponseBuilder::error("", Some(""), Some("product not found"), Some(404))
                 .into_response(),
@@ -114,9 +116,12 @@ pub async fn edit_product_item(
 
 pub async fn delete_product_item(
     db: AxumDBExtansion,
+    current_user: CurrentUser,
     Path((product_id, item_id)): Path<(ObjectId, ObjectId)>,
 ) -> HandlerResult {
-    let res = db.delete_product_item(&product_id, &item_id, None).await?;
+    let res = db
+        .delete_product_item(&product_id, &current_user.store_id, &item_id, None)
+        .await?;
 
     if res.matched_count == 0 {
         return Ok(
