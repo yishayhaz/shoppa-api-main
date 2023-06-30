@@ -2,10 +2,10 @@ use crate::prelude::{types::*, *};
 use axum::{async_trait, extract::Multipart};
 use shoppa_core::{
     constans::{self, MAX_IMAGE_SIZE},
+    db::models::ProductStatus,
     extractors::{FileFieldstr, FromMultipart},
     parser::empty_string_as_none,
     validators::image_file_field_validator,
-    db::models::ProductStatus
 };
 use validator::Validate;
 
@@ -37,7 +37,7 @@ pub struct GetProductsQueryParams {
     #[serde(default, deserialize_with = "empty_string_as_none")]
     pub category_id: Option<ObjectId>,
     #[serde(default, deserialize_with = "empty_string_as_none")]
-    pub status: Option<ProductStatus>, // todo omer
+    pub status: Option<ProductStatus>,
 }
 
 #[derive(Deserialize, Debug, Clone, Validate)]
@@ -62,13 +62,22 @@ pub struct EditProductPayload {
     pub description: Option<String>,
     pub feature_bullet_points: Option<Vec<String>>,
     pub warranty: Option<f32>,
-    pub status: Option<ProductStatus>, // todo omer
+    pub status: Option<StoreUserUpdatableProductStatus>,
 }
 
 #[derive(Debug, Clone, Validate)]
 pub struct UploadProductAssetPayload {
     #[validate(length(max = "MAX_IMAGE_SIZE"), custom = "image_file_field_validator")]
     pub file: FileFieldstr,
+}
+
+#[derive(Deserialize, Debug, Clone, Serialize, Copy)]
+#[serde(rename_all = "snake_case")]
+pub enum StoreUserUpdatableProductStatus {
+    Draft,
+    Active,
+    InActive,
+    Pending,
 }
 
 #[async_trait]
@@ -92,6 +101,17 @@ impl FromMultipart for UploadProductAssetPayload {
             Ok(Self { file })
         } else {
             Err(Error::NoNewDataProvided)
+        }
+    }
+}
+
+impl From<StoreUserUpdatableProductStatus> for ProductStatus {
+    fn from(status: StoreUserUpdatableProductStatus) -> Self {
+        match status {
+            StoreUserUpdatableProductStatus::Draft => Self::Draft,
+            StoreUserUpdatableProductStatus::Active => Self::Active,
+            StoreUserUpdatableProductStatus::InActive => Self::InActive,
+            StoreUserUpdatableProductStatus::Pending => Self::Pending,
         }
     }
 }

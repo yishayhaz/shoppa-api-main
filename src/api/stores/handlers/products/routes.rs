@@ -109,7 +109,9 @@ pub async fn delete_product_asset(
     storage_client: AxumStorgeClientExtension,
     Path((product_id, file_id)): Path<(ObjectId, ObjectId)>,
 ) -> HandlerResult {
-    let product = db.delete_product_file(&product_id, &current_user.user_id, &file_id, None).await?;
+    let product = db
+        .delete_product_file(&product_id, &current_user.user_id, &file_id, None)
+        .await?;
 
     if product.is_none() {
         return Ok(
@@ -117,7 +119,7 @@ pub async fn delete_product_asset(
                 .into_response(),
         );
     }
-    
+
     let product = product.unwrap();
 
     let file = product
@@ -136,7 +138,29 @@ pub async fn edit_product(
     Path(product_id): Path<ObjectId>,
     JsonWithValidation(payload): JsonWithValidation<EditProductPayload>,
 ) -> HandlerResult {
-    todo!()
+    let res = db
+        .edit_product_by_id(
+            &product_id,
+            &current_user.store_id,
+            payload.name,
+            payload.keywords,
+            payload.brand,
+            payload.description,
+            payload.feature_bullet_points,
+            payload.warranty,
+            payload.status.map(|status| status.into()),
+            None,
+        )
+        .await?;
+
+    if res.is_none() {
+        return Ok(
+            ResponseBuilder::<u16>::error("", None, Some("product not found"), Some(404))
+                .into_response(),
+        );
+    }
+
+    Ok(ResponseBuilder::success(Some(res), None, None).into_response())
 }
 
 pub async fn delete_product(

@@ -1,6 +1,6 @@
 use crate::prelude::*;
 use axum::async_trait;
-use bson::{doc, oid::ObjectId, Document};
+use bson::{doc, oid::ObjectId, Bson, Document};
 use chrono::Utc;
 use mongodb::{
     options::{AggregateOptions, FindOneAndUpdateOptions, UpdateOptions},
@@ -1148,24 +1148,30 @@ impl StoreProductFunctions for DBConection {
             }
         };
 
+        let mut update_status: bool = false;
+
         let mut update = doc! {};
 
         if let Some(name) = name {
             update.insert(Product::fields().name, name);
+            update_status = true;
         }
 
         if let Some(keywords) = keywords {
             update.insert(Product::fields().keywords, keywords);
+            update_status = true;
         }
 
         if let Some(brand) = brand {
             // In the future when the brand is a reference to a brand document
             // this will need to be changed
             update.insert(Product::fields().brand, ProducdBrandField::new(brand));
+            update_status = true;
         }
 
         if let Some(description) = description {
             update.insert(Product::fields().description, description);
+            update_status = true;
         }
 
         if let Some(feature_bullet_points) = feature_bullet_points {
@@ -1173,18 +1179,79 @@ impl StoreProductFunctions for DBConection {
                 Product::fields().feature_bullet_points,
                 feature_bullet_points,
             );
+            update_status = true;
         }
 
         if let Some(warranty) = warranty {
             update.insert(Product::fields().warranty, warranty);
+            update_status = true;
         }
 
+        // If a update status is needed, there is no need to update the status
         if let Some(status) = status {
-            //TODO check the status is valid
-            update.insert(Product::fields().status, status);
+            // If a status update is needed the status supplied by the user
+            // can only be to pending or draft
+            if update_status
+                && !(status == ProductStatus::Pending || status == ProductStatus::Draft)
+            {
+            } else {
+                let current_status = format!("${}", Product::fields().status);
+
+                let value = match status {
+                    // store user can only set the status to active
+                    // only if the current status is inactive
+                    ProductStatus::Active => Bson::Document(doc! {
+                        "$cond": {
+                            "if": {
+                                "$eq": [
+                                    &current_status,
+                                    ProductStatus::InActive
+                                ]
+                            },
+                            "then": ProductStatus::Active,
+                            "else": current_status
+                        }
+                    }),
+                    // The user can only set the status to inactive
+                    // if the current status is active
+                    ProductStatus::InActive => Bson::Document(doc! {
+                        "$cond": {
+                            "if": {
+                                "$eq": [
+                                    &current_status,
+                                    ProductStatus::Active
+                                ]
+                            },
+                            "then": ProductStatus::InActive,
+                            "else": current_status
+                        }
+                    }),
+                    // The user can only set the status to draft or pending
+                    // if the current status is not deleted or banned
+                    ProductStatus::Draft | ProductStatus::Pending => Bson::Document(doc! {
+                        "$cond": {
+                            "if": {
+                                "$in": [
+                                    &current_status,
+                                    [
+                                        ProductStatus::Deleted,
+                                        ProductStatus::Banned
+                                    ]
+                                ]
+                            },
+                            "then": current_status,
+                            "else": status
+                        }
+                    }),
+                    // else the status is the current status
+                    _ => Bson::String(current_status),
+                };
+
+                update.insert(Product::fields().status, value);
+            }
         }
 
-        let update = vec![
+        let mut update = vec![
             doc! {
                 "$set": update,
             },
@@ -1193,13 +1260,18 @@ impl StoreProductFunctions for DBConection {
                     Product::fields().updated_at: true
                 }
             },
-            // Maybe this will not work
-            doc! {
-                "$set": {
-                    Product::fields().status: product_status_update()
-                }
-            },
         ];
+
+        if update_status {
+            update.push(
+                // Maybe this will not work
+                doc! {
+                    "$set": {
+                        Product::fields().status: product_status_update()
+                    }
+                },
+            );
+        }
 
         self.find_and_update_product(filters, update, options, None)
             .await
@@ -1307,16 +1379,14 @@ impl StoreProductFunctions for DBConection {
             sort_stage,
             aggregations::skip(pagination.offset),
             aggregations::limit(pagination.amount),
-            aggregations::add_fields(
-                doc! {
-                    Product::fields().items: {
-                        "$first": format!("${}", Product::fields().items)
-                    },
-                    "total_items": {
-                        "$size": format!("${}", Product::fields().items)
-                    }
+            aggregations::add_fields(doc! {
+                Product::fields().items: {
+                    "$first": format!("${}", Product::fields().items)
+                },
+                "total_items": {
+                    "$size": format!("${}", Product::fields().items)
                 }
-            ),
+            }),
             aggregations::project(
                 ProjectIdOptions::Keep,
                 [
