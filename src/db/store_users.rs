@@ -1,7 +1,9 @@
 use crate::prelude::*;
 use axum::async_trait;
-use bson::{doc, oid::ObjectId};
+use bson::{doc, oid::ObjectId, Document};
 use mongodb::options::FindOneAndUpdateOptions;
+use shoppa_core::db::aggregations;
+use shoppa_core::db::models::Store;
 use shoppa_core::db::{models::StoreUser, DBConection};
 
 #[async_trait]
@@ -19,6 +21,11 @@ pub trait StoreUserFunctions {
         email: &str,
         registration_completed: bool,
     ) -> Result<Option<StoreUser>>;
+}
+
+#[async_trait]
+pub trait StoreUserFunctionsForStoreUser {
+    async fn get_me(&self, user_id: &ObjectId) -> Result<Option<Document>>;
 }
 
 #[async_trait]
@@ -67,5 +74,38 @@ impl StoreUserFunctions for DBConection {
         };
 
         self.get_store_user(filters, None, None, None).await
+    }
+}
+
+#[async_trait]
+impl StoreUserFunctionsForStoreUser for DBConection {
+    async fn get_me(&self, user_id: &ObjectId) -> Result<Option<Document>> {
+        let pipeline = [
+            aggregations::match_query(&doc! {
+                StoreUser::fields().id: user_id,
+            }),
+            aggregations::lookup::<Store>(
+                StoreUser::fields().store,
+                Store::fields().id,
+                StoreUser::fields().store,
+                Some(vec![aggregations::project(
+                    aggregations::ProjectIdOptions::Keep,
+                    [Store::fields().logo, Store::fields().name],
+                    None,
+                )]),
+                None,
+            ),
+            aggregations::project(aggregations::ProjectIdOptions::Keep, [
+                StoreUser::fields().id,
+                StoreUser::fields().store,
+                StoreUser::fields().name,
+                StoreUser::fields().email,
+                StoreUser::fields().registration_completed_at,
+            ], None),
+        ];
+
+        let mut store_user = self.aggregate_store_users(pipeline, None, None).await?;
+
+        Ok(store_user.pop())
     }
 }
