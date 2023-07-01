@@ -1476,6 +1476,7 @@ impl StoreProductFunctions for DBConection {
                     Product::fields().store,
                     Product::fields().categories,
                     Product::fields().variants,
+                    Product::fields().status,
                     Product::fields().analytics(true).views,
                     // Product items fields to return
                     Product::fields().items(true).id,
