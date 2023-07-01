@@ -1392,16 +1392,18 @@ impl StoreProductFunctions for DBConection {
         };
 
         let filters = {
-            let mut f = vec![doc! {
+            let mut f = vec![
+                doc! {
                 "equals": {
                     "value": store_id,
                     "path": Product::fields().store(true).id
+                }},
+                doc! {"text": {
+                        "query": [ProductStatus::Active, ProductStatus::Draft, ProductStatus::Pending, ProductStatus::InActive, ProductStatus::Banned],
+                        "path": Product::fields().status
+                    }
                 },
-                "text": {
-                    "query": [ProductStatus::Active, ProductStatus::Draft, ProductStatus::Pending, ProductStatus::InActive, ProductStatus::Banned],
-                    "path": Product::fields().status
-                }
-            }];
+            ];
 
             if let Some(category_id) = category_id {
                 f.push(doc! {
