@@ -95,6 +95,7 @@ impl StoreUserFunctionsForStoreUser for DBConection {
                 )]),
                 None,
             ),
+            aggregations::unwind(StoreUser::fields().store, false),
             aggregations::project(aggregations::ProjectIdOptions::Keep, [
                 StoreUser::fields().id,
                 StoreUser::fields().store,

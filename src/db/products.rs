@@ -492,7 +492,7 @@ impl ProductFunctions for DBConection {
             aggregations::limit(pagination.amount),
             // In the future return the most relevant item
             aggregations::add_fields(doc! {
-                "items": {
+                "item": {
                     "$arrayElemAt": [
                         {
                         "$filter": {
@@ -521,7 +521,7 @@ impl ProductFunctions for DBConection {
                     Product::fields().created_at,
                     Product::fields().store,
                     // Product items fields to return
-                    Product::fields().items(true).id,
+                    format!("item.{}", Product::fields().items(false).id).as_str(),
                     Product::fields().items(true).price,
                     Product::fields().items(true).in_storage,
                     Product::fields().items(true).variants,
