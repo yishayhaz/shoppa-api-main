@@ -1432,6 +1432,13 @@ impl StoreProductFunctions for DBConection {
                     "$size": "$filterd_items"
                 }
             }),
+            // aggregations::lookup::<Variants>(
+            //     Product::fields().items(true).variants,
+            //     Variants::fields().id,
+            //     Product::fields().items(true).variants,
+            //     None,
+            //     None,
+            // ),
             aggregations::project(
                 ProjectIdOptions::Keep,
                 [
