@@ -1034,20 +1034,18 @@ impl StoreProductFunctions for DBConection {
         asset: &FileDocument,
         options: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Product>> {
-        let update = vec![
-            doc! {
-                "$set": {
-                    Product::fields().updated_at: "$$NOW",
-                    Product::fields().status: product_status_update(),
-                    Product::fields().assets: {
-                        "$concatArrays": [
-                            format!("${}", Product::fields().assets),
-                            [asset.into_bson()?]
-                        ]
-                    }
+        let update = vec![doc! {
+            "$set": {
+                Product::fields().updated_at: "$$NOW",
+                Product::fields().status: product_status_update(),
+                Product::fields().assets: {
+                    "$concatArrays": [
+                        format!("${}", Product::fields().assets),
+                        [asset.into_bson()?]
+                    ]
                 }
-            },
-        ];
+            }
+        }];
 
         let filters = doc! {
             Product::fields().id: product_id,
