@@ -1223,49 +1223,50 @@ impl StoreProductFunctions for DBConection {
                 let current_status = format!("${}", Product::fields().status);
 
                 let value = match status {
-                    // store user can only set the status to active
-                    // only if the current status is inactive
-                    ProductStatus::Active => Bson::Document(doc! {
-                        "$cond": {
-                            "if": {
-                                "$eq": [
-                                    &current_status,
-                                    ProductStatus::InActive
-                                ]
-                            },
-                            "then": ProductStatus::Active,
-                            "else": current_status
-                        }
-                    }),
                     // The user can only set the status to inactive
                     // if the current status is active
                     ProductStatus::InActive => Bson::Document(doc! {
                         "$cond": {
                             "if": {
-                                "$eq": [
+                                "$in": [
                                     &current_status,
-                                    ProductStatus::Active
+                                    [ProductStatus::Active, ProductStatus::Pending, ProductStatus::Draft]
                                 ]
                             },
                             "then": ProductStatus::InActive,
                             "else": current_status
                         }
                     }),
-                    // The user can only set the status to draft or pending
-                    // if the current status is not deleted or banned
-                    ProductStatus::Draft | ProductStatus::Pending => Bson::Document(doc! {
+                    ProductStatus::Pending => Bson::Document(doc! {
                         "$cond": {
                             "if": {
                                 "$in": [
                                     &current_status,
                                     [
-                                        ProductStatus::Deleted,
-                                        ProductStatus::Banned
+                                        ProductStatus::InActive,
+                                        ProductStatus::Draft
                                     ]
                                 ]
                             },
-                            "then": current_status,
-                            "else": status
+                            "then": status,
+                            "else": current_status
+                        }
+                    }),
+                    ProductStatus::Deleted => Bson::Document(doc! {
+                        "$cond": {
+                            "if": {
+                                "$in": [
+                                    &current_status,
+                                    [
+                                        ProductStatus::InActive,
+                                        ProductStatus::Draft,
+                                        ProductStatus::Pending,
+                                        ProductStatus::Active
+                                    ]
+                                ]
+                            },
+                            "then": status,
+                            "else": current_status
                         }
                     }),
                     // else the status is the current status
@@ -1318,7 +1319,7 @@ impl StoreProductFunctions for DBConection {
                 "$exists": true
             }
         };
-
+        tracing::info!("filters: {:?}", filters);
         let update = doc! {
             "$pull": {
                 Product::fields().assets: {

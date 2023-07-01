@@ -120,7 +120,7 @@ pub async fn delete_product_asset(
     Path((product_id, file_id)): Path<(ObjectId, ObjectId)>,
 ) -> HandlerResult {
     let product = db
-        .delete_product_file(&product_id, &current_user.user_id, &file_id, None)
+        .delete_product_file(&product_id, &current_user.store_id, &file_id, None)
         .await?;
 
     if product.is_none() {

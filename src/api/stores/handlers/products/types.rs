@@ -75,7 +75,6 @@ pub struct UploadProductAssetPayload {
 #[serde(rename_all = "snake_case")]
 pub enum StoreUserUpdatableProductStatus {
     Draft,
-    Active,
     InActive,
     Pending,
 }
@@ -109,7 +108,6 @@ impl From<StoreUserUpdatableProductStatus> for ProductStatus {
     fn from(status: StoreUserUpdatableProductStatus) -> Self {
         match status {
             StoreUserUpdatableProductStatus::Draft => Self::Draft,
-            StoreUserUpdatableProductStatus::Active => Self::Active,
             StoreUserUpdatableProductStatus::InActive => Self::InActive,
             StoreUserUpdatableProductStatus::Pending => Self::Pending,
         }
