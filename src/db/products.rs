@@ -387,7 +387,7 @@ impl ProductFunctions for DBConection {
                     Product::fields().store,
                     Product::fields().categories,
                     Product::fields().variants,
-                    Product::fields().analytics(true).views,
+                    Product::fields().analytics,
                     // Product items fields to return
                     Product::fields().items(true).id,
                     Product::fields().items(true).price,
@@ -490,6 +490,26 @@ impl ProductFunctions for DBConection {
             sort_stage,
             aggregations::skip(pagination.offset),
             aggregations::limit(pagination.amount),
+            // In the future return the most relevant item
+            aggregations::add_fields(doc! {
+                "items": {
+                    "$arrayElemAt": [
+                        {
+                        "$filter": {
+                            "input": format!("${}", Product::fields().items),
+                            "as": "item",
+                            "cond": {
+                                "$eq": [
+                                    format!("$$item.{}", Product::fields().items(false).status),
+                                    ProductItemStatus::Active
+                                ]
+                            }
+                        }
+                    },
+                        0
+                    ]
+                }
+            }),
             aggregations::project(
                 ProjectIdOptions::Keep,
                 vec![
@@ -500,28 +520,25 @@ impl ProductFunctions for DBConection {
                     Product::fields().categories,
                     Product::fields().created_at,
                     Product::fields().store,
-                    Product::fields().assets,
+                    // Product items fields to return
+                    Product::fields().items(true).id,
+                    Product::fields().items(true).price,
+                    Product::fields().items(true).in_storage,
+                    Product::fields().items(true).variants,
+                    Product::fields().items(true).name,
+                    Product::fields().items(true).assets_refs,
+                    Product::fields().items(true).sku,
+                    Product::fields().items(true).info,
+                    Product::fields().items(true).status,
+                    // Product assets fields to return
+                    Product::fields().assets(true).id,
+                    Product::fields().assets(true).file_name,
+                    Product::fields().assets(true).path,
+                    Product::fields().assets(true).size,
+                    Product::fields().assets(true).mime_type,
+                    Product::fields().assets(true).file_type,
                 ],
-                // In the future return the most relevant item
-                Some(doc! {
-                    "item": {
-                        "$arrayElemAt": [
-                            {
-                            "$filter": {
-                                "input": format!("${}", Product::fields().items),
-                                "as": "item",
-                                "cond": {
-                                    "$eq": [
-                                        format!("$$item.{}", Product::fields().items(false).status),
-                                        ProductItemStatus::Active
-                                    ]
-                                }
-                            }
-                        },
-                            0
-                        ]
-                    }
-                }),
+                None,
             ),
         ];
 
@@ -610,7 +627,7 @@ impl ProductFunctions for DBConection {
                 Some(doc! {
                     "item_id": {
                         "$getField": {
-                            "field": "_id",
+                            "field": Product::fields().items(true).id,
                             "input": aggregations::random_array_element(&format!("${}", Product::fields().items)),
                         }
                     },
@@ -927,6 +944,33 @@ impl AdminProductFunctions for DBConection {
             sort_stage,
             aggregations::skip(pagination.offset),
             aggregations::limit(pagination.amount),
+            aggregations::add_fields(doc! {
+                Product::fields().items: {
+                    "$arrayElemAt": [
+                        format!("${}", Product::fields().items),
+                        0
+                    ]
+                },
+                "total_items": {
+                    "$size": format!("${}", Product::fields().items)
+                },
+            }),
+            aggregations::project(
+                ProjectIdOptions::Keep,
+                vec![
+                    "total_items",
+                    Product::fields().brand,
+                    Product::fields().name,
+                    Product::fields().keywords,
+                    Product::fields().analytics,
+                    Product::fields().categories,
+                    Product::fields().created_at,
+                    Product::fields().store,
+                    Product::fields().items,
+                    Product::fields().assets,
+                ],
+                None,
+            ),
         ];
 
         let products = self
@@ -1389,11 +1433,28 @@ impl StoreProductFunctions for DBConection {
             aggregations::skip(pagination.offset),
             aggregations::limit(pagination.amount),
             aggregations::add_fields(doc! {
+                "filterd_items": {
+                    "$filter": {
+                        "input": format!("${}", Product::fields().items),
+                        "as": "item",
+                        "cond": {
+                            "$ne": [
+                                format!("$$item.{}", Product::fields().items(false).status),
+                                ProductItemStatus::Deleted
+                            ]
+                        }
+                    }
+                }
+            }),
+            aggregations::add_fields(doc! {
                 Product::fields().items: {
-                    "$first": format!("${}", Product::fields().items)
+                    "$arrayElemAt": [
+                        "$filterd_items",
+                        0
+                    ]
                 },
                 "total_items": {
-                    "$size": format!("${}", Product::fields().items)
+                    "$size": "$filterd_items"
                 }
             }),
             aggregations::project(
