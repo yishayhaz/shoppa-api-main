@@ -98,8 +98,15 @@ pub async fn upload_product_asset(
         FileTypes::Image,
     );
 
-    db.add_asset_to_product(&product_id, &current_user.store_id, &asset, None)
+    let product = db.add_asset_to_product(&product_id, &current_user.store_id, &asset, None)
         .await?;
+
+    if product.is_none() {
+        return Ok(
+            ResponseBuilder::<()>::error("", None, Some("product not found"), Some(404))
+                .into_response(),
+        );
+    }
 
     upload.fire().await;
 
