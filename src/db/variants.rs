@@ -51,6 +51,17 @@ pub trait AdminVariantsFunctions {
 }
 
 #[async_trait]
+pub trait StoreUserVariantsFunctions {
+    async fn get_variants_by_ids(&self, ids: &Vec<ObjectId>) -> Result<Vec<Variants>>;
+    async fn autocomplete_variants_search(
+        &self,
+        pagination: Option<Pagination>,
+        categories_ids: Vec<ObjectId>,
+        free_text: Option<String>,
+    ) -> Result<Vec<Document>>;
+}
+
+#[async_trait]
 impl AdminVariantsFunctions for DBConection {
     async fn validate_variants_exist(&self, ids: &Vec<ObjectId>) -> Result<bool> {
         if ids.is_empty() {
@@ -461,17 +472,96 @@ impl AdminVariantsFunctions for DBConection {
                     }
                 }),
                 aggregations::unwind(Category::fields().allowed_variants, false),
-                aggregations::group(
-                    doc! {
-                        "_id": format!("${}", Category::fields().allowed_variants),
-                    }
-                ),
+                aggregations::group(doc! {
+                    "_id": format!("${}", Category::fields().allowed_variants),
+                }),
                 aggregations::lookup::<Variants>(
                     "_id",
                     Variants::fields().id,
                     "variants",
                     None,
-                    None
+                    None,
+                ),
+                aggregations::unwind("variants", false),
+                aggregations::replace_root("variants"),
+                filter,
+                aggregations::limit(pagination.amount),
+                project_stage,
+            ];
+
+            return self.aggregate_categories(pipeline, None, None).await;
+        }
+    }
+}
+
+#[async_trait]
+impl StoreUserVariantsFunctions for DBConection {
+    async fn get_variants_by_ids(&self, ids: &Vec<ObjectId>) -> Result<Vec<Variants>> {
+        if ids.is_empty() {
+            return Ok(vec![]);
+        }
+
+        self.get_variants(
+            doc! {
+                Variants::fields().id: {
+                    "$in": ids
+                }
+            },
+            None,
+            None,
+            None,
+        )
+        .await
+    }
+    async fn autocomplete_variants_search(
+        &self,
+        pagination: Option<Pagination>,
+        categories_ids: Vec<ObjectId>,
+        free_text: Option<String>,
+    ) -> Result<Vec<Document>> {
+        let pagination = pagination.unwrap_or_default();
+
+        let filter = match free_text {
+            Some(free_text) => aggregations::match_query(&doc! {
+                Variants::fields().name: {
+                    "$regex": free_text,
+                    "$options": "i"
+                }
+            }),
+            None => aggregations::match_all(),
+        };
+
+        let project_stage = aggregations::project(
+            aggregations::ProjectIdOptions::Keep,
+            vec![Variants::fields().name],
+            None,
+        );
+
+        if categories_ids.is_empty() {
+            let pipeline = [
+                filter,
+                aggregations::limit(pagination.amount),
+                project_stage,
+            ];
+
+            return self.aggregate_variants(pipeline, None, None).await;
+        } else {
+            let pipeline = [
+                aggregations::match_query(&doc! {
+                    Category::fields().id: {
+                        "$in": categories_ids
+                    }
+                }),
+                aggregations::unwind(Category::fields().allowed_variants, false),
+                aggregations::group(doc! {
+                    "_id": format!("${}", Category::fields().allowed_variants),
+                }),
+                aggregations::lookup::<Variants>(
+                    "_id",
+                    Variants::fields().id,
+                    "variants",
+                    None,
+                    None,
                 ),
                 aggregations::unwind("variants", false),
                 aggregations::replace_root("variants"),
