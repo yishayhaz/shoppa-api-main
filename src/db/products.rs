@@ -870,7 +870,7 @@ impl AdminProductFunctions for DBConection {
                 Product::fields().assets: {
                     Product::fields().assets(false).id: file_id
                 },
-                Product::fields().items(true).assets_refs: file_id
+                format!("{}.$[].{}", Product::fields().items, Product::fields().items(false).assets_refs): file_id
             }
         };
 
@@ -1225,7 +1225,7 @@ impl StoreProductFunctions for DBConection {
                 let value = match status {
                     // The user can only set the status to inactive
                     // if the current status is active
-                    ProductStatus::InActive => Bson::Document(doc! {
+                    ProductStatus::Inactive => Bson::Document(doc! {
                         "$cond": {
                             "if": {
                                 "$in": [
@@ -1233,7 +1233,7 @@ impl StoreProductFunctions for DBConection {
                                     [ProductStatus::Active, ProductStatus::Pending, ProductStatus::Draft]
                                 ]
                             },
-                            "then": ProductStatus::InActive,
+                            "then": ProductStatus::Inactive,
                             "else": current_status
                         }
                     }),
@@ -1243,7 +1243,7 @@ impl StoreProductFunctions for DBConection {
                                 "$in": [
                                     &current_status,
                                     [
-                                        ProductStatus::InActive,
+                                        ProductStatus::Inactive,
                                         ProductStatus::Draft
                                     ]
                                 ]
@@ -1258,7 +1258,7 @@ impl StoreProductFunctions for DBConection {
                                 "$in": [
                                     &current_status,
                                     [
-                                        ProductStatus::InActive,
+                                        ProductStatus::Inactive,
                                         ProductStatus::Draft,
                                         ProductStatus::Pending,
                                         ProductStatus::Active
@@ -1319,13 +1319,13 @@ impl StoreProductFunctions for DBConection {
                 "$exists": true
             }
         };
-        tracing::info!("filters: {:?}", filters);
+
         let update = doc! {
             "$pull": {
                 Product::fields().assets: {
                     Product::fields().assets(false).id: file_id
                 },
-                Product::fields().items(true).assets_refs: file_id
+                format!("{}.$[].{}", Product::fields().items, Product::fields().items(false).assets_refs): file_id
             }
         };
 
@@ -1374,7 +1374,7 @@ impl StoreProductFunctions for DBConection {
                     "path": Product::fields().store(true).id
                 }},
                 doc! {"text": {
-                        "query": [ProductStatus::Active, ProductStatus::Draft, ProductStatus::Pending, ProductStatus::InActive, ProductStatus::Banned],
+                        "query": [ProductStatus::Active, ProductStatus::Draft, ProductStatus::Pending, ProductStatus::Inactive, ProductStatus::Banned],
                         "path": Product::fields().status
                     }
                 },
@@ -1592,7 +1592,7 @@ fn product_status_update() -> Document {
                     format!("${}", Product::fields().status),
                     [
                         ProductStatus::Active,
-                        ProductStatus::InActive,
+                        ProductStatus::Inactive,
                     ]
                 ]
             },
