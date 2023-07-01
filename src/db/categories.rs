@@ -56,7 +56,7 @@ impl AdminCategoriesFunctions for DBConection {
         variants: Option<Vec<ObjectId>>,
     ) -> Result<Option<Category>> {
 
-        if let Some(name) = name {
+        if let Some(_name) = name {
             todo!("update all the products that have this category")
         } else {
 

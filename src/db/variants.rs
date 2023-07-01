@@ -424,8 +424,8 @@ impl AdminVariantsFunctions for DBConection {
 
     async fn check_if_variant_value_is_in_use(
         &self,
-        variant_id: &ObjectId,
-        value_id: &ObjectId,
+        _variant_id: &ObjectId,
+        _value_id: &ObjectId,
     ) -> Result<bool> {
         // TODO
 

@@ -59,7 +59,7 @@ pub async fn create_store_user(
         .add_to((store_user.email.clone(), store_user.name.clone()).into())
         .build();
 
-    email_client.send(email).await;
+    let _ = email_client.send(email).await;
 
     Ok(ResponseBuilder::success(Some(store_user), None, None).into_response())
 }

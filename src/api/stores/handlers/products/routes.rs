@@ -1,6 +1,8 @@
-use super::super::super::middlewares::CurrentUser;
-use super::types::{
-    CreateProductPayload, EditProductPayload, GetProductsQueryParams, UploadProductAssetPayload,
+use super::{
+    super::super::middlewares::CurrentUser,
+    types::{
+        CreateProductPayload, EditProductPayload, GetProductsQueryParams, UploadProductAssetPayload,
+    },
 };
 use crate::{
     db::{AxumDBExtansion, ProductSortBy, StoreProductFunctions},
@@ -15,7 +17,6 @@ use bson::oid::ObjectId;
 use shoppa_core::{
     db::{
         models::{EmbeddedDocument, FileDocument, FileTypes, Product, ProductStatus},
-        populate::{FieldPopulate, ProductsPopulate},
         OptionalSorter, Pagination,
     },
     extractors::{JsonWithValidation, MultipartFormWithValidation},
