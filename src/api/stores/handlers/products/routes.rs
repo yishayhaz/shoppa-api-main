@@ -96,7 +96,7 @@ pub async fn upload_product_asset(
         FileTypes::Image,
     );
 
-    db.add_asset_to_product(&product_id, &current_user.store_id, &asset, None, None)
+    db.add_asset_to_product(&product_id, &current_user.store_id, &asset, None)
         .await?;
 
     upload.fire().await;

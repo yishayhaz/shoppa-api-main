@@ -144,7 +144,6 @@ pub trait StoreProductFunctions {
         product_id: &ObjectId,
         store_id: &ObjectId,
         asset: &FileDocument,
-        items_ids: Option<Vec<ObjectId>>,
         options: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Product>>;
 
@@ -1033,49 +1032,19 @@ impl StoreProductFunctions for DBConection {
         product_id: &ObjectId,
         store_id: &ObjectId,
         asset: &FileDocument,
-        items_ids: Option<Vec<ObjectId>>,
         options: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Product>> {
-        let mut options = options.unwrap_or_default();
-        // the update push operation
-        let mut push = doc! {
-            Product::fields().assets: asset.into_bson()?
-        };
-        // if items ids are provided, then we need to push the asset to the items refs
-        if let Some(items_ids) = items_ids {
-            // adding the asset to the items refs using the array filter
-            push.insert(
-                format!(
-                    "{}.$[item].{}",
-                    Product::fields().items,
-                    Product::fields().items(false).assets_refs
-                ),
-                asset.into_bson()?,
-            );
-
-            let item_filter = doc! {
-                "item": {
-                    Product::fields().items(true).id: {
-                        "$in": items_ids
-                    }
-                }
-            };
-
-            // adding the array filter to the options, if there is already an array filter
-            let mut array_filter = options.array_filters.unwrap_or_default();
-
-            array_filter.push(item_filter);
-
-            options.array_filters = Some(array_filter);
-        }
-
         let update = vec![
             doc! {
-                "$push": push
-            },
-            doc! {
                 "$set": {
-                    Product::fields().status: product_status_update()
+                    Product::fields().updated_at: "$$NOW",
+                    Product::fields().status: product_status_update(),
+                    Product::fields().assets: {
+                        "$concatArrays": [
+                            format!("${}", Product::fields().assets),
+                            [asset.into_bson()?]
+                        ]
+                    }
                 }
             },
         ];
@@ -1088,7 +1057,7 @@ impl StoreProductFunctions for DBConection {
             }
         };
 
-        self.find_and_update_product(filters, update, options.into(), None)
+        self.find_and_update_product(filters, update, options, None)
             .await
     }
 
@@ -1314,8 +1283,8 @@ impl StoreProductFunctions for DBConection {
                 "$set": update,
             },
             doc! {
-                "$currentDate": {
-                    Product::fields().updated_at: true
+                "$set": {
+                    Product::fields().updated_at: "$$NOW"
                 }
             },
         ];
