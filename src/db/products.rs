@@ -1080,8 +1080,8 @@ impl StoreProductFunctions for DBConection {
             Product::fields().store(true).id: store_id,
             Product::fields().items: {
                 "$elemMatch": {
-                    Product::fields().items(true).id: item_id,
-                    Product::fields().items(true).status: {
+                    Product::fields().items(false).id: &item_id,
+                    Product::fields().items(false).status: {
                         "$ne": ProductItemStatus::Deleted
                     }
                 }
@@ -1137,7 +1137,7 @@ impl StoreProductFunctions for DBConection {
                         "in": {
                             "$cond": {
                                 "if": {
-                                    "$eq": ["$$item.{}", Product::fields().items(false).id]
+                                    "$eq": [format!("$$item.{}", Product::fields().items(false).id), item_id]
                                 },
                                 "then": {
                                     "$mergeObjects": ["$$item", update_doc]

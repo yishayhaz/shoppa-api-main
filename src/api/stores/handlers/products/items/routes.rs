@@ -95,7 +95,7 @@ pub async fn edit_product_item(
         .return_document(Some(mongodb::options::ReturnDocument::After))
         .build();
 
-    let prouct = db
+    let product = db
         .edit_product_item(
             &product_id,
             &current_user.store_id,
@@ -111,8 +111,15 @@ pub async fn edit_product_item(
         )
         .await?;
 
+    if product.is_none() {
+        return Ok(
+            ResponseBuilder::error("", Some(""), Some("product item not found"), Some(404))
+                .into_response(),
+        );
+    };
+
     Ok(
-        ResponseBuilder::success(prouct, Some("Product item edited successfully"), None)
+        ResponseBuilder::success(product, Some("Product item edited successfully"), None)
             .into_response(),
     )
 }
