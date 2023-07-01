@@ -211,6 +211,13 @@ pub trait StoreProductFunctions {
         options: Option<FindOneOptions>,
         populate: Option<ProductsPopulate>,
     ) -> Result<Option<Product>>;
+
+    async fn get_product_by_id_for_store_manager(
+        &self,
+        product_id: &ObjectId,
+        store_id: &ObjectId,
+        options: Option<AggregateOptions>,
+    ) -> Result<Option<Document>>;
 }
 
 #[async_trait]
@@ -1566,6 +1573,45 @@ impl StoreProductFunctions for DBConection {
         };
 
         self.get_product(filters, options, populate, None).await
+    }
+
+    async fn get_product_by_id_for_store_manager(
+        &self,
+        product_id: &ObjectId,
+        store_id: &ObjectId,
+        options: Option<AggregateOptions>,
+    ) -> Result<Option<Document>> {
+        let filters = doc! {
+            Product::fields().id: product_id,
+            Product::fields().status: {
+                "$ne": ProductStatus::Deleted
+            },
+            Product::fields().store(true).id: store_id
+        };
+
+        let pipeline = [
+            aggregations::match_query(&filters),
+            aggregations::add_fields(doc! {
+                Product::fields().items: {
+                    "$filter": {
+                        "input": format!("${}", Product::fields().items),
+                        "as": "item",
+                        "cond": {
+                            "$ne": [
+                                format!("$$item.{}", Product::fields().items(false).status),
+                                ProductItemStatus::Deleted
+                            ]
+                        }
+                    }
+                }
+            }),
+            aggregations::unset(vec![Product::fields().store]),
+        ];
+
+        Ok(self
+            .aggregate_products(pipeline, options, None)
+            .await?
+            .pop())
     }
 }
 

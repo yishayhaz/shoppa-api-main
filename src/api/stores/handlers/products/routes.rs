@@ -198,7 +198,18 @@ pub async fn get_product(
     current_user: CurrentUser,
     Path(product_id): Path<ObjectId>,
 ) -> HandlerResult {
-    todo!()
+    let product = db
+        .get_product_by_id_for_store_manager(&product_id, &current_user.store_id, None)
+        .await?;
+
+    if product.is_none() {
+        return Ok(
+            ResponseBuilder::<u16>::error("", None, Some("product not found"), Some(404))
+                .into_response(),
+        );
+    }
+
+    Ok(ResponseBuilder::success(Some(product), None, None).into_response())
 }
 
 pub async fn get_products(
