@@ -74,7 +74,9 @@ pub async fn upload_product_asset(
 ) -> HandlerResult {
     // once user successfully upload file, change status for productId to "pending"
 
-    let product = db.get_product_by_id(&product_id, None, None, None).await?;
+    let product = db
+        .get_product_by_id_and_store_id(&product_id, &current_user.store_id, None, None)
+        .await?;
 
     if product.is_none() || product.unwrap().store_id() != &current_user.store_id {
         return Ok(ResponseBuilder::<()>::success(None, None, None).into_response());
