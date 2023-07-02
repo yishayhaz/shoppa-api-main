@@ -1089,64 +1089,81 @@ impl StoreProductFunctions for DBConection {
             }
         };
 
-        let mut update_doc = Document::new();
+        let mut set_doc = Document::new();
 
         if let Some(price) = price {
-            update_doc.insert(Product::fields().items(false).price, price);
+            let field = format!(
+                "{}.$.{}",
+                Product::fields().items,
+                Product::fields().items(false).price
+            );
+            set_doc.insert(field, price);
         }
 
         if let Some(in_storage) = in_storage {
-            update_doc.insert(Product::fields().items(false).in_storage, in_storage as i64);
+            let field = format!(
+                "{}.$.{}",
+                Product::fields().items,
+                Product::fields().items(false).in_storage
+            );
+            set_doc.insert(field, in_storage as i64);
         }
 
         if FieldPatch::Missing != name {
-            update_doc.insert(Product::fields().items(false).name, name.into_option());
+            let field = format!(
+                "{}.$.{}",
+                Product::fields().items,
+                Product::fields().items(false).name
+            );
+            set_doc.insert(field, name.into_option());
         }
 
         if let Some(assets_refs) = assets_refs {
-            update_doc.insert(Product::fields().items(false).assets_refs, assets_refs);
+            let field = format!(
+                "{}.$.{}",
+                Product::fields().items,
+                Product::fields().items(false).assets_refs
+            );
+            set_doc.insert(field, assets_refs);
         }
 
         if FieldPatch::Missing != sku {
-            update_doc.insert(Product::fields().items(false).sku, sku.into_option());
+            let field = format!(
+                "{}.$.{}",
+                Product::fields().items,
+                Product::fields().items(false).sku
+            );
+            set_doc.insert(field, sku.into_option());
         }
 
         if FieldPatch::Missing != info {
-            update_doc.insert(Product::fields().items(false).info, info.into_option());
+            let field = format!(
+                "{}.$.{}",
+                Product::fields().items,
+                Product::fields().items(false).info
+            );
+            set_doc.insert(field, info.into_option());
         }
 
         if let Some(status) = status {
-            update_doc.insert(Product::fields().items(false).status, status);
+            let field = format!(
+                "{}.$.{}",
+                Product::fields().items,
+                Product::fields().items(false).status
+            );
+            set_doc.insert(field, status);
         }
 
-        if update_doc.is_empty() {
+        if set_doc.is_empty() {
             return Err(Error::Static("No update fields provided"));
         }
 
-        update_doc.insert(Product::fields().items(false).updated_at, Utc::now());
-
-        let update = vec![doc! {
-            "$set": {
-                Product::fields().status: product_status_update(),
-                Product::fields().items: {
-                    "$map": {
-                        "input": format!("${}", Product::fields().items),
-                        "as": "item",
-                        "in": {
-                            "$cond": {
-                                "if": {
-                                    "$eq": [format!("$$item.{}", Product::fields().items(false).id), item_id]
-                                },
-                                "then": {
-                                    "$mergeObjects": ["$$item", update_doc]
-                                },
-                                "else": "$$item"
-                            }
-                        }
-                    }
-                }
+        let update = doc! {
+            "$set": set_doc,
+            "$currentDate": {
+                format!("{}.$.{}", Product::fields().items, Product::fields().items(false).updated_at): true
             }
-        }];
+        };
 
         self.find_and_update_product(filters, update, options, None)
             .await
