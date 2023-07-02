@@ -1567,6 +1567,7 @@ impl StoreProductFunctions for DBConection {
 
         let pipeline = [
             aggregations::match_query(&filters),
+            aggregations::lookup_product_variants(None),
             aggregations::add_fields(doc! {
                 Product::fields().items: {
                     "$filter": {
