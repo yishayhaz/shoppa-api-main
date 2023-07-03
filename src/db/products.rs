@@ -1,7 +1,6 @@
 use crate::prelude::*;
 use axum::async_trait;
 use bson::{doc, oid::ObjectId, Bson, Document};
-use chrono::Utc;
 use mongodb::{
     options::{AggregateOptions, FindOneAndUpdateOptions, FindOneOptions, UpdateOptions},
     results::UpdateResult,
@@ -882,7 +881,7 @@ impl AdminProductFunctions for DBConection {
         &self,
         pagination: Option<Pagination>,
         sorting: Option<Sorter<ProductSortBy>>,
-        free_text: Option<String>,
+        product_name: Option<String>,
         store_id: Option<ObjectId>,
         category_id: Option<ObjectId>,
         status: Option<ProductStatus>,
@@ -899,7 +898,7 @@ impl AdminProductFunctions for DBConection {
                 Product::fields().analytics(true).views: &sorting.direction
             }),
             ProductSortBy::Relevance => {
-                if free_text.is_some() {
+                if product_name.is_some() {
                     aggregations::sort(doc! {
                         "score": &sorting.direction
                     })
@@ -944,8 +943,10 @@ impl AdminProductFunctions for DBConection {
             f
         };
 
+        let search_stage = aggregations::product_name_search(product_name, filters);
+
         let pipeline = [
-            aggregations::search_products(&free_text, &filters, Some(1)),
+            search_stage.clone(),
             aggregations::add_score_meta(),
             sort_stage,
             aggregations::skip(pagination.offset),
@@ -989,10 +990,7 @@ impl AdminProductFunctions for DBConection {
 
         let count = self
             .count_products_with_aggregation(
-                [
-                    aggregations::search_products(&free_text, &filters, Some(1)),
-                    aggregations::count("count"),
-                ],
+                [search_stage, aggregations::count("count")],
                 options,
                 None,
             )
@@ -1355,7 +1353,7 @@ impl StoreProductFunctions for DBConection {
         store_id: &ObjectId,
         pagination: Option<Pagination>,
         sorting: Option<Sorter<ProductSortBy>>,
-        free_text: Option<String>,
+        product_name: Option<String>,
         category_id: Option<ObjectId>,
         status: Option<ProductStatus>,
         options: Option<AggregateOptions>,
@@ -1371,7 +1369,7 @@ impl StoreProductFunctions for DBConection {
                 Product::fields().analytics(true).views: &sorting.direction
             }),
             ProductSortBy::Relevance => {
-                if free_text.is_some() {
+                if product_name.is_some() {
                     aggregations::sort(doc! {
                         "score": &sorting.direction
                     })
@@ -1418,8 +1416,10 @@ impl StoreProductFunctions for DBConection {
             f
         };
 
+        let search_stage = aggregations::product_name_search(product_name, filters);
+
         let pipeline = [
-            aggregations::search_products(&free_text, &filters, Some(1)),
+            search_stage.clone(),
             aggregations::add_score_meta(),
             sort_stage,
             aggregations::skip(pagination.offset),
@@ -1504,10 +1504,7 @@ impl StoreProductFunctions for DBConection {
 
         let count = self
             .count_products_with_aggregation(
-                [
-                    aggregations::search_products(&free_text, &filters, Some(1)),
-                    aggregations::count("count"),
-                ],
+                [search_stage, aggregations::count("count")],
                 options,
                 None,
             )

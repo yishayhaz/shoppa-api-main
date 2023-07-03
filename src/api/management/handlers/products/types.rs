@@ -34,7 +34,7 @@ pub struct CreateProductPayload {
 #[derive(Deserialize, Debug, Clone, Validate)]
 pub struct GetProductsQueryParams {
     #[serde(default, deserialize_with = "empty_string_as_none")]
-    pub free_text: Option<String>,
+    pub name: Option<String>,
     #[serde(default, deserialize_with = "empty_string_as_none")]
     pub store_id: Option<ObjectId>,
     #[serde(default, deserialize_with = "empty_string_as_none")]

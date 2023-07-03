@@ -234,7 +234,7 @@ pub async fn get_products(
             &current_user.store_id,
             Some(pagination),
             sorting,
-            query.free_text,
+            query.name,
             query.category_id,
             query.status,
             None,

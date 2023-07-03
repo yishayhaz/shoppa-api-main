@@ -213,7 +213,7 @@ pub async fn get_products(
         .get_products_for_admins(
             Some(pagination),
             sorting,
-            query.free_text,
+            query.name,
             query.store_id,
             query.category_id,
             query.status,
