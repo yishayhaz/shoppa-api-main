@@ -944,7 +944,15 @@ impl AdminProductFunctions for DBConection {
             f
         };
 
-        let search_stage = aggregations::product_name_search(product_name, filters);
+
+
+        let search_stage = {
+            if filters.is_empty() && product_name.is_none() {
+                aggregations::match_all()
+            } else {
+                aggregations::product_name_search(product_name, filters)
+            }
+        };
 
         let pipeline = [
             search_stage.clone(),
