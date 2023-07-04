@@ -393,6 +393,7 @@ impl ProductFunctions for DBConection {
                     Product::fields().categories,
                     Product::fields().variants,
                     Product::fields().analytics,
+                    Product::fields().feature_bullet_points,
                     // Product items fields to return
                     Product::fields().items(true).id,
                     Product::fields().items(true).price,
