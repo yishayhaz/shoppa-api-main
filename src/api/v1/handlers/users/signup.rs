@@ -27,33 +27,33 @@ pub async fn signup(
 
     // hashing password
     let password = security::hash_password(&payload.password)?;
-
+    todo!()
     // if there is some token data we upgrade the user to level 2
-    if token_data.is_some() {
-        let user = db
-            .update_user_to_level_2(
-                &token_data.unwrap().user_id,
-                &payload.email,
-                &password,
-                &payload.name,
-                None,
-            )
-            .await?;
+    // if token_data.is_some() {
+    //     let user = db
+    //         .update_user_to_level_2(
+    //             &token_data.unwrap().user_id,
+    //             &payload.email,
+    //             &password,
+    //             &payload.name,
+    //             None,
+    //         )
+    //         .await?;
 
-        match user {
-            // If we managed to create a user we set cookie and return res
-            Some(user) => {
-                set_access_cookie(&cookies, &user)?;
+    //     match user {
+    //         // If we managed to create a user we set cookie and return res
+    //         Some(user) => {
+    //             set_access_cookie(&cookies, &user)?;
 
-                return Ok(
-                    ResponseBuilder::success(Some(user.to_get_me()?), None, None).into_response(),
-                );
-            }
-            // else we try to create a completly new user
-            None => {}
-        }
-    }
-    todo!("signup new level 2")
+    //             return Ok(
+    //                 ResponseBuilder::success(Some(user.to_get_me()?), None, None).into_response(),
+    //             );
+    //         }
+    //         // else we try to create a completly new user
+    //         None => {}
+    //     }
+    // }
+    // todo!("signup new level 2")
     // let user = inserts::new_level_2_user(&db, payload.email, password, payload.name).await?;
 
     // set_access_cookie(&cookies, &user)?;

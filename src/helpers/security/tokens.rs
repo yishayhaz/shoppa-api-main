@@ -25,7 +25,7 @@ pub fn generate_login_token(user: &User) -> Result<String> {
         let token = PasetoBuilder::<V4, Local>::default()
             .set_claim(ExpirationClaim::try_from(in_90_days)?)
             .set_claim(IssuerClaim::try_from("main-api")?)
-            .set_claim(CustomClaim::try_from(("level", user.level))?)
+            .set_claim(CustomClaim::try_from(("status", 1))?)
             .set_claim(CustomClaim::try_from(("user_id", user_id))?)
             .build(&LOGIN_TOKEN_KEY)?;
         Ok(token)

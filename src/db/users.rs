@@ -20,14 +20,12 @@ pub trait UserFunctions {
         options: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<User>>;
 
-    async fn update_user_to_level_2(
-        &self,
-        user_id: &ObjectId,
-        email: &String,
-        password: &String,
-        name: &String,
-        options: Option<FindOneAndUpdateOptions>,
-    ) -> Result<Option<User>>;
+    // async fn create_new_guest_user(
+    //     &self,
+    //     email: &str,
+    //     password: &str,
+    //     options: Option<FindOneAndUpdateOptions>,
+    // ) -> Result<Option<User>>;
 }
 
 #[async_trait]
@@ -57,28 +55,29 @@ impl UserFunctions for DBConection {
         self.find_and_update_user_by_id(user_id, update, options, None)
             .await
     }
-    async fn update_user_to_level_2(
-        &self,
-        user_id: &ObjectId,
-        email: &String,
-        password: &String,
-        name: &String,
-        options: Option<FindOneAndUpdateOptions>,
-    ) -> Result<Option<User>> {
-        let filters = doc! {
-            User::fields().id: user_id,
-            User::fields().level: 1
-        };
+    
+//     async fn update_user_to_level_2(
+//         &self,
+//         user_id: &ObjectId,
+//         email: &String,
+//         password: &String,
+//         name: &String,
+//         options: Option<FindOneAndUpdateOptions>,
+//     ) -> Result<Option<User>> {
+//         let filters = doc! {
+//             User::fields().id: user_id,
+//             User::fields().level: 1
+//         };
 
-        let update = doc! {
-            "$set": {
-                User::fields().email: email,
-                User::fields().password: password,
-                User::fields().name: name,
-                User::fields().level: 2
-            }
-        };
+//         let update = doc! {
+//             "$set": {
+//                 User::fields().email: email,
+//                 User::fields().password: password,
+//                 User::fields().name: name,
+//                 User::fields().level: 2
+//             }
+//         };
 
-        self.find_and_update_user(filters, update, options, None).await
-    }
+//         self.find_and_update_user(filters, update, options, None).await
+//     }
 }
