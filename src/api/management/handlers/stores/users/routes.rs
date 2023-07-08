@@ -51,7 +51,7 @@ pub async fn create_store_user(
 
     let email = email_client
         .new_store_user_email(
-            format!("https://shoppa.co.il?token={}", token),
+            token,
             store_user.name.clone(),
             store.logo.map(|l| l.path).unwrap_or_default(),
             store.name,

@@ -33,6 +33,12 @@ pub struct EnvVariables {
     pub STORE_USER_LOGIN_TOKEN_SECRET: String,
     #[validate(length(equal = 32))]
     pub STORE_USER_REGISTRATION_TOKEN_SECRET: String,
+    #[validate(length(min = 1))]
+    pub STORE_PANEL_URL: String,
+    #[validate(length(min = 1))]
+    pub SHOPPA_URL: String,
+    #[validate(length(min = 1))]
+    pub ASSETS_URL: String,
 }
 
 impl EnvVariables {
@@ -75,6 +81,24 @@ impl EnvVariables {
                 .expect("STORE_USER_LOGIN_TOKEN_SECRET must be set"),
             STORE_USER_REGISTRATION_TOKEN_SECRET: env::var("STORE_USER_REGISTRATION_TOKEN_SECRET")
                 .expect("STORE_USER_REGISTRATION_TOKEN_SECRET must be set"),
+            STORE_PANEL_URL: env::var("STORE_PANEL_URL").unwrap_or_else(|_| {
+                let default_url = "https://store.shoppa.co.il".to_string();
+                println!(
+                    "STORE_PANEL_URL not set, using default: {d}",
+                    d = default_url
+                );
+                default_url
+            }),
+            SHOPPA_URL: env::var("SHOPPA_URL").unwrap_or_else(|_| {
+                let default_url = "https://shoppa.co.il".to_string();
+                println!("SHOPPA_URL not set, using default: {d}", d = default_url);
+                default_url
+            }),
+            ASSETS_URL: env::var("ASSETS_URL").unwrap_or_else(|_| {
+                let default_url = "https://assets.shoppa.co.il".to_string();
+                println!("ASSETS_URL not set, using default: {d}", d = default_url);
+                default_url
+            }),
         }
     }
     pub fn is_production(&self) -> bool {

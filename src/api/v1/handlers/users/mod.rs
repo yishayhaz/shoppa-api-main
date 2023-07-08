@@ -5,9 +5,11 @@ mod login;
 mod password;
 mod signup;
 mod types;
+mod cart;
 
 pub fn router() -> Router {
     Router::new()
+        .nest("/cart", cart::router())
         .route("/login", routing::post(login::login))
         .route("/logout", routing::delete(login::logout))
         .route("/sign-up", routing::post(signup::signup))
