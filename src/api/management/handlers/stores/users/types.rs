@@ -6,7 +6,7 @@ pub struct CreateStoreUserPayload {
     #[validate(email)]
     pub email: String,
     #[validate(custom = "phone_number_validator")]
-    pub phone_number: Option<String>,
+    pub phone: Option<String>,
     pub store: ObjectId,
     pub name: String,
 }
@@ -17,7 +17,7 @@ impl Into<StoreUser> for CreateStoreUserPayload {
             self.store,
             self.name,
             self.email,
-            self.phone_number,
+            self.phone,
             String::new(),
         )
     }
