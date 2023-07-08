@@ -104,6 +104,14 @@ impl EnvVariables {
     pub fn is_production(&self) -> bool {
         self.ENVIRONMENT.contains("prod")
     }
+
+    pub fn is_development(&self) -> bool {
+        self.ENVIRONMENT.contains("dev")
+    }
+
+    pub fn is_stage(&self) -> bool {
+        self.ENVIRONMENT.contains("stage")
+    }
 }
 
 lazy_static! {

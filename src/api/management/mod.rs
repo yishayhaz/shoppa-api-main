@@ -3,7 +3,7 @@ use axum::Router;
 mod handlers;
 
 pub fn router() -> Router {
-    if ENV_VARS.is_production() {
+    if ENV_VARS.is_production() || ENV_VARS.is_stage(){
         return Router::new();
     }
     Router::new()
