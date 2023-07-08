@@ -2,7 +2,7 @@ use super::types::UserRegisterPayload;
 use crate::{
     api::v1::middlewares::*,
     db::{AxumDBExtansion, UserFunctions},
-    helpers::cookies::set_access_cookie,
+    helpers::cookies::CookieManager,
     prelude::*,
 };
 use axum::response::IntoResponse;

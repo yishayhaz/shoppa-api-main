@@ -14,7 +14,7 @@ pub trait CookieManager {
 
     fn get_access_cookie(&self) -> Result<Option<String>>;
 
-    fn delete_access_cookie(&self) -> HandlerResult;
+    fn delete_access_cookie(&self);
 }
 
 impl CookieManager for Cookies {
@@ -49,7 +49,7 @@ impl CookieManager for Cookies {
     fn set_access_cookie(&self, user: &User) -> Result<()> {
         let login_token = security::generate_login_token(&user)?;
 
-        self.set_cookie(&Cookeys::AccessToken, login_token, MAX_COOKIE_EXP, true)?;
+        self.set_cookie(&Cookeys::AccessToken, login_token, MAX_COOKIE_EXP, true);
 
         Ok(())
     }
@@ -67,31 +67,8 @@ impl CookieManager for Cookies {
         Ok(Some(cookie))
     }
 
-    fn delete_access_cookie(&self) -> HandlerResult {
-        self.delete_cookie(&Cookeys::AccessToken)?;
-
-        Ok(ResponseBuilder::<u16>::success(None, None, None).into_response())
+    fn delete_access_cookie(&self) {
+        self.delete_cookie(&Cookeys::AccessToken);
     }
 }
 
-pub fn delete_cookie<'a>(key: &'a Cookeys) -> Cookie<'a> {
-    let mut cookie = Cookie::new(key.to_string(), "");
-
-    cookie.set_max_age(Duration::seconds_f64(0.0));
-
-    cookie.set_domain(&ENV_VARS.COOKIE_DOMAIN);
-
-    cookie.set_path("/");
-
-    cookie
-}
-
-pub fn set_access_cookie(cookies: &Cookies, user: &User) -> Result<()> {
-    let login_token = security::generate_login_token(&user)?;
-
-    let access_cookie = create_cookie(&Cookeys::AccessToken, login_token, MAX_COOKIE_EXP, true);
-
-    cookies.add(access_cookie);
-
-    Ok(())
-}

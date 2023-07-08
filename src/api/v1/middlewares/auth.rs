@@ -1,5 +1,5 @@
 use crate::helpers::{
-    cookies::delete_cookie,
+    cookies::CookieManager,
     security::{decode_login_token, LoginTokenData},
     types::{Cookeys},
 };
@@ -165,8 +165,7 @@ where
     let token_data = match decode_login_token(login_cookie.value()) {
         Ok(d) => d,
         Err(_) => {
-            let cookie = delete_cookie(&Cookeys::AccessToken);
-            cookies.remove(cookie);
+            cookies.delete_access_cookie();
             return Err((AuthErrors::InvalidToken, Some(cookies)));
         }
     };

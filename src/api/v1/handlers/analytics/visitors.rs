@@ -1,4 +1,4 @@
-use crate::helpers::{cookies::create_cookie, types::Cookeys};
+use crate::helpers::{cookies::CookieManager, types::Cookeys};
 use crate::{db::AxumDBExtansion, prelude::*};
 use axum::response::IntoResponse;
 use shoppa_core::{extractors::ClientIpAddress, ResponseBuilder};
@@ -14,17 +14,14 @@ pub async fn add_new_visitor_to_counter(
     match cookies.get(cookie_key.as_str()) {
         Some(_) => {}
         None => {
-            let cookie = create_cookie(
+            db.insert_new_site_visit(ip, None, None).await?;
+            cookies.set_cookie(
                 &Cookeys::VisitIndicator,
                 String::from("visited=true"),
                 // one day
-                86400.0,
+                86400,
                 true,
             );
-
-            db.insert_new_site_visit(ip, None, None).await?;
-
-            cookies.add(cookie);
         }
     };
 
