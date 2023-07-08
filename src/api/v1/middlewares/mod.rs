@@ -1,5 +1,5 @@
 mod auth;
-
+mod new_auth;
 pub use auth::{
     GetTokenForGetMe, GuestOnly, Level1Access, Level1AccessOrNone, Level2Access, Level3Access,
 };
