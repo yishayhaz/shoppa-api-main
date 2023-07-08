@@ -1,7 +1,7 @@
 use super::types::{CompleteRegistrationPayload, ValidateRegistrationTokenPayload};
 use crate::{
     db::{AxumDBExtansion, StoreUserFunctions},
-    helpers::{cookies::create_cookie, types::Cookeys},
+    helpers::{cookies::CookieManager, types::Cookeys},
     prelude::*,
     tokens::{STORE_USER_REGISTRATION_TOKEN_MANAGER, STORE_USER_TOKEN_MANAGER},
 };
@@ -60,12 +60,12 @@ pub async fn complete_registration(
 
     let access_token = STORE_USER_TOKEN_MANAGER.generate_token(&user, None)?;
 
-    cookies.add(create_cookie(
+    cookies.set_cookie(
         &Cookeys::StoreUserAccessToken,
         access_token,
-        90.0 * 24.0 * 60.0 * 60.0,
+        90 * 24 * 60 * 60,
         true,
-    ));
+    );
 
     Ok(ResponseBuilder::success(
         Some(user),

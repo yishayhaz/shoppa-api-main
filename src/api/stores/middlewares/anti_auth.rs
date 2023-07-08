@@ -1,5 +1,5 @@
 use crate::{
-    helpers::cookies::delete_cookie, helpers::types::Cookeys, tokens::STORE_USER_TOKEN_MANAGER,
+    helpers::cookies::CookieManager, helpers::types::Cookeys, tokens::STORE_USER_TOKEN_MANAGER,
 };
 use axum::{
     http::Request,
@@ -26,8 +26,7 @@ pub async fn guest_required<B>(req: Request<B>, next: Next<B>) -> Result<Respons
                     .into_response(),
             )
         } else {
-            cookies.remove(delete_cookie(&Cookeys::StoreUserAccessToken));
-
+            cookies.delete_cookie(&Cookeys::StoreUserAccessToken);
             Ok(next.run(req).await)
         }
     } else {

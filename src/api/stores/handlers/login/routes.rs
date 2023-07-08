@@ -1,7 +1,7 @@
 use super::types::LoginPayload;
 use crate::{
     db::{AxumDBExtansion, StoreUserFunctions},
-    helpers::{cookies::create_cookie, types::Cookeys},
+    helpers::{cookies::CookieManager, types::Cookeys},
     prelude::*,
     tokens::STORE_USER_TOKEN_MANAGER,
 };
@@ -37,12 +37,12 @@ pub async fn login(
 
     let access_token = STORE_USER_TOKEN_MANAGER.generate_token(&user, None)?;
 
-    cookies.add(create_cookie(
+    cookies.set_cookie(
         &Cookeys::StoreUserAccessToken,
         access_token,
-        90.0 * 24.0 * 60.0 * 60.0,
+        90 * 24 * 60 * 60,
         true,
-    ));
+    );
 
     Ok(ResponseBuilder::success(Some(()), Some("login success"), Some(200)).into_response())
 }

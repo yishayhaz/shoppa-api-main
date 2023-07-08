@@ -1,5 +1,5 @@
 use crate::{
-    helpers::cookies::delete_cookie, helpers::types::Cookeys, tokens::STORE_USER_TOKEN_MANAGER,
+    helpers::cookies::CookieManager, helpers::types::Cookeys, tokens::STORE_USER_TOKEN_MANAGER,
 };
 use axum::{
     async_trait,
@@ -43,8 +43,7 @@ pub async fn login_required<B>(mut req: Request<B>, next: Next<B>) -> Result<Res
 
         Ok(next.run(req).await)
     } else {
-        cookies.remove(delete_cookie(&Cookeys::StoreUserAccessToken));
-
+        cookies.delete_cookie(&Cookeys::StoreUserAccessToken);
         Err(ResponseBuilder::error("", Some(()), None, Some(403)).into_response())
     }
 }
