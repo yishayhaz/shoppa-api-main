@@ -43,13 +43,18 @@ impl StoreUserFunctions for DBConection {
             StoreUser::fields().registration_token_secret: registration_token_secret,
         };
 
+        let mut set = doc! {
+            StoreUser::fields().password: password,
+            StoreUser::fields().registration_completed: true,
+            StoreUser::fields().registration_token_secret: None::<String>,
+        };
+
+        if let Some(name) = name {
+            set.insert(StoreUser::fields().name, name);
+        }
+
         let update = doc! {
-            "$set": {
-                StoreUser::fields().password: password,
-                StoreUser::fields().registration_completed: true,
-                StoreUser::fields().name: name,
-                StoreUser::fields().registration_token_secret: None::<String>,
-            },
+            "$set": set,
             "$currentDate": {
                 StoreUser::fields().registration_completed_at: true,
             }
