@@ -27,4 +27,4 @@ tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 bytes = "1.4.0"
 strum_macros = "0.24.3"
 strum = "0.24.1"
-shoppa-core = { path = "../api-core/shoppa-core", features = ["db", "security", "file-storage", "email-sender"] }
+shoppa-core = { git = "https://github.com/yishayhaz/shoppa-core", features = ["db", "security", "file-storage", "email-sender"] }
