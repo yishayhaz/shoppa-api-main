@@ -71,4 +71,3 @@ impl CookieManager for Cookies {
         self.delete_cookie(&Cookeys::AccessToken);
     }
 }
-
