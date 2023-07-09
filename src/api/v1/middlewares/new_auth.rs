@@ -11,7 +11,7 @@ use axum::{
 };
 use bson::oid::ObjectId;
 use shoppa_core::{
-    db::{models::User, populate::UsersPopulate, DBConection},
+    db::{models::{User, DBModel}, populate::UsersPopulate, DBConection},
     ResponseBuilder,
 };
 use std::sync::Arc;
@@ -82,9 +82,9 @@ pub async fn login_required_or_create_guest<B>(
     
     cookies.set_access_cookie(&user)?;
     
-    let token_data = USER_TOKEN_MANAGER.decode_token(cookies.get_access_cookie()?.unwrap().as_ref())?;
+    // let token_data = USER_TOKEN_MANAGER.decode_token(cookies.get_access_cookie()?.unwrap().as_ref())?;
 
-    let mut current_user = CurrentUser::new(token_data.user_id, token_data.secret, true);
+    let mut current_user = CurrentUser::new(user.id().unwrap().clone(), "".to_string(), true);
 
     current_user.set_user(user);
     

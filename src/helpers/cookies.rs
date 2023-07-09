@@ -1,6 +1,7 @@
 use crate::{
-    helpers::{env::ENV_VARS, security, types::Cookeys},
+    helpers::{env::ENV_VARS, types::Cookeys},
     prelude::*,
+    tokens::{USER_TOKEN_MANAGER, UserTokenData},
 };
 use shoppa_core::{constans::MAX_COOKIE_EXP, db::models::User};
 use tower_cookies::{cookie::time::Duration, Cookie, Cookies};
@@ -47,7 +48,8 @@ impl CookieManager for Cookies {
     }
 
     fn set_access_cookie(&self, user: &User) -> Result<()> {
-        let login_token = security::generate_login_token(&user)?;
+
+        let login_token = USER_TOKEN_MANAGER.generate_token(user, None)?;
 
         self.set_cookie(&Cookeys::AccessToken, login_token, MAX_COOKIE_EXP, true);
 
