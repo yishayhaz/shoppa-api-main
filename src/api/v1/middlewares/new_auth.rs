@@ -1,5 +1,8 @@
 use crate::{
-    db::UserFunctions, helpers::cookies::CookieManager, prelude::*, tokens::USER_TOKEN_MANAGER,
+    db::{AxumDBExtansion, UserFunctions},
+    helpers::cookies::CookieManager,
+    prelude::*,
+    tokens::USER_TOKEN_MANAGER,
 };
 use axum::{
     async_trait,
@@ -11,7 +14,11 @@ use axum::{
 };
 use bson::oid::ObjectId;
 use shoppa_core::{
-    db::{models::{User, DBModel}, populate::UsersPopulate, DBConection},
+    db::{
+        models::{DBModel, User},
+        populate::UsersPopulate,
+        DBConection,
+    },
     ResponseBuilder,
 };
 use std::sync::Arc;
@@ -79,15 +86,15 @@ pub async fn login_required_or_create_guest<B>(
         ))?;
 
     let user = db.insert_new_user(User::new_guest(), None, None).await?;
-    
+
     cookies.set_access_cookie(&user)?;
-    
+
     // let token_data = USER_TOKEN_MANAGER.decode_token(cookies.get_access_cookie()?.unwrap().as_ref())?;
 
     let mut current_user = CurrentUser::new(user.id().unwrap().clone(), "".to_string(), true);
 
     current_user.set_user(user);
-    
+
     req.extensions_mut().insert(current_user);
 
     Ok(next.run(req).await)
@@ -119,9 +126,9 @@ impl CurrentUser {
         }
     }
 
-    pub async fn fetch<T: UserFunctions>(
+    pub async fn fetch(
         &mut self,
-        db: T,
+        db: &AxumDBExtansion,
         populate: Option<UsersPopulate>,
     ) -> Result<()> {
         if self.user.is_none() {
