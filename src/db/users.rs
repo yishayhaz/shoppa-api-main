@@ -3,7 +3,7 @@ use axum::async_trait;
 use bson::{doc, oid::ObjectId};
 use mongodb::options::{FindOneAndUpdateOptions, FindOneOptions};
 use shoppa_core::db::{
-    models::{User, UserStatus},
+    models::{CartItem, User, UserStatus},
     populate::UsersPopulate,
     DBConection,
 };
@@ -31,12 +31,14 @@ pub trait UserFunctions {
         populate: Option<UsersPopulate>,
     ) -> Result<Option<User>>;
 
-    // async fn create_new_guest_user(
-    //     &self,
-    //     email: &str,
-    //     password: &str,
-    //     options: Option<FindOneAndUpdateOptions>,
-    // ) -> Result<Option<User>>;
+    async fn add_product_to_cart<T>(
+        &self,
+        user_id: &ObjectId,
+        cart_item: T,
+        options: Option<FindOneAndUpdateOptions>,
+    ) -> Result<Option<User>>
+    where
+        T: Into<CartItem> + Send + Sync;
 }
 
 #[async_trait]
@@ -82,28 +84,19 @@ impl UserFunctions for DBConection {
         self.get_user(filters, options, populate, None).await
     }
 
-    //     async fn update_user_to_level_2(
-    //         &self,
-    //         user_id: &ObjectId,
-    //         email: &String,
-    //         password: &String,
-    //         name: &String,
-    //         options: Option<FindOneAndUpdateOptions>,
-    //     ) -> Result<Option<User>> {
-    //         let filters = doc! {
-    //             User::fields().id: user_id,
-    //             User::fields().level: 1
-    //         };
+    async fn add_product_to_cart<T: Into<CartItem>>(
+        &self,
+        user_id: &ObjectId,
+        cart_item: T,
+        options: Option<FindOneAndUpdateOptions>,
+    ) -> Result<Option<User>>
+    where
+        T: Into<CartItem> + Send + Sync,
+    {
+        let cart_item: CartItem = cart_item.into();
 
-    //         let update = doc! {
-    //             "$set": {
-    //                 User::fields().email: email,
-    //                 User::fields().password: password,
-    //                 User::fields().name: name,
-    //                 User::fields().level: 2
-    //             }
-    //         };
+        let update = doc! { "$push": { User::fields().cart(true).items: cart_item } };
 
-    //         self.find_and_update_user(filters, update, options, None).await
-    //     }
+        todo!()
+    }
 }
