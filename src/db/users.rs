@@ -134,8 +134,7 @@ impl UserFunctions for DBConection {
 
         let update = doc! { "$push": { User::fields().cart(true).items: cart_item } };
 
-        self.update_user(filters, update, options, None)
-            .await
+        self.update_user(filters, update, options, None).await
     }
 
     async fn remove_product_from_cart(
@@ -145,7 +144,26 @@ impl UserFunctions for DBConection {
         item_id: &ObjectId,
         options: Option<UpdateOptions>,
     ) -> Result<UpdateResult> {
-        todo!()
+        // by filtering only by this two fields,
+        // if the matched count is 0, that means the user
+        // got deleted or banned, so we can remove his access token
+        let filters = doc! {
+            User::fields().id: user_id,
+            User::fields().status: {
+                "$nin": [UserStatus::Deleted, UserStatus::Banned]
+            },
+        };
+
+        let update = doc! {
+            "$pull": {
+                User::fields().cart(true).items: {
+                    User::fields().cart(false).items(false).product: product_id,
+                    User::fields().cart(false).items(false).item_id: item_id,
+                }
+            }
+        };
+
+        self.update_user(filters, update, options, None).await
     }
 
     async fn edit_product_in_cart(
@@ -156,6 +174,28 @@ impl UserFunctions for DBConection {
         quantity: u32,
         options: Option<UpdateOptions>,
     ) -> Result<UpdateResult> {
-        todo!()
+        let filters = doc! {
+            User::fields().id: user_id,
+            User::fields().status: {
+                "$nin": [UserStatus::Deleted, UserStatus::Banned]
+            },
+            User::fields().cart(true).items: {
+                "$elemMatch": {
+                    User::fields().cart(false).items(false).product: product_id,
+                    User::fields().cart(false).items(false).item_id: item_id,
+                }
+            }
+        };
+
+        let update = doc! {
+            "$set": {
+                format!("{}.$.{}",
+                    User::fields().cart(true).items,
+                    User::fields().cart(false).items(false).quantity
+                ): quantity
+            }
+        };
+
+        self.update_user(filters, update, options, None).await
     }
 }

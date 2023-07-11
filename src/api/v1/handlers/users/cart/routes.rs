@@ -152,6 +152,7 @@ pub async fn get_full_cart(db: AxumDBExtansion, current_user: CurrentUser) -> Ha
 pub async fn remove_product_from_cart(
     db: AxumDBExtansion,
     current_user: CurrentUser,
+    cookies: Cookies,
     Query(query): Query<RemoveProductFromCartQuery>,
 ) -> HandlerResult {
     let update_res = db
@@ -163,7 +164,21 @@ pub async fn remove_product_from_cart(
         )
         .await?;
 
-    todo!()
+    if update_res.modified_count == 0 {
+        if update_res.matched_count == 0 {
+            cookies.delete_access_cookie();
+            return Ok(
+                ResponseBuilder::<()>::error("User not found", None, None, None).into_response(),
+            );
+        }
+
+        return Ok(
+            ResponseBuilder::<()>::error("Maybe item not in cart", None, None, None)
+                .into_response(),
+        );
+    }
+
+    Ok(ResponseBuilder::<()>::success(None, None, None).into_response())
 }
 
 pub async fn edit_product_in_cart(
@@ -181,5 +196,15 @@ pub async fn edit_product_in_cart(
         )
         .await?;
 
-    todo!()
+    if updated_res.modified_count == 0 {
+        return Ok(ResponseBuilder::<()>::error(
+            "User not found or item not in cart",
+            None,
+            None,
+            None,
+        )
+        .into_response());
+    }
+
+    Ok(ResponseBuilder::<()>::success(None, None, None).into_response())
 }
