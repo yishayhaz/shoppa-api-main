@@ -143,10 +143,9 @@ pub async fn add_product_to_cart(
 }
 
 pub async fn get_full_cart(db: AxumDBExtansion, current_user: CurrentUser) -> HandlerResult {
-    todo!()
-    // let cart = db.get_cart_by_user_id(&current_user.user_id).await?;
+    let cart = db.get_user_full_cart(&current_user.user_id, None).await?;
 
-    // Ok(ResponseBuilder::success(cart, None, None).into_response())
+    Ok(ResponseBuilder::success(Some(cart), None, None).into_response())
 }
 
 pub async fn remove_product_from_cart(

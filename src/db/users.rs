@@ -1,11 +1,12 @@
 use crate::prelude::*;
 use axum::async_trait;
-use bson::{doc, oid::ObjectId};
+use bson::{doc, oid::ObjectId, Document};
 use mongodb::{
-    options::{FindOneAndUpdateOptions, FindOneOptions, UpdateOptions},
+    options::{AggregateOptions, FindOneAndUpdateOptions, FindOneOptions, UpdateOptions},
     results::UpdateResult,
 };
 use shoppa_core::db::{
+    aggregations,
     models::{CartItem, User, UserStatus},
     populate::UsersPopulate,
     DBConection,
@@ -59,6 +60,12 @@ pub trait UserFunctions {
         quantity: u32,
         options: Option<UpdateOptions>,
     ) -> Result<UpdateResult>;
+
+    async fn get_user_full_cart(
+        &self,
+        user_id: &ObjectId,
+        options: Option<AggregateOptions>,
+    ) -> Result<Vec<Document>>;
 }
 
 #[async_trait]
@@ -132,7 +139,14 @@ impl UserFunctions for DBConection {
             }
         };
 
-        let update = doc! { "$push": { User::fields().cart(true).items: cart_item } };
+        let update = doc! {
+            "$push": {
+                User::fields().cart(true).items: cart_item
+            },
+            "$currentDate": {
+                User::fields().cart(true).last_updated: true
+            }
+        };
 
         self.update_user(filters, update, options, None).await
     }
@@ -160,6 +174,9 @@ impl UserFunctions for DBConection {
                     User::fields().cart(false).items(false).product: product_id,
                     User::fields().cart(false).items(false).item_id: item_id,
                 }
+            },
+            "$currentDate": {
+                User::fields().cart(true).last_updated: true
             }
         };
 
@@ -193,9 +210,30 @@ impl UserFunctions for DBConection {
                     User::fields().cart(true).items,
                     User::fields().cart(false).items(false).quantity
                 ): quantity
+            },
+            "$currentDate": {
+                User::fields().cart(true).last_updated: true
             }
         };
 
         self.update_user(filters, update, options, None).await
+    }
+
+    async fn get_user_full_cart(
+        &self,
+        user_id: &ObjectId,
+        options: Option<AggregateOptions>,
+    ) -> Result<Vec<Document>> {
+        let pipeline = [
+            aggregations::match_query(&doc! {
+                User::fields().id: user_id,
+                User::fields().status: {
+                    "$nin": [UserStatus::Deleted, UserStatus::Banned]
+                },
+            }),
+            aggregations::unwind(User::fields().cart(true).items, false),
+        ];
+
+        self.aggregate_users(pipeline, options, None).await
     }
 }
