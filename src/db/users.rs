@@ -7,7 +7,10 @@ use mongodb::{
 };
 use shoppa_core::db::{
     aggregations,
-    models::{CartItem, User, UserStatus},
+    models::{
+        CartItem, FileTypes, ItemVariants, Product, ProductItemStatus, ProductStatus, User,
+        UserStatus, Variants, Store,
+    },
     populate::UsersPopulate,
     DBConection,
 };
@@ -224,6 +227,80 @@ impl UserFunctions for DBConection {
         user_id: &ObjectId,
         options: Option<AggregateOptions>,
     ) -> Result<Vec<Document>> {
+        let get_name_field = doc! {
+            "$cond": {
+                "if": {
+                    "$eq": [
+                        format!("${}", Product::fields().items(true).name),
+                        None::<String>
+                    ]
+                },
+                "then": format!("${}", Product::fields().name),
+                "else": format!("${}", Product::fields().items(true).name)
+            }
+        };
+
+        fn image_cond(asset_ref: bool) -> Document {
+            let mut and = vec![
+                doc! {
+                    "$eq": [
+                        format!("$$asset.{}", Product::fields().assets(false).file_type),
+                        FileTypes::Image
+                    ]
+                },
+                doc! {
+                    "$eq": [
+                        format!("$$asset.{}", Product::fields().assets(false).public),
+                        true
+                    ]
+                },
+                doc! {
+                    "$eq": [
+                        format!("$$asset.{}", Product::fields().assets(false).hidden),
+                        false
+                    ]
+                },
+            ];
+
+            if asset_ref {
+                and.push(doc! {
+                    "$in": [
+                        format!("$$asset.{}", Product::fields().assets(false).id),
+                        format!("${}", Product::fields().items(true).assets_refs)
+                    ]
+                });
+            }
+
+            doc! {
+                "$and": and
+            }
+        }
+
+        let get_image_field = doc! {
+            "$cond": {
+                "if": {
+                    "$eq": [
+                        format!("${}", Product::fields().items(true).assets_refs),
+                        []
+                    ]
+                },
+                "then": {
+                    "$first": aggregations::filter(
+                        format!("${}", Product::fields().assets),
+                        "asset",
+                        image_cond(false)
+                    )
+                },
+                "else": {
+                    "$first": aggregations::filter(
+                        format!("${}", Product::fields().assets),
+                        "asset",
+                        image_cond(true)
+                    )
+                }
+            }
+        };
+
         let pipeline = [
             aggregations::match_query(&doc! {
                 User::fields().id: user_id,
@@ -232,6 +309,129 @@ impl UserFunctions for DBConection {
                 },
             }),
             aggregations::unwind(User::fields().cart(true).items, false),
+            aggregations::replace_root(User::fields().cart(true).items),
+            aggregations::lookup::<Product>(
+                User::fields().cart(false).items(false).product,
+                Product::fields().id,
+                User::fields().cart(false).items(false).product,
+                Some(vec![
+                    aggregations::unwind(Product::fields().items, false),
+                    aggregations::match_query(&doc! {
+                        "$expr": {
+                            "$eq": [
+                                format!("${}", Product::fields().items(true).id),
+                                "$$item_id"
+                            ]
+                        },
+                        Product::fields().items(true).status: {
+                            "$ne": ProductItemStatus::Deleted
+                        },
+                        Product::fields().status: {
+                            "$ne": ProductStatus::Deleted
+                        },
+                    }),
+                    aggregations::lookup_product_variants(None),
+                    aggregations::project(
+                        aggregations::ProjectIdOptions::Keep,
+                        [Product::fields().store, Product::fields().status],
+                        Some(doc! {
+                            Product::fields().name: get_name_field,
+                            // getting the variants in a nice format
+                            Product::fields().variants:
+                                aggregations::map(
+                                    format!("${}", Product::fields().items(true).variants),
+                                    "item_variant",
+                                    // finding the current variant, and formatting it, there can be only one.
+                                    aggregations::array_elem_at(
+                                        aggregations::map(
+                                            // getting the current variant (A TypeOf Variant DBModel)
+                                            aggregations::filter(
+                                                format!("${}", Product::fields().variants),
+                                                "product_variant",
+                                                doc!{
+                                                    "$eq": [
+                                                        format!("$$product_variant.{}", Variants::fields().id),
+                                                        format!("$$item_variant.{}", ItemVariants::fields().variant_id)
+                                                    ]
+                                                }
+                                            ),
+                                            "current_variant",
+                                            doc!{
+                                                Variants::fields().id: format!("$$current_variant.{}", Variants::fields().id),
+                                                Variants::fields().name: format!("$$current_variant.{}", Variants::fields().name),
+                                                // getting the currect variant value for the current item_variant
+                                                "value": aggregations::array_elem_at(
+                                                    aggregations::map(
+                                                        // getting the value
+                                                        aggregations::filter(
+                                                            format!("$$current_variant.{}", Variants::fields().values),
+                                                            "variant_value",
+                                                            doc!{
+                                                                "$eq": [
+                                                                    "$$variant_value._id",
+                                                                    format!("$$item_variant.{}", ItemVariants::fields().value_id)
+                                                                ]
+                                                            }
+                                                        ),
+                                                        "current_value",
+                                                        "$$current_value"
+                                                    ),
+                                                    0
+                                                )
+                                            }
+                                        ),
+                                        0
+                                    )
+                                ),
+                            "item_status": format!("${}", Product::fields().items(true).status),
+                            "price": format!("${}", Product::fields().items(true).price),
+                            "image": get_image_field,
+                            "item_id": format!("${}", Product::fields().items(true).id),
+                            Product::fields().items(false).in_storage: format!("${}", Product::fields().items(true).in_storage),
+
+                        }),
+                    ),
+                ]),
+                Some(doc! {
+                    "item_id": format!("${}", User::fields().cart(false).items(false).item_id)
+                }),
+            ),
+            aggregations::unwind(User::fields().cart(false).items(false).product, false),
+            // grouping product in the cart by store
+            aggregations::group(doc! {
+                "_id": format!("${}.{}", User::fields().cart(false).items(false).product, Product::fields().store(true).id),
+                "products": {
+                    "$push": "$$ROOT"
+                },
+            }),
+            aggregations::lookup::<Store>(
+                "_id",
+                Store::fields().id,
+                "store",
+                Some(vec![
+                    aggregations::project(
+                        aggregations::ProjectIdOptions::Keep,
+                        [Store::fields().name, Store::fields().min_order],
+                        None
+                    ),
+                ]),
+                None    
+            ),
+            aggregations::unwind("store", false),
+            // just cleaning up the result
+            // no need to do safe fields name here
+            aggregations::unset(vec![
+                "_id",
+                "products.item_id",
+                "products.product.store",
+                "products.product.variants.value.created_at",
+                "products.product.variants.value.updated_at",
+                "products.product.image.created_at",
+                "products.product.image.updated_at",
+                "products.product.image.public",
+                "products.product.image.hidden",
+                "products.product.image._id",
+            ])
         ];
 
         self.aggregate_users(pipeline, options, None).await
