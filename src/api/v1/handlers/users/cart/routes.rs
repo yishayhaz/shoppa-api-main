@@ -1,5 +1,6 @@
 use super::types::{AddProductToCartPayload, EditProductInCartPayload, RemoveProductFromCartQuery};
 use crate::api::v1::middlewares::CurrentUser;
+use crate::db::UserFunctions;
 use crate::helpers::cookies::CookieManager;
 use crate::{db::AxumDBExtansion, prelude::*};
 use axum::{
@@ -103,13 +104,42 @@ pub async fn add_product_to_cart(
         .find(|item| item.product_id() == &payload.product_id && item.item_id == payload.item_id)
         .is_some();
 
+    let updated_res;
+
     if update_quantity {
-        // TODO update quantity in cart (same as edit_product_in_cart)
-    }else {
-        // TODO add product to cart
+        updated_res = db
+            .edit_product_in_cart(
+                &current_user.user_id,
+                &payload.product_id,
+                &payload.item_id,
+                payload.quantity,
+                None,
+            )
+            .await?;
+    } else {
+        updated_res = db
+            .add_product_to_cart(&current_user.user_id, payload, None)
+            .await?
     }
 
-    Ok(().into_response())
+    if updated_res.modified_count == 0 {
+        if updated_res.matched_count == 0 {
+            return Ok(ResponseBuilder::<()>::error(
+                "Maybe item is in cart already?",
+                None,
+                None,
+                None,
+            )
+            .into_response());
+        }
+
+        return Ok(
+            ResponseBuilder::<()>::error("Failed to add product to cart", None, None, None)
+                .into_response(),
+        );
+    }
+
+    Ok(ResponseBuilder::<()>::success(None, None, None).into_response())
 }
 
 pub async fn get_full_cart(db: AxumDBExtansion, current_user: CurrentUser) -> HandlerResult {
@@ -124,6 +154,15 @@ pub async fn remove_product_from_cart(
     current_user: CurrentUser,
     Query(query): Query<RemoveProductFromCartQuery>,
 ) -> HandlerResult {
+    let update_res = db
+        .remove_product_from_cart(
+            &current_user.user_id,
+            &query.product_id,
+            &query.item_id,
+            None,
+        )
+        .await?;
+
     todo!()
 }
 
@@ -132,5 +171,15 @@ pub async fn edit_product_in_cart(
     current_user: CurrentUser,
     Json(payload): Json<EditProductInCartPayload>,
 ) -> HandlerResult {
+    let updated_res = db
+        .edit_product_in_cart(
+            &current_user.user_id,
+            &payload.product_id,
+            &payload.item_id,
+            payload.new_quantity,
+            None,
+        )
+        .await?;
+
     todo!()
 }

@@ -1,7 +1,10 @@
 use crate::prelude::*;
 use axum::async_trait;
 use bson::{doc, oid::ObjectId};
-use mongodb::options::{FindOneAndUpdateOptions, FindOneOptions};
+use mongodb::{
+    options::{FindOneAndUpdateOptions, FindOneOptions, UpdateOptions},
+    results::UpdateResult,
+};
 use shoppa_core::db::{
     models::{CartItem, User, UserStatus},
     populate::UsersPopulate,
@@ -35,10 +38,27 @@ pub trait UserFunctions {
         &self,
         user_id: &ObjectId,
         cart_item: T,
-        options: Option<FindOneAndUpdateOptions>,
-    ) -> Result<Option<User>>
+        options: Option<UpdateOptions>,
+    ) -> Result<UpdateResult>
     where
         T: Into<CartItem> + Send + Sync;
+
+    async fn remove_product_from_cart(
+        &self,
+        user_id: &ObjectId,
+        product_id: &ObjectId,
+        item_id: &ObjectId,
+        options: Option<UpdateOptions>,
+    ) -> Result<UpdateResult>;
+
+    async fn edit_product_in_cart(
+        &self,
+        user_id: &ObjectId,
+        product_id: &ObjectId,
+        item_id: &ObjectId,
+        quantity: u32,
+        options: Option<UpdateOptions>,
+    ) -> Result<UpdateResult>;
 }
 
 #[async_trait]
@@ -88,15 +108,54 @@ impl UserFunctions for DBConection {
         &self,
         user_id: &ObjectId,
         cart_item: T,
-        options: Option<FindOneAndUpdateOptions>,
-    ) -> Result<Option<User>>
+        options: Option<UpdateOptions>,
+    ) -> Result<UpdateResult>
     where
         T: Into<CartItem> + Send + Sync,
     {
         let cart_item: CartItem = cart_item.into();
 
+        let filters = doc! {
+            User::fields().id: user_id,
+            User::fields().status: {
+                "$nin": [UserStatus::Deleted, UserStatus::Banned]
+            },
+            // Check if the product is already in the cart
+            // If it is, then we don't need to add it again
+            User::fields().cart(true).items: {
+                "$not": {
+                    "$elemMatch": {
+                        User::fields().cart(false).items(false).product: cart_item.product_id(),
+                        User::fields().cart(false).items(false).item_id: &cart_item.item_id,
+                    }
+                }
+            }
+        };
+
         let update = doc! { "$push": { User::fields().cart(true).items: cart_item } };
 
+        self.update_user(filters, update, options, None)
+            .await
+    }
+
+    async fn remove_product_from_cart(
+        &self,
+        user_id: &ObjectId,
+        product_id: &ObjectId,
+        item_id: &ObjectId,
+        options: Option<UpdateOptions>,
+    ) -> Result<UpdateResult> {
+        todo!()
+    }
+
+    async fn edit_product_in_cart(
+        &self,
+        user_id: &ObjectId,
+        product_id: &ObjectId,
+        item_id: &ObjectId,
+        quantity: u32,
+        options: Option<UpdateOptions>,
+    ) -> Result<UpdateResult> {
         todo!()
     }
 }

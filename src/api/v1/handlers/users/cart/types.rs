@@ -1,5 +1,5 @@
 use crate::prelude::types::*;
-
+use shoppa_core::db::models::CartItem;
 
 #[derive(Deserialize, Serialize, Validate)]
 pub struct AddProductToCartPayload {
@@ -9,7 +9,6 @@ pub struct AddProductToCartPayload {
     pub quantity: u32,
 }
 
-
 #[derive(Deserialize, Serialize, Validate)]
 pub struct EditProductInCartPayload {
     pub product_id: ObjectId,
@@ -17,10 +16,14 @@ pub struct EditProductInCartPayload {
     pub new_quantity: u32,
 }
 
-
 #[derive(Deserialize, Serialize, Validate)]
 pub struct RemoveProductFromCartQuery {
     pub product_id: ObjectId,
     pub item_id: ObjectId,
 }
 
+impl From<AddProductToCartPayload> for CartItem {
+    fn from(payload: AddProductToCartPayload) -> Self {
+        Self::new(payload.product_id, payload.item_id, payload.quantity)
+    }
+}
