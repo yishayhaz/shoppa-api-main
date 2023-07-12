@@ -87,6 +87,28 @@ pub trait AdminStoreFunctions {
     ) -> Result<Option<Store>>;
 }
 
+
+#[async_trait]
+pub trait StoreUserStoreFunctions{
+    async fn update_store_base_data(
+        &self,
+        store_id: &ObjectId,
+        store_logo: Option<models::FileDocument>,
+        store_banner: Option<models::FileDocument>,
+        name: Option<String>,
+        description: Option<String>,
+        slogan: FieldPatch<String>,
+        contact_email: Option<String>,
+        contact_phone: Option<String>,
+        legal_id: Option<String>,
+        business_type: Option<models::StoreBusinessType>,
+        business_name: Option<String>,
+        min_order: Option<u64>,
+        option: Option<FindOneAndUpdateOptions>,
+    ) -> Result<Option<Store>>;
+}
+
+
 #[async_trait]
 impl StoreFunctions for DBConection {
     async fn get_random_stores_names(

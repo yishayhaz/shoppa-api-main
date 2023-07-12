@@ -35,7 +35,6 @@ impl AdminEmailFunctions for EmailClient {
                 ENV_VARS.STORE_PANEL_URL, token
             ),
         );
-
         args.insert("username".to_string(), username);
         args.insert("store_logo".to_string(), store_logo);
         args.insert("store_name".to_string(), store_name);
