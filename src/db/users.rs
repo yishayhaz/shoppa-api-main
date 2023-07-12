@@ -8,8 +8,8 @@ use mongodb::{
 use shoppa_core::db::{
     aggregations,
     models::{
-        CartItem, FileTypes, ItemVariants, Product, ProductItemStatus, ProductStatus, User,
-        UserStatus, Variants, Store,
+        CartItem, FileTypes, ItemVariants, Product, ProductItemStatus, ProductStatus, Store, User,
+        UserStatus, Variants,
     },
     populate::UsersPopulate,
     DBConection,
@@ -358,6 +358,7 @@ impl UserFunctions for DBConection {
                                             "current_variant",
                                             doc!{
                                                 Variants::fields().id: format!("$$current_variant.{}", Variants::fields().id),
+                                                Variants::fields().type_: format!("$$current_variant.{}", Variants::fields().type_),
                                                 Variants::fields().name: format!("$$current_variant.{}", Variants::fields().name),
                                                 // getting the currect variant value for the current item_variant
                                                 "value": aggregations::array_elem_at(
@@ -408,14 +409,12 @@ impl UserFunctions for DBConection {
                 "_id",
                 Store::fields().id,
                 "store",
-                Some(vec![
-                    aggregations::project(
-                        aggregations::ProjectIdOptions::Keep,
-                        [Store::fields().name, Store::fields().min_order],
-                        None
-                    ),
-                ]),
-                None    
+                Some(vec![aggregations::project(
+                    aggregations::ProjectIdOptions::Keep,
+                    [Store::fields().name, Store::fields().min_order],
+                    None,
+                )]),
+                None,
             ),
             aggregations::unwind("store", false),
             // just cleaning up the result
@@ -431,7 +430,7 @@ impl UserFunctions for DBConection {
                 "products.product.image.public",
                 "products.product.image.hidden",
                 "products.product.image._id",
-            ])
+            ]),
         ];
 
         self.aggregate_users(pipeline, options, None).await
