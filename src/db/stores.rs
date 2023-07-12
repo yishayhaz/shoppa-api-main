@@ -87,27 +87,47 @@ pub trait AdminStoreFunctions {
     ) -> Result<Option<Store>>;
 }
 
-
 #[async_trait]
-pub trait StoreUserStoreFunctions{
+pub trait StoreUserStoreFunctions {
+    async fn add_store_location(
+        &self,
+        store_id: &ObjectId,
+        location: &models::StoreLocation,
+        options: Option<FindOneAndUpdateOptions>,
+    ) -> Result<Option<Store>>;
+
+    async fn update_store_location(
+        &self,
+        store_id: &ObjectId,
+        location_id: &ObjectId,
+        city: &Option<String>,
+        street: &Option<String>,
+        street_number: &Option<String>,
+        free_text: FieldPatch<String>,
+        phone: &Option<String>,
+        options: Option<FindOneAndUpdateOptions>,
+    ) -> Result<Option<Store>>;
+
+    async fn delete_store_location(
+        &self,
+        store_id: &ObjectId,
+        location_id: &ObjectId,
+        options: Option<FindOneAndUpdateOptions>,
+    ) -> Result<Option<Store>>;
+
     async fn update_store_base_data(
         &self,
         store_id: &ObjectId,
         store_logo: Option<models::FileDocument>,
         store_banner: Option<models::FileDocument>,
-        name: Option<String>,
         description: Option<String>,
         slogan: FieldPatch<String>,
         contact_email: Option<String>,
         contact_phone: Option<String>,
-        legal_id: Option<String>,
-        business_type: Option<models::StoreBusinessType>,
-        business_name: Option<String>,
         min_order: Option<u64>,
         option: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Store>>;
 }
-
 
 #[async_trait]
 impl StoreFunctions for DBConection {
@@ -433,6 +453,163 @@ impl AdminStoreFunctions for DBConection {
 
         if let Some(business_name) = business_name {
             update.insert(Store::fields().legal_information(true).name, business_name);
+        }
+
+        if let Some(min_order) = min_order {
+            update.insert(Store::fields().min_order, min_order as i64);
+        }
+
+        let update = doc! {
+            "$set": update
+        };
+
+        self.find_and_update_store_by_id(store_id, update, option, None)
+            .await
+    }
+}
+
+#[async_trait]
+impl StoreUserStoreFunctions for DBConection {
+    async fn add_store_location(
+        &self,
+        store_id: &ObjectId,
+        location: &models::StoreLocation,
+        options: Option<FindOneAndUpdateOptions>,
+    ) -> Result<Option<Store>> {
+        let filters = doc! {
+            "_id": store_id,
+            // to make sure that the id is not in the store locations already
+            Store::fields().locations(true).id: {
+                "$ne": location.id()
+            }
+        };
+
+        let update = doc! {
+            "$push": {
+                Store::fields().locations: location
+            }
+        };
+
+        self.find_and_update_store(filters, update, options, None)
+            .await
+    }
+
+    async fn update_store_location(
+        &self,
+        store_id: &ObjectId,
+        location_id: &ObjectId,
+        city: &Option<String>,
+        street: &Option<String>,
+        street_number: &Option<String>,
+        free_text: FieldPatch<String>,
+        phone: &Option<String>,
+        options: Option<FindOneAndUpdateOptions>,
+    ) -> Result<Option<Store>> {
+        let filters = doc! {
+            "_id": store_id,
+            Store::fields().locations(true).id: location_id
+        };
+
+        let mut update = doc! {};
+
+        let loca_key_dollar = format!("{}.{}", Store::fields().locations, "$");
+
+        let locations_fields = Store::fields().locations(false);
+
+        if let Some(city) = city {
+            update.insert(format!("{loca_key_dollar}.{}", locations_fields.city), city);
+        }
+
+        if let Some(street) = street {
+            update.insert(
+                format!("{loca_key_dollar}.{}", locations_fields.street),
+                street,
+            );
+        }
+
+        if let Some(street_number) = street_number {
+            update.insert(
+                format!("{loca_key_dollar}.{}", locations_fields.street_number),
+                street_number,
+            );
+        }
+
+        if FieldPatch::Missing != free_text {
+            update.insert(
+                format!("{loca_key_dollar}.{}", locations_fields.free_text),
+                free_text.into_option(),
+            );
+        }
+
+        if let Some(phone) = phone {
+            update.insert(
+                format!("{loca_key_dollar}.{}", locations_fields.phone),
+                phone,
+            );
+        }
+
+        let update = doc! {
+            "$set": update
+        };
+
+        self.find_and_update_store(filters, update, options, None)
+            .await
+    }
+
+    async fn delete_store_location(
+        &self,
+        store_id: &ObjectId,
+        location_id: &ObjectId,
+        options: Option<FindOneAndUpdateOptions>,
+    ) -> Result<Option<Store>> {
+        let update = doc! {
+            "$pull": {
+                Store::fields().locations: {
+                    "_id": location_id
+                }
+            }
+        };
+
+        self.find_and_update_store_by_id(store_id, update, options, None)
+            .await
+    }
+
+    async fn update_store_base_data(
+        &self,
+        store_id: &ObjectId,
+        store_logo: Option<models::FileDocument>,
+        store_banner: Option<models::FileDocument>,
+        description: Option<String>,
+        slogan: FieldPatch<String>,
+        contact_email: Option<String>,
+        contact_phone: Option<String>,
+        min_order: Option<u64>,
+        option: Option<FindOneAndUpdateOptions>,
+    ) -> Result<Option<Store>> {
+        let mut update = doc! {};
+
+        if let Some(store_logo) = store_logo {
+            update.insert(Store::fields().logo, store_logo.into_bson()?);
+        }
+
+        if let Some(store_banner) = store_banner {
+            update.insert(Store::fields().banner, store_banner.into_bson()?);
+        }
+
+        if let Some(description) = description {
+            update.insert(Store::fields().description, description);
+        }
+
+        if FieldPatch::Missing != slogan {
+            update.insert(Store::fields().slogan, slogan.into_option());
+        }
+
+        if let Some(contact_email) = contact_email {
+            update.insert(Store::fields().contact(true).email, contact_email);
+        }
+
+        if let Some(contact_phone) = contact_phone {
+            update.insert(Store::fields().contact(true).phone, contact_phone);
         }
 
         if let Some(min_order) = min_order {
