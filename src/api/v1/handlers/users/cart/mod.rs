@@ -16,4 +16,3 @@ pub fn router() -> Router {
             )),
         )
 }
-
