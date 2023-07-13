@@ -200,3 +200,21 @@ pub async fn update_store_location(
 
     Ok(ResponseBuilder::success(store, None, None).into_response())
 }
+
+pub async fn get_current_user_store(
+    db: AxumDBExtansion,
+    current_user: CurrentUser,
+) -> HandlerResult {
+    let store = db
+        .get_store_by_id(&current_user.store_id, None, None, None)
+        .await?;
+
+    if store.is_none() {
+        return Ok(
+            ResponseBuilder::<u16>::error("", None, Some("store not found"), Some(400))
+                .into_response(),
+        );
+    }
+
+    Ok(ResponseBuilder::success(store, None, None).into_response())
+}
