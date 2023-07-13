@@ -2,7 +2,7 @@ use super::types::{
     CreateProductPayload, EditProductPayload, GetProductsQueryParams, UploadProductImagePayload,
 };
 use crate::{
-    db::{AdminProductFunctions, AxumDBExtansion, ProductSortBy},
+    db::{AdminProductFunctions, AxumDBExtansion, ProductSortBy, UserFunctions},
     helpers::types::AxumStorgeClientExtension,
     prelude::*,
 };
@@ -148,6 +148,12 @@ pub async fn delete_product(
                 .into_response(),
         );
     }
+
+    tokio::spawn(async move {
+        let _ = db
+            .remove_product_from_carts(&product_id, None, None, None)
+            .await;
+    });
 
     Ok(ResponseBuilder::success(Some(res), None, None).into_response())
 }

@@ -134,6 +134,12 @@ pub async fn delete_product_item(
         .into_response());
     }
 
+    tokio::spawn(async move {
+        let _ = db
+            .remove_product_from_carts(&product_id, Some(&item_id), None, None)
+            .await;
+    });
+
     Ok(
         ResponseBuilder::<()>::success(None, Some("Product item deleted successfully"), None)
             .into_response(),
