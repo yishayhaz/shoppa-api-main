@@ -14,6 +14,14 @@ use shoppa_core::{
     ResponseBuilder,
 };
 
+pub async fn get_my_store(db: AxumDBExtansion, current_user: CurrentUser) -> HandlerResult {
+    let store = db
+        .get_store_by_id(&current_user.store_id, None, None, None)
+        .await?;
+
+    Ok(ResponseBuilder::success(store, None, None).into_response())
+}
+
 pub async fn update_store_assets(
     db: AxumDBExtansion,
     storage_client: AxumStorgeClientExtension,
