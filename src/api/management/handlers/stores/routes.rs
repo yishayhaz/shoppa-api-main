@@ -12,8 +12,8 @@ use shoppa_core::{
         Pagination,
     },
     extractors::{JsonWithValidation, MultipartFormWithValidation},
-    ResponseBuilder,
     parser::FieldPatch,
+    ResponseBuilder,
 };
 
 pub async fn create_new_store(
@@ -118,7 +118,19 @@ pub async fn update_store_assets(
     };
 
     db.update_store_base_data(
-        &store_id, logo_doc, banner_doc, None, None, FieldPatch::Missing, None, None, None, None, None, None, None,
+        &store_id,
+        logo_doc,
+        banner_doc,
+        None,
+        None,
+        FieldPatch::Missing,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
     )
     .await?;
 
@@ -136,6 +148,8 @@ pub async fn update_store(
     Path(store_id): Path<ObjectId>,
     JsonWithValidation(payload): JsonWithValidation<types::UpdateStorePayload>,
 ) -> HandlerResult {
+    // TODO change to transaction if store name is changed
+    // to change the store name, we need to change the store name in all the products
     let store = db
         .update_store_base_data(
             &store_id,
