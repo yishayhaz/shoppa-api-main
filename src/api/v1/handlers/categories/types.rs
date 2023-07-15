@@ -1,13 +1,8 @@
-use crate::prelude::{types::*};
-
-
-#[derive(Deserialize)]
-pub struct GetCategoryInfo {
-    pub category_ids: Vec<ObjectId>
-}
+use crate::prelude::types::*;
+use shoppa_core::parser::empty_string_as_none;
 
 #[derive(Deserialize)]
-pub struct DeleteCategory {
-    pub category_ids: Vec<ObjectId>
+pub struct GetCategoriesQueryParams {
+    #[serde(default, deserialize_with = "empty_string_as_none")]
+    pub parent: Option<ObjectId>,
 }
-

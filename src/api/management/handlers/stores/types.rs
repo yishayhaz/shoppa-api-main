@@ -2,10 +2,10 @@ use crate::prelude::{types::*, *};
 use axum::{async_trait, extract::Multipart};
 use shoppa_core::{
     constans,
-    db::models::{Store, StoreBusinessType, StoreLocation},
+    db::models::{Store, StoreBusinessType, StoreLocation, DeliveryStrategies},
     validators::{image_file_field_validator, number_string_validator, phone_number_validator},
     extractors::{FileFieldstr, FromMultipart},
-    parser::empty_string_as_none,
+    parser::{empty_string_as_none, FieldPatch},
 };
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -39,6 +39,8 @@ pub struct CreateStorePayload {
     pub legal_id: String,
     pub legal_name: String,
     pub business_type: StoreBusinessType,
+    pub min_order: Option<u64>,
+    pub delivery_strategies: Option<DeliveryStrategies>,
 }
 
 #[derive(Validate)]
@@ -64,11 +66,12 @@ pub struct UpdateStorePayload {
         max = "constans::STORE_NAME_MAX_LENGTH"
     ))]
     pub name: Option<String>, // store name
+    #[serde(default)]
     #[validate(length(
         min = "constans::STORE_SLOGAN_MIN_LENGTH",
         max = "constans::STORE_SLOGAN_MAX_LENGTH"
     ))]
-    pub slogan: Option<String>,
+    pub slogan: FieldPatch<String>,
     #[validate(length(
         min = "constans::STORE_DESCRIPTION_MIN_LENGTH",
         max = "constans::STORE_DESCRIPTION_MAX_LENGTH"
@@ -82,6 +85,7 @@ pub struct UpdateStorePayload {
     pub legal_id: Option<String>,
     pub business_name: Option<String>,
     pub business_type: Option<StoreBusinessType>,
+    pub min_order: Option<u64>,
 }
 
 #[derive(Debug, Validate, Deserialize, Serialize)]
@@ -101,10 +105,11 @@ pub struct UpdateStoreLocationPayload {
         max = "constans::STREET_NUMBER_MAX_LENGTH"
     ))]
     pub street_number: Option<String>,
+    #[serde(default)]
     #[validate(length(
         max = "constans::LOCATION_FREE_TEXT_MAX_LENGTH"
     ))]
-    pub free_text: Option<String>,
+    pub free_text: FieldPatch<String>,
     #[validate(custom = "number_string_validator")]
     pub phone: Option<String>,
 }
@@ -185,6 +190,8 @@ impl Into<Store> for CreateStorePayload {
             self.legal_id,
             self.business_type,
             self.legal_name,
+            self.min_order,
+            self.delivery_strategies,
         )
     }
 }

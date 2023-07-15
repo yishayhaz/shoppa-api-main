@@ -28,6 +28,17 @@ pub struct EnvVariables {
     pub DIGITAL_OCEAN_SPACE_REGION: String,
     #[validate(length(min = 1))]
     pub BUCKET_NAME: String,
+    pub NEW_STORE_USER_TEMPLATE_ID: String,
+    #[validate(length(equal = 32))]
+    pub STORE_USER_LOGIN_TOKEN_SECRET: String,
+    #[validate(length(equal = 32))]
+    pub STORE_USER_REGISTRATION_TOKEN_SECRET: String,
+    #[validate(length(min = 1))]
+    pub STORE_PANEL_URL: String,
+    #[validate(length(min = 1))]
+    pub SHOPPA_URL: String,
+    #[validate(length(min = 1))]
+    pub ASSETS_URL: String,
 }
 
 impl EnvVariables {
@@ -56,10 +67,50 @@ impl EnvVariables {
             DIGITAL_OCEAN_SPACE_REGION: env::var("DIGITAL_OCEAN_SPACE_REGION")
                 .expect("DIGITAL_OCEAN_SPACE_REGION must be set"),
             BUCKET_NAME: env::var("BUCKET_NAME").expect("BUCKET_NAME must be set"),
+            NEW_STORE_USER_TEMPLATE_ID: env::var("NEW_STORE_USER_TEMPLATE_ID").unwrap_or_else(
+                |_| {
+                    let default_temp_id = "d-de7d34459e32405596a27221f1d191fb".to_string();
+                    println!(
+                        "NEW_STORE_USER_TEMPLATE_ID not set, using default: {d}",
+                        d = default_temp_id
+                    );
+                    default_temp_id
+                },
+            ),
+            STORE_USER_LOGIN_TOKEN_SECRET: env::var("STORE_USER_LOGIN_TOKEN_SECRET")
+                .expect("STORE_USER_LOGIN_TOKEN_SECRET must be set"),
+            STORE_USER_REGISTRATION_TOKEN_SECRET: env::var("STORE_USER_REGISTRATION_TOKEN_SECRET")
+                .expect("STORE_USER_REGISTRATION_TOKEN_SECRET must be set"),
+            STORE_PANEL_URL: env::var("STORE_PANEL_URL").unwrap_or_else(|_| {
+                let default_url = "https://my.shoppa.co.il".to_string();
+                println!(
+                    "STORE_PANEL_URL not set, using default: {d}",
+                    d = default_url
+                );
+                default_url
+            }),
+            SHOPPA_URL: env::var("SHOPPA_URL").unwrap_or_else(|_| {
+                let default_url = "https://shoppa.co.il".to_string();
+                println!("SHOPPA_URL not set, using default: {d}", d = default_url);
+                default_url
+            }),
+            ASSETS_URL: env::var("ASSETS_URL").unwrap_or_else(|_| {
+                let default_url = "https://assets.shoppa.co.il".to_string();
+                println!("ASSETS_URL not set, using default: {d}", d = default_url);
+                default_url
+            }),
         }
     }
     pub fn is_production(&self) -> bool {
         self.ENVIRONMENT.contains("prod")
+    }
+
+    pub fn is_development(&self) -> bool {
+        self.ENVIRONMENT.contains("dev")
+    }
+
+    pub fn is_stage(&self) -> bool {
+        self.ENVIRONMENT.contains("stage")
     }
 }
 

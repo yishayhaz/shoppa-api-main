@@ -1,9 +1,9 @@
 mod auth;
-
+mod new_auth;
+pub use new_auth::{login_required, CurrentUser, login_required_or_create_guest};
 pub use auth::{
     GetTokenForGetMe, GuestOnly, Level1Access, Level1AccessOrNone, Level2Access, Level3Access,
 };
-
 use crate::helpers::env::ENV_VARS;
 use axum::{async_trait, extract::FromRequestParts, http::request::Parts};
 

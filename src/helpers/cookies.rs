@@ -1,44 +1,74 @@
 use crate::{
-    helpers::{env::ENV_VARS, security, types::Cookeys},
+    helpers::{env::ENV_VARS, types::Cookeys},
     prelude::*,
+    tokens::USER_TOKEN_MANAGER,
 };
 use shoppa_core::{constans::MAX_COOKIE_EXP, db::models::User};
 use tower_cookies::{cookie::time::Duration, Cookie, Cookies};
 
-pub fn create_cookie<'a>(key: &'a Cookeys, value: String, exp: f64, http_only: bool) -> Cookie<'a> {
-    let mut cookie = Cookie::new(key.to_string(), value);
+pub trait CookieManager {
+    fn set_cookie(&self, key: &Cookeys, value: String, exp: i64, http_only: bool);
 
-    cookie.set_http_only(http_only);
+    fn delete_cookie(&self, key: &Cookeys);
 
-    cookie.set_secure(ENV_VARS.is_production());
+    fn set_access_cookie(&self, user: &User) -> Result<()>;
 
-    cookie.set_max_age(Duration::seconds_f64(exp));
+    fn get_access_cookie(&self) -> Result<Option<String>>;
 
-    cookie.set_domain(&ENV_VARS.COOKIE_DOMAIN);
-
-    cookie.set_path("/");
-
-    cookie
+    fn delete_access_cookie(&self);
 }
 
-pub fn delete_cookie<'a>(key: &'a Cookeys) -> Cookie<'a> {
-    let mut cookie = Cookie::new(key.to_string(), "");
+impl CookieManager for Cookies {
+    fn set_cookie(&self, key: &Cookeys, value: String, exp: i64, http_only: bool) {
+        let mut cookie = Cookie::new(key.to_string(), value);
 
-    cookie.set_max_age(Duration::seconds_f64(0.0));
+        cookie.set_http_only(http_only);
 
-    cookie.set_domain(&ENV_VARS.COOKIE_DOMAIN);
+        cookie.set_secure(ENV_VARS.is_production());
 
-    cookie.set_path("/");
+        cookie.set_max_age(Duration::seconds(exp as i64));
 
-    cookie
-}
+        cookie.set_domain(&ENV_VARS.COOKIE_DOMAIN);
 
-pub fn set_access_cookie(cookies: &Cookies, user: &User) -> Result<()> {
-    let login_token = security::generate_login_token(&user)?;
+        cookie.set_path("/");
 
-    let access_cookie = create_cookie(&Cookeys::AccessToken, login_token, MAX_COOKIE_EXP, true);
+        self.add(cookie);
+    }
 
-    cookies.add(access_cookie);
+    fn delete_cookie(&self, key: &Cookeys) {
+        let mut cookie = Cookie::new(key.to_string(), "");
 
-    Ok(())
+        cookie.set_max_age(Duration::seconds(0));
+
+        cookie.set_domain(&ENV_VARS.COOKIE_DOMAIN);
+
+        cookie.set_path("/");
+
+        self.add(cookie);
+    }
+
+    fn set_access_cookie(&self, user: &User) -> Result<()> {
+        let login_token = USER_TOKEN_MANAGER.generate_token(user, None)?;
+
+        self.set_cookie(&Cookeys::AccessToken, login_token, MAX_COOKIE_EXP, true);
+
+        Ok(())
+    }
+
+    fn get_access_cookie(&self) -> Result<Option<String>> {
+        let cookie = self.get(&Cookeys::AccessToken.to_string());
+
+        let cookie = match cookie {
+            Some(cookie) => cookie,
+            None => return Ok(None),
+        };
+
+        let cookie = cookie.value().to_string();
+
+        Ok(Some(cookie))
+    }
+
+    fn delete_access_cookie(&self) {
+        self.delete_cookie(&Cookeys::AccessToken);
+    }
 }

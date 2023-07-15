@@ -7,7 +7,7 @@ pub async fn signup_to_news_letter(
     db: AxumDBExtansion,
     JsonWithValidation(payload): JsonWithValidation<types::SignUpToNewsLetterPayload>,
 ) -> HandlerResult {
-    db.insert_new_news_letter_subscriber(payload, None).await?;
+    db.insert_new_news_letter_subscriber(payload, None, None).await?;
 
     Ok(ResponseBuilder::<u16>::success(None, None, None).into_response())
 }

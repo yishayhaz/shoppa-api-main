@@ -1,13 +1,12 @@
 pub mod error_code;
-mod responses;
-pub use responses::*;
-use shoppa_core::file_storage::StorageClient;
+use shoppa_core::{file_storage::StorageClient, email_sender::EmailClient};
 use strum_macros::{Display, EnumString};
 
 use axum::Extension;
 use std::sync::Arc;
 
 pub type AxumStorgeClientExtension = Extension<Arc<StorageClient>>;
+pub type AxumEmailClientExtension = Extension<Arc<EmailClient>>;
 
 #[derive(EnumString, Display)]
 pub enum Cookeys {
@@ -19,9 +18,11 @@ pub enum Cookeys {
     VisitIndicator,
     #[strum(to_string = "lab_pigeon")]
     DebugingCookie,
+    #[strum(to_string = "government_pigeon")]
+    StoreUserAccessToken,
 }
 
-#[derive(EnumString)]
+#[derive(EnumString, Display)]
 pub enum HeadKeys {
     #[strum(to_string = "x-top_secret_pigeon")]
     CsrfToken,

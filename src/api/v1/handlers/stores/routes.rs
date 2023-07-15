@@ -28,7 +28,7 @@ pub async fn get_stores_autocomplete(
 }
 
 pub async fn get_stores_count(db: AxumDBExtansion) -> HandlerResult {
-    let count = db.count_stores(None, None).await?;
+    let count = db.count_stores(None, None, None).await?;
 
     Ok(ResponseBuilder::success(Some(count), None, None).into_response())
 }

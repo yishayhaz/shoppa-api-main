@@ -1,104 +1,153 @@
 use super::types;
 use crate::{
-    api::v1::middlewares::*,
-    db::{inserts, updates, queries},
-    prelude::{handlers::*, *},
+    db::{AdminVariantsFunctions, AxumDBExtansion},
+    prelude::*,
+};
+use axum::{
+    extract::{Path, Query},
+    response::IntoResponse,
+};
+use bson::oid::ObjectId;
+use shoppa_core::{
+    db::Pagination,
+    extractors::{JsonWithValidation, QueryWithValidation},
+    ResponseBuilder,
 };
 
-pub async fn get_variants(db: DBExtension, pagination: Pagination) -> HandlerResult {
-    let variants = queries::get_variants_for_extarnel(&db, Some(pagination)).await?;
+pub async fn get_variants(db: AxumDBExtansion, pagination: Pagination) -> HandlerResult {
+    let variants = db.get_variants_for_extarnel(Some(pagination)).await?;
 
     Ok(ResponseBuilder::paginated_response(&variants).into_response())
 }
 
 pub async fn get_variants_by_ids(
-    db: DBExtension,
+    db: AxumDBExtansion,
     QueryWithValidation(query): QueryWithValidation<types::GetVariantsByIdsQuery>,
 ) -> HandlerResult {
-    let variants = queries::get_variants_by_ids(&db, &query.variants_ids).await?;
+    let variants = db.get_variants_by_ids(&query.variants_ids).await?;
 
     Ok(ResponseBuilder::success(Some(variants), None, None).into_response())
 }
 
-pub async fn get_variant_by_id(db: DBExtension, Path(variant_id): Path<ObjectId>) -> HandlerResult {
-    let variant = queries::get_variant_by_id(&db, &variant_id).await?;
+pub async fn get_variant_by_id(
+    db: AxumDBExtansion,
+    Path(variant_id): Path<ObjectId>,
+) -> HandlerResult {
+    let variant = db.get_variant_for_extarnel(&variant_id).await?;
 
     Ok(ResponseBuilder::success(Some(variant), None, None).into_response())
 }
 
-
-
 pub async fn create_new_variant(
-    db: DBExtension,
-    _: OnlyInDev,
+    db: AxumDBExtansion,
     JsonWithValidation(payload): JsonWithValidation<types::CreateVariantPayload>,
 ) -> HandlerResult {
-    let _ = inserts::new_variant(&db, payload.name, payload.values, payload.type_).await;
+    let variant = db.insert_new_variant(payload, None, None).await?;
 
-    Ok(().into_response())
+    Ok(ResponseBuilder::success(Some(variant), None, None).into_response())
 }
 
 pub async fn update_variant(
-    db: DBExtension,
-    _: OnlyInDev,
+    db: AxumDBExtansion,
     Path(variant_id): Path<ObjectId>,
     JsonWithValidation(payload): JsonWithValidation<types::UpdateVariantBasicInfoPayload>,
 ) -> HandlerResult {
-    let _ = updates::update_variant_basic_info(&db, &variant_id, &payload.name, &payload.type_).await;
-    
-    Ok(().into_response())
-}
+    let variant = db
+        .update_variant_basic(
+            &variant_id,
+            &payload.name,
+            &payload.type_,
+            &payload
+                .new_values
+                .map(|values| values.into_iter().map(|v| v.into()).collect()),
+        )
+        .await?;
 
+    if variant.is_none() {
+        return Ok(ResponseBuilder::<()>::error("", None, None, Some(404)).into_response());
+    }
 
-pub async fn add_value_to_variant(
-    db: DBExtension,
-    _: OnlyInDev,
-    Path(variant_id): Path<ObjectId>,
-    JsonWithValidation(payload): JsonWithValidation<types::CreateVariantValuePayload>,
-) -> HandlerResult {
-    let _ = inserts::add_variant_value(&db, &variant_id, &payload.label, &payload.value).await;
-
-    Ok(().into_response())
+    Ok(ResponseBuilder::success(Some(variant), None, None).into_response())
 }
 
 pub async fn update_variant_value(
-    db: DBExtension,
-    _: OnlyInDev,
-    Path(variant_id): Path<ObjectId>,
-    Path(value_id): Path<ObjectId>,
+    db: AxumDBExtansion,
+    Path((variant_id, value_id)): Path<(ObjectId, ObjectId)>,
     JsonWithValidation(payload): JsonWithValidation<types::UpdateVariantValuePayload>,
 ) -> HandlerResult {
-    let _ = updates::update_variant_value(&db, &variant_id, &value_id, &payload.label, &payload.value).await;
+    let variant = db
+        .update_variant_value(&variant_id, &value_id, payload.value, payload.label)
+        .await?;
 
-    Ok(().into_response())
+    if variant.is_none() {
+        return Ok(ResponseBuilder::<()>::error("", None, None, Some(404)).into_response());
+    }
+
+    Ok(ResponseBuilder::success(Some(variant.unwrap()), None, None).into_response())
 }
 
-
 pub async fn delete_variant(
-    db: DBExtension,
-    _: OnlyInDev,
+    db: AxumDBExtansion,
     Path(variant_id): Path<ObjectId>,
 ) -> HandlerResult {
-    // TODO: omer
-    // 1. check if any category uses it
-    // 2. if so - return error
+    if db.check_if_variant_is_in_use(&variant_id).await? {
+        return Ok(
+            ResponseBuilder::<()>::error("", None, Some("variant is in use"), Some(400))
+                .into_response(),
+        );
+    }
 
-    Ok(().into_response())
+    let variant = db
+        .find_and_delete_variant_by_id(&variant_id, None, None)
+        .await?;
+
+    if variant.is_none() {
+        return Ok(ResponseBuilder::<()>::error("", None, None, Some(404)).into_response());
+    }
+
+    Ok(ResponseBuilder::success(variant, None, None).into_response())
 }
 
 pub async fn delete_variant_value(
-    db: DBExtension,
-    _: OnlyInDev,
-    Path(variant_id): Path<ObjectId>,
-    Path(value_id): Path<ObjectId>,
+    db: AxumDBExtansion,
+    Path((variant_id, value_id)): Path<(ObjectId, ObjectId)>,
 ) -> HandlerResult {
-    // TODO: omer
-    
-    // 1. check if any category uses `variant_id`
-    // 2. if not -> go ahead and perform the delete
-    // 3. if yes -> check if any product.variants.includes(variant_id) AND product.items[~].variants.value_id == `value_id`
-    // 4. if yes -> return error
-    // 5. if no -> go ahead and perform the delete
+    let delete_res;
 
-    Ok(().into_response())
+    if !db.check_if_variant_is_in_use(&variant_id).await? {
+        delete_res = db.delete_variant_value(&variant_id, &value_id).await?;
+    } else {
+        if db
+            .check_if_variant_value_is_in_use(&variant_id, &value_id)
+            .await?
+        {
+            return Ok(ResponseBuilder::<()>::error(
+                "",
+                None,
+                Some("variant value is in use"),
+                Some(400),
+            )
+            .into_response());
+        }
+
+        delete_res = db.delete_variant_value(&variant_id, &value_id).await?;
+    }
+
+    if delete_res.is_none() {
+        return Ok(ResponseBuilder::<()>::error("", None, None, Some(404)).into_response());
+    }
+
+    Ok(ResponseBuilder::success(delete_res, None, None).into_response())
+}
+
+pub async fn autocomplete_variants(
+    db: AxumDBExtansion,
+    pagination: Pagination,
+    Query(query): Query<types::GetVariantsAutocompleteQuery>,
+) -> HandlerResult {
+    let variants = db
+        .autocomplete_variants_search(Some(pagination), query.categories_ids, query.free_text)
+        .await?;
+
+    Ok(ResponseBuilder::success(Some(variants), None, None).into_response())
 }

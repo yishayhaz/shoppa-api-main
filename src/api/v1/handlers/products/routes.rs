@@ -24,13 +24,13 @@ pub async fn get_products_infinite(
 pub async fn get_products(
     db: AxumDBExtansion,
     pagination: Pagination,
-    sorting: OptionalSorter<ProductSortBy>,
+    OptionalSorter(sorting): OptionalSorter<ProductSortBy>,
     Query(query): Query<types::GetProductQueryParams>,
 ) -> HandlerResult {
     let products = db
         .get_products_for_extarnel(
             Some(pagination),
-            sorting.0,
+            sorting,
             query.free_text,
             query.store_id,
             query.category_id,
@@ -55,30 +55,37 @@ pub async fn products_autocomplete(
     db: AxumDBExtansion,
     Query(query): Query<types::GetProductsAutoCompleteQueryParams>,
 ) -> HandlerResult {
-    // maybe get random products if there is no free text
-    if query.free_text.is_none() {
-        return Ok(ResponseBuilder::<Vec<u16>>::success(Some(vec![]), None, None).into_response());
-    }
-    todo!()
-    // let products = queries::get_products_names_for_autocomplete(
-    //     &db,
-    //     query.free_text.unwrap(),
-    //     query.store_id,
-    //     query.category_id,
-    // )
-    // .await?;
 
-    // Ok(ResponseBuilder::success(Some(products), None, None).into_response())
+    let products = match query.free_text {
+        Some(free_text) => db
+            .autocomplete_products_search(
+                free_text,
+                query.store_id,
+                query.category_id,
+                None,
+            )
+            .await?,
+        None => db
+            .random_autocomplete_products_search(
+                query.amount,
+                query.store_id,
+                query.category_id,
+                None
+            )
+            .await?,
+    };
+
+    Ok(ResponseBuilder::success(Some(products), None, None).into_response())
 }
 
 pub async fn products_count(
     db: AxumDBExtansion,
     Query(query): Query<types::GetProductsCountQueryParams>,
 ) -> HandlerResult {
-    todo!()
-    // let count = queries::get_products_count(&db, query.store_id, query.category_id).await?;
 
-    // Ok(ResponseBuilder::success(Some(count), None, None).into_response())
+    let count = db.get_products_count(query.store_id, query.category_id).await?;
+
+    Ok(ResponseBuilder::success(Some(count), None, None).into_response())
 }
 
 pub async fn add_view_to_product(

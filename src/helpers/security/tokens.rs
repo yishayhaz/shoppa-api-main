@@ -3,7 +3,6 @@ use bson::oid::ObjectId;
 use chrono::Utc;
 use rusty_paseto::prelude::*;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 use shoppa_core::db::models::{User, DBModel};
 
 lazy_static! {
@@ -26,7 +25,7 @@ pub fn generate_login_token(user: &User) -> Result<String> {
         let token = PasetoBuilder::<V4, Local>::default()
             .set_claim(ExpirationClaim::try_from(in_90_days)?)
             .set_claim(IssuerClaim::try_from("main-api")?)
-            .set_claim(CustomClaim::try_from(("level", user.level))?)
+            .set_claim(CustomClaim::try_from(("status", 1))?)
             .set_claim(CustomClaim::try_from(("user_id", user_id))?)
             .build(&LOGIN_TOKEN_KEY)?;
         Ok(token)
@@ -44,10 +43,7 @@ pub fn decode_login_token(token: &str) -> Result<LoginTokenData> {
         Err(_) => return Err(Error::Static("TODO")),
     };
 
-    let data = serde_json::from_value::<LoginTokenData>(json!({
-        "level": token_data.get("level"),
-        "user_id":  token_data.get("user_id")
-    }));
+    let data = serde_json::from_value::<LoginTokenData>(token_data);
 
     match data {
         Ok(v) => Ok(v),

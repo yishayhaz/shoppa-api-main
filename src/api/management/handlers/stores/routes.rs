@@ -1,8 +1,8 @@
 use super::types;
 use crate::{
     db::{AdminStoreFunctions, AxumDBExtansion},
+    helpers::types::AxumStorgeClientExtension,
     prelude::*,
-    helpers::types::AxumStorgeClientExtension
 };
 use axum::{extract::Path, response::IntoResponse};
 use bson::oid::ObjectId;
@@ -12,6 +12,7 @@ use shoppa_core::{
         Pagination,
     },
     extractors::{JsonWithValidation, MultipartFormWithValidation},
+    parser::FieldPatch,
     ResponseBuilder,
 };
 
@@ -19,13 +20,13 @@ pub async fn create_new_store(
     db: AxumDBExtansion,
     JsonWithValidation(payload): JsonWithValidation<types::CreateStorePayload>,
 ) -> HandlerResult {
-    let store = db.insert_new_store(payload, None).await?;
+    let store = db.insert_new_store(payload, None, None).await?;
 
     Ok(ResponseBuilder::success(Some(store), None, None).into_response())
 }
 
 pub async fn get_store_by_id(db: AxumDBExtansion, Path(store_id): Path<ObjectId>) -> HandlerResult {
-    let store = db.get_store_by_id(&store_id, None, None).await?;
+    let store = db.get_store_by_id(&store_id, None, None, None).await?;
 
     Ok(ResponseBuilder::success(Some(store), None, None).into_response())
 }
@@ -38,7 +39,7 @@ pub async fn update_store_assets(
         types::UpdateStoreAssetsPayload,
     >,
 ) -> HandlerResult {
-    let store = db.get_store_by_id(&store_id, None, None).await?;
+    let store = db.get_store_by_id(&store_id, None, None, None).await?;
 
     if store.is_none() {
         return Ok(
@@ -117,7 +118,19 @@ pub async fn update_store_assets(
     };
 
     db.update_store_base_data(
-        &store_id, logo_doc, banner_doc, None, None, None, None, None, None, None, None, None,
+        &store_id,
+        logo_doc,
+        banner_doc,
+        None,
+        None,
+        FieldPatch::Missing,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
     )
     .await?;
 
@@ -135,6 +148,8 @@ pub async fn update_store(
     Path(store_id): Path<ObjectId>,
     JsonWithValidation(payload): JsonWithValidation<types::UpdateStorePayload>,
 ) -> HandlerResult {
+    // TODO change to transaction if store name is changed
+    // to change the store name, we need to change the store name in all the products
     let store = db
         .update_store_base_data(
             &store_id,
@@ -148,6 +163,7 @@ pub async fn update_store(
             payload.legal_id,
             payload.business_type,
             payload.business_name,
+            payload.min_order,
             None,
         )
         .await?;
@@ -202,7 +218,7 @@ pub async fn update_store_location(
             &payload.city,
             &payload.street,
             &payload.street_number,
-            &payload.free_text,
+            payload.free_text,
             &payload.phone,
             None,
         )

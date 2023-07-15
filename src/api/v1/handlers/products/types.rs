@@ -26,6 +26,8 @@ pub struct GetProductsAutoCompleteQueryParams {
     pub store_id: Option<ObjectId>,
     #[serde(default, deserialize_with = "empty_string_as_none")]
     pub category_id: Option<ObjectId>,
+    #[serde(default, deserialize_with = "empty_string_as_none")]
+    pub amount: Option<u8>,
 }
 
 #[derive(Deserialize, Debug, Clone, Validate)]
