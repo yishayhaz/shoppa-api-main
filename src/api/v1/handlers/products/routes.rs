@@ -82,10 +82,10 @@ pub async fn products_count(
     db: AxumDBExtansion,
     Query(query): Query<types::GetProductsCountQueryParams>,
 ) -> HandlerResult {
-    todo!()
-    // let count = queries::get_products_count(&db, query.store_id, query.category_id).await?;
 
-    // Ok(ResponseBuilder::success(Some(count), None, None).into_response())
+    let count = db.get_products_count(query.store_id, query.category_id).await?;
+
+    Ok(ResponseBuilder::success(Some(count), None, None).into_response())
 }
 
 pub async fn add_view_to_product(

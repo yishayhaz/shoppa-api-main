@@ -2,7 +2,7 @@ use crate::helpers::env::ENV_VARS;
 use bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 use shoppa_core::{
-    db::models::{DBModel, RefrenceField, StoreUser, User},
+    db::models::{DBModel, RefrenceField, StoreUser, User, UserStatus},
     random::random_string,
     security::TokenManager,
 };
@@ -26,6 +26,7 @@ pub struct StoreUserRegistrationTokenData {
 pub struct UserTokenData {
     pub user_id: ObjectId,
     pub secret: String,
+    pub guest: bool,
 }
 
 lazy_static! {
@@ -65,10 +66,11 @@ impl StoreUserRegistrationTokenData {
 }
 
 impl UserTokenData {
-    pub fn new(user_id: ObjectId) -> Self {
+    pub fn new(user_id: ObjectId, guest: bool) -> Self {
         Self {
             user_id,
             secret: random_string(32),
+            guest
         }
     }
 }
@@ -91,6 +93,6 @@ impl Into<StoreUserRegistrationTokenData> for &StoreUser {
 
 impl Into<UserTokenData> for &User {
     fn into(self) -> UserTokenData {
-        UserTokenData::new(self.id().unwrap().clone())
+        UserTokenData::new(self.id().unwrap().clone(), self.status == UserStatus::Guest)
     }
 }

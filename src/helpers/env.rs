@@ -82,7 +82,7 @@ impl EnvVariables {
             STORE_USER_REGISTRATION_TOKEN_SECRET: env::var("STORE_USER_REGISTRATION_TOKEN_SECRET")
                 .expect("STORE_USER_REGISTRATION_TOKEN_SECRET must be set"),
             STORE_PANEL_URL: env::var("STORE_PANEL_URL").unwrap_or_else(|_| {
-                let default_url = "https://store.shoppa.co.il".to_string();
+                let default_url = "https://my.shoppa.co.il".to_string();
                 println!(
                     "STORE_PANEL_URL not set, using default: {d}",
                     d = default_url

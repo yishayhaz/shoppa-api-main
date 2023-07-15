@@ -71,6 +71,11 @@ pub trait ProductFunctions {
         category_id: Option<ObjectId>,
         options: Option<AggregateOptions>,
     ) -> Result<Vec<Document>>;
+    async fn get_products_count(
+        &self,
+        store_id: Option<ObjectId>,
+        category_id: Option<ObjectId>,
+    ) -> Result<u64>;
 }
 
 #[async_trait]
@@ -304,7 +309,7 @@ impl ProductFunctions for DBConection {
         product_id: &ObjectId,
         options: Option<AggregateOptions>,
     ) -> Result<Option<Document>> {
-        let filter = vec![
+        let filters = vec![
             doc! {
                 "equals": {
                     "path": Product::fields().id,
@@ -329,7 +334,7 @@ impl ProductFunctions for DBConection {
         let pipeline = [
             aggregations::search(doc! {
                 "compound": {
-                    "filter": filter
+                    "filter": filters
                 }
             }),
             aggregations::lookup_product_variants(Some(vec![aggregations::project(
@@ -644,6 +649,57 @@ impl ProductFunctions for DBConection {
         ];
 
         self.aggregate_products(pipeline, options, None).await
+    }
+
+    async fn get_products_count(
+        &self,
+        store_id: Option<ObjectId>,
+        category_id: Option<ObjectId>,
+    ) -> Result<u64> {
+        let filters = {
+            let mut f = vec![
+                doc! {
+                    "text": {
+                        "path": Product::fields().status,
+                        "query": ProductStatus::Active
+                    }
+
+                },
+                doc! {
+                    "text": {
+                        "path": Product::fields().items(true).status,
+                        "query": ProductItemStatus::Active
+                    }
+                },
+            ];
+
+            if let Some(store_id) = store_id {
+                f.push(doc! {
+                    "equals": {
+                        "value": store_id,
+                        "path": Product::fields().store(true).id
+                    }
+                });
+            };
+
+            if let Some(category_id) = category_id {
+                f.push(doc! {
+                    "equals": {
+                        "value": category_id,
+                        "path": Product::fields().categories(true).ids
+                    }
+                });
+            }
+            f
+        };
+
+        let pipeline = [
+            aggregations::search_products(&None, &filters, Some(0)),
+            aggregations::count("count"),
+        ];
+
+        self.count_products_with_aggregation(pipeline, None, None)
+            .await
     }
 }
 

@@ -28,7 +28,13 @@ impl AdminEmailFunctions for EmailClient {
             store_logo = format!("{}{}", ENV_VARS.ASSETS_URL, store_logo);
         }
 
-        args.insert("reg_link".to_string(), format!("{}?token={}", ENV_VARS.STORE_PANEL_URL, token));
+        args.insert(
+            "reg_link".to_string(),
+            format!(
+                "{}/complete-registration?token={}",
+                ENV_VARS.STORE_PANEL_URL, token
+            ),
+        );
         args.insert("username".to_string(), username);
         args.insert("store_logo".to_string(), store_logo);
         args.insert("store_name".to_string(), store_name);

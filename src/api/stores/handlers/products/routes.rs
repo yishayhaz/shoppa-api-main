@@ -98,7 +98,8 @@ pub async fn upload_product_asset(
         FileTypes::Image,
     );
 
-    let product = db.add_asset_to_product(&product_id, &current_user.store_id, &asset, None)
+    let product = db
+        .add_asset_to_product(&product_id, &current_user.store_id, &asset, None)
         .await?;
 
     if product.is_none() {
@@ -199,6 +200,12 @@ pub async fn delete_product(
                 .into_response(),
         );
     }
+
+    tokio::spawn(async move {
+        let _ = db
+            .remove_product_from_carts(&product_id, None, None, None)
+            .await;
+    });
 
     Ok(ResponseBuilder::success(Some(res), None, None).into_response())
 }

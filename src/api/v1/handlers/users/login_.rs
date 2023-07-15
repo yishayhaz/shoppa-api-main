@@ -1,8 +1,5 @@
 use super::types::UserLoginPayload;
-use crate::{
-    api::v1::middlewares::*,
-    helpers::{cookies::CookieManager, types::Cookeys},
-};
+use crate::{api::v1::middlewares::*, helpers::cookies::CookieManager};
 use crate::{
     db::{AxumDBExtansion, UserFunctions},
     prelude::*,

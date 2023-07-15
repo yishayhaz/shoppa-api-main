@@ -95,19 +95,27 @@ impl StoreUserFunctionsForStoreUser for DBConection {
                 StoreUser::fields().store,
                 Some(vec![aggregations::project(
                     aggregations::ProjectIdOptions::Keep,
-                    [Store::fields().logo, Store::fields().name],
+                    [
+                        Store::fields().logo,
+                        Store::fields().banner,
+                        Store::fields().name,
+                    ],
                     None,
                 )]),
                 None,
             ),
             aggregations::unwind(StoreUser::fields().store, false),
-            aggregations::project(aggregations::ProjectIdOptions::Keep, [
-                StoreUser::fields().id,
-                StoreUser::fields().store,
-                StoreUser::fields().name,
-                StoreUser::fields().email,
-                StoreUser::fields().registration_completed_at,
-            ], None),
+            aggregations::project(
+                aggregations::ProjectIdOptions::Keep,
+                [
+                    StoreUser::fields().id,
+                    StoreUser::fields().store,
+                    StoreUser::fields().name,
+                    StoreUser::fields().email,
+                    StoreUser::fields().registration_completed_at,
+                ],
+                None,
+            ),
         ];
 
         let mut store_user = self.aggregate_store_users(pipeline, None, None).await?;

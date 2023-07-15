@@ -1,45 +1,30 @@
 use super::types;
 use crate::{
-    db::{AdminStoreFunctions, AxumDBExtansion},
+    api::stores::middlewares::CurrentUser,
+    db::{AxumDBExtansion, StoreUserStoreFunctions},
     helpers::types::AxumStorgeClientExtension,
     prelude::*,
 };
 use axum::{extract::Path, response::IntoResponse};
 use bson::oid::ObjectId;
 use shoppa_core::{
-    db::{
-        models::{FileDocument, FileTypes},
-        Pagination,
-    },
+    db::models::{FileDocument, FileTypes},
     extractors::{JsonWithValidation, MultipartFormWithValidation},
     parser::FieldPatch,
     ResponseBuilder,
 };
 
-pub async fn create_new_store(
-    db: AxumDBExtansion,
-    JsonWithValidation(payload): JsonWithValidation<types::CreateStorePayload>,
-) -> HandlerResult {
-    let store = db.insert_new_store(payload, None, None).await?;
-
-    Ok(ResponseBuilder::success(Some(store), None, None).into_response())
-}
-
-pub async fn get_store_by_id(db: AxumDBExtansion, Path(store_id): Path<ObjectId>) -> HandlerResult {
-    let store = db.get_store_by_id(&store_id, None, None, None).await?;
-
-    Ok(ResponseBuilder::success(Some(store), None, None).into_response())
-}
-
 pub async fn update_store_assets(
     db: AxumDBExtansion,
     storage_client: AxumStorgeClientExtension,
-    Path(store_id): Path<ObjectId>,
+    current_user: CurrentUser,
     MultipartFormWithValidation(payload): MultipartFormWithValidation<
         types::UpdateStoreAssetsPayload,
     >,
 ) -> HandlerResult {
-    let store = db.get_store_by_id(&store_id, None, None, None).await?;
+    let store = db
+        .get_store_by_id(&current_user.store_id, None, None, None)
+        .await?;
 
     if store.is_none() {
         return Ok(
@@ -61,7 +46,7 @@ pub async fn update_store_assets(
         let upload = storage_client.upload_store_logo(
             logo.file,
             &logo.content_type,
-            &store_id,
+            &current_user.store_id,
             &mut logo.file_extension,
         );
 
@@ -85,7 +70,7 @@ pub async fn update_store_assets(
         let upload = storage_client.upload_store_banner(
             banner.file,
             &banner.content_type,
-            &store_id,
+            &current_user.store_id,
             &mut banner.file_extension,
         );
 
@@ -105,28 +90,12 @@ pub async fn update_store_assets(
         }
     }
 
-    let logo_doc = if let Some(logo_doc) = logo_doc {
-        Some(Some(logo_doc))
-    } else {
-        None
-    };
-
-    let banner_doc = if let Some(banner_doc) = banner_doc {
-        Some(Some(banner_doc))
-    } else {
-        None
-    };
-
     db.update_store_base_data(
-        &store_id,
+        &current_user.store_id,
         logo_doc,
         banner_doc,
         None,
-        None,
         FieldPatch::Missing,
-        None,
-        None,
-        None,
         None,
         None,
         None,
@@ -145,24 +114,18 @@ pub async fn update_store_assets(
 
 pub async fn update_store(
     db: AxumDBExtansion,
-    Path(store_id): Path<ObjectId>,
+    current_user: CurrentUser,
     JsonWithValidation(payload): JsonWithValidation<types::UpdateStorePayload>,
 ) -> HandlerResult {
-    // TODO change to transaction if store name is changed
-    // to change the store name, we need to change the store name in all the products
     let store = db
         .update_store_base_data(
-            &store_id,
+            &current_user.store_id,
             None,
             None,
-            payload.name,
             payload.description,
             payload.slogan,
             payload.contact_email,
             payload.contact_phone,
-            payload.legal_id,
-            payload.business_type,
-            payload.business_name,
             payload.min_order,
             None,
         )
@@ -173,10 +136,12 @@ pub async fn update_store(
 
 pub async fn add_store_locations(
     db: AxumDBExtansion,
-    Path(store_id): Path<ObjectId>,
+    current_user: CurrentUser,
     JsonWithValidation(payload): JsonWithValidation<types::StoreLocationPayload>,
 ) -> HandlerResult {
-    let store = db.add_store_location(&store_id, &payload, None).await?;
+    let store = db
+        .add_store_location(&current_user.store_id, &payload, None)
+        .await?;
 
     if store.is_none() {
         return Ok(
@@ -190,10 +155,11 @@ pub async fn add_store_locations(
 
 pub async fn delete_store_location(
     db: AxumDBExtansion,
-    Path((store_id, location_id)): Path<(ObjectId, ObjectId)>,
+    current_user: CurrentUser,
+    Path(location_id): Path<ObjectId>,
 ) -> HandlerResult {
     let store = db
-        .delete_store_location(&store_id, &location_id, None)
+        .delete_store_location(&current_user.store_id, &location_id, None)
         .await?;
 
     if store.is_none() {
@@ -208,12 +174,13 @@ pub async fn delete_store_location(
 
 pub async fn update_store_location(
     db: AxumDBExtansion,
-    Path((store_id, location_id)): Path<(ObjectId, ObjectId)>,
+    current_user: CurrentUser,
+    Path(location_id): Path<ObjectId>,
     JsonWithValidation(payload): JsonWithValidation<types::UpdateStoreLocationPayload>,
 ) -> HandlerResult {
     let store = db
         .update_store_location(
-            &store_id,
+            &current_user.store_id,
             &location_id,
             &payload.city,
             &payload.street,
@@ -234,8 +201,20 @@ pub async fn update_store_location(
     Ok(ResponseBuilder::success(store, None, None).into_response())
 }
 
-pub async fn get_stores(db: AxumDBExtansion, pagination: Pagination) -> HandlerResult {
-    let stores = db.get_stores_for_admins(Some(pagination), None).await?;
+pub async fn get_current_user_store(
+    db: AxumDBExtansion,
+    current_user: CurrentUser,
+) -> HandlerResult {
+    let store = db
+        .get_store_by_id(&current_user.store_id, None, None, None)
+        .await?;
 
-    Ok(ResponseBuilder::paginated_response(&stores).into_response())
+    if store.is_none() {
+        return Ok(
+            ResponseBuilder::<u16>::error("", None, Some("store not found"), Some(400))
+                .into_response(),
+        );
+    }
+
+    Ok(ResponseBuilder::success(store, None, None).into_response())
 }

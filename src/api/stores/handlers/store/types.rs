@@ -2,46 +2,11 @@ use crate::prelude::{types::*, *};
 use axum::{async_trait, extract::Multipart};
 use shoppa_core::{
     constans,
-    db::models::{Store, StoreBusinessType, StoreLocation, DeliveryStrategies},
-    validators::{image_file_field_validator, number_string_validator, phone_number_validator},
+    db::models::StoreLocation,
     extractors::{FileFieldstr, FromMultipart},
-    parser::{empty_string_as_none, FieldPatch},
+    parser::FieldPatch,
+    validators::{image_file_field_validator, number_string_validator, phone_number_validator},
 };
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct SearchStoresQueryParams {
-    #[serde(default, deserialize_with = "empty_string_as_none")]
-    pub free_text: Option<String>,
-}
-
-#[derive(Debug, Validate, Deserialize, Serialize)]
-pub struct CreateStorePayload {
-    #[validate(length(
-        min = "constans::STORE_NAME_MIN_LENGTH",
-        max = "constans::STORE_NAME_MAX_LENGTH"
-    ))]
-    pub name: String, // store name
-    #[validate(length(
-        min = "constans::STORE_SLOGAN_MIN_LENGTH",
-        max = "constans::STORE_SLOGAN_MAX_LENGTH"
-    ))]
-    pub slogan: Option<String>,
-    #[validate(length(
-        min = "constans::STORE_DESCRIPTION_MIN_LENGTH",
-        max = "constans::STORE_DESCRIPTION_MAX_LENGTH"
-    ))]
-    pub description: String,
-    #[validate(email)]
-    pub contact_email: String,
-    #[validate(custom = "phone_number_validator")]
-    pub contact_phone: String,
-    #[validate(custom = "number_string_validator")]
-    pub legal_id: String,
-    pub legal_name: String,
-    pub business_type: StoreBusinessType,
-    pub min_order: Option<u64>,
-    pub delivery_strategies: Option<DeliveryStrategies>,
-}
 
 #[derive(Validate)]
 pub struct UpdateStoreAssetsPayload {
@@ -61,11 +26,6 @@ pub type StoreLocationPayload = StoreLocation;
 
 #[derive(Debug, Validate, Deserialize, Serialize)]
 pub struct UpdateStorePayload {
-    #[validate(length(
-        min = "constans::STORE_NAME_MIN_LENGTH",
-        max = "constans::STORE_NAME_MAX_LENGTH"
-    ))]
-    pub name: Option<String>, // store name
     #[serde(default)]
     #[validate(length(
         min = "constans::STORE_SLOGAN_MIN_LENGTH",
@@ -81,10 +41,6 @@ pub struct UpdateStorePayload {
     pub contact_email: Option<String>,
     #[validate(custom = "phone_number_validator")]
     pub contact_phone: Option<String>,
-    #[validate(custom = "number_string_validator")]
-    pub legal_id: Option<String>,
-    pub business_name: Option<String>,
-    pub business_type: Option<StoreBusinessType>,
     pub min_order: Option<u64>,
 }
 
@@ -106,9 +62,7 @@ pub struct UpdateStoreLocationPayload {
     ))]
     pub street_number: Option<String>,
     #[serde(default)]
-    #[validate(length(
-        max = "constans::LOCATION_FREE_TEXT_MAX_LENGTH"
-    ))]
+    #[validate(length(max = "constans::LOCATION_FREE_TEXT_MAX_LENGTH"))]
     pub free_text: FieldPatch<String>,
     #[validate(custom = "number_string_validator")]
     pub phone: Option<String>,
@@ -176,22 +130,5 @@ impl FromMultipart for UpdateStoreAssetsPayload {
             }
         }
         Ok(Self { logo, banner })
-    }
-}
-
-impl Into<Store> for CreateStorePayload {
-    fn into(self) -> Store {
-        Store::new(
-            self.name,
-            self.description,
-            self.contact_email,
-            self.contact_phone,
-            self.slogan,
-            self.legal_id,
-            self.business_type,
-            self.legal_name,
-            self.min_order,
-            self.delivery_strategies,
-        )
     }
 }
