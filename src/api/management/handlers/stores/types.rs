@@ -2,7 +2,7 @@ use crate::prelude::{types::*, *};
 use axum::{async_trait, extract::Multipart};
 use shoppa_core::{
     constans,
-    db::models::{Store, StoreBusinessType, StoreLocation},
+    db::models::{Store, StoreBusinessType, StoreLocation, DeliveryStrategies},
     validators::{image_file_field_validator, number_string_validator, phone_number_validator},
     extractors::{FileFieldstr, FromMultipart},
     parser::{empty_string_as_none, FieldPatch},
@@ -40,6 +40,7 @@ pub struct CreateStorePayload {
     pub legal_name: String,
     pub business_type: StoreBusinessType,
     pub min_order: Option<u64>,
+    pub delivery_strategies: Option<DeliveryStrategies>,
 }
 
 #[derive(Validate)]
@@ -189,7 +190,8 @@ impl Into<Store> for CreateStorePayload {
             self.legal_id,
             self.business_type,
             self.legal_name,
-            self.min_order
+            self.min_order,
+            self.delivery_strategies,
         )
     }
 }

@@ -1,4 +1,3 @@
 /target
-.env
 .vscode
-.env-stage
+*.env
