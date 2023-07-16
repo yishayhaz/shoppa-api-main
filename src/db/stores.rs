@@ -23,7 +23,6 @@ pub struct DefaultDeliveryUpdatePayload {
     pub to_days: Option<u32>,
     #[validate(range(min = 0.0))]
     pub price: Option<f64>,
-    #[validate(range(min = 0.0))]
     pub free_above: FieldPatch<f64>,
     pub comment: FieldPatch<String>,
 }
