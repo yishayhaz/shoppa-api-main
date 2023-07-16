@@ -1,3 +1,4 @@
+use crate::db::DeliveryStrategiesUpdatePayload;
 use crate::prelude::{types::*, *};
 use axum::{async_trait, extract::Multipart};
 use shoppa_core::{
@@ -7,7 +8,6 @@ use shoppa_core::{
     parser::FieldPatch,
     validators::{image_file_field_validator, number_string_validator, phone_number_validator},
 };
-
 #[derive(Validate)]
 pub struct UpdateStoreAssetsPayload {
     #[validate(
@@ -42,6 +42,7 @@ pub struct UpdateStorePayload {
     #[validate(custom = "phone_number_validator")]
     pub contact_phone: Option<String>,
     pub min_order: Option<u64>,
+    pub delivery_strategies: Option<DeliveryStrategiesUpdatePayload>,
 }
 
 #[derive(Debug, Validate, Deserialize, Serialize)]
