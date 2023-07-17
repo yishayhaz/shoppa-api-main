@@ -748,8 +748,8 @@ impl Into<bson::Bson> for DefaultDeliveryUpdatePayload {
         if self.from_days.is_some() {
             partiel_doc.insert(
                 Store::fields()
-                    .delivery_strategies(true)
-                    .default(true)
+                    .delivery_strategies(false)
+                    .default(false)
                     .from_days,
                 self.from_days,
             );
@@ -758,8 +758,8 @@ impl Into<bson::Bson> for DefaultDeliveryUpdatePayload {
         if self.to_days.is_some() {
             partiel_doc.insert(
                 Store::fields()
-                    .delivery_strategies(true)
-                    .default(true)
+                    .delivery_strategies(false)
+                    .default(false)
                     .to_days,
                 self.to_days,
             );
@@ -768,8 +768,8 @@ impl Into<bson::Bson> for DefaultDeliveryUpdatePayload {
         if self.price.is_some() {
             partiel_doc.insert(
                 Store::fields()
-                    .delivery_strategies(true)
-                    .default(true)
+                    .delivery_strategies(false)
+                    .default(false)
                     .price,
                 self.price,
             );
@@ -780,8 +780,8 @@ impl Into<bson::Bson> for DefaultDeliveryUpdatePayload {
             FieldPatch::Null => {
                 partiel_doc.insert(
                     Store::fields()
-                        .delivery_strategies(true)
-                        .default(true)
+                        .delivery_strategies(false)
+                        .default(false)
                         .free_above,
                     None::<String>,
                 );
@@ -789,8 +789,8 @@ impl Into<bson::Bson> for DefaultDeliveryUpdatePayload {
             FieldPatch::Value(value) => {
                 partiel_doc.insert(
                     Store::fields()
-                        .delivery_strategies(true)
-                        .default(true)
+                        .delivery_strategies(false)
+                        .default(false)
                         .free_above,
                     value,
                 );
@@ -802,8 +802,8 @@ impl Into<bson::Bson> for DefaultDeliveryUpdatePayload {
             FieldPatch::Null => {
                 partiel_doc.insert(
                     Store::fields()
-                        .delivery_strategies(true)
-                        .default(true)
+                        .delivery_strategies(false)
+                        .default(false)
                         .comment,
                     None::<String>,
                 );
@@ -811,34 +811,32 @@ impl Into<bson::Bson> for DefaultDeliveryUpdatePayload {
             FieldPatch::Value(value) => {
                 partiel_doc.insert(
                     Store::fields()
-                        .delivery_strategies(true)
-                        .default(true)
+                        .delivery_strategies(false)
+                        .default(false)
                         .comment,
                     value,
                 );
             }
         };
 
+        let field = format!("${}", Store::fields().delivery_strategies(true).default);
+
         bson::Bson::Document(doc! {
-            Store::fields()
-                .delivery_strategies(true)
-                .fast: {
-                    "$cond": {
-                        "if": {
-                            "$eq": [
-                                "$$this",
-                                None::<String>
-                            ]
-                        },
-                        "then": full_doc,
-                        "else": {
-                            "$mergeObjects": [
-                                "$$this",
-                                partiel_doc
-                            ]
-                        }
-                    }
+            "$cond": {
+                "if": {
+                    "$eq": [
+                        &field,
+                        None::<String>
+                    ]
+                },
+                "then": full_doc,
+                "else": {
+                    "$mergeObjects": [
+                        field,
+                        partiel_doc
+                    ]
                 }
+            }
         })
     }
 }
@@ -852,8 +850,8 @@ impl Into<bson::Bson> for FastDeliveryUpdatePayload {
         if self.from_days.is_some() {
             partiel_doc.insert(
                 Store::fields()
-                    .delivery_strategies(true)
-                    .default(true)
+                    .delivery_strategies(false)
+                    .default(false)
                     .from_days,
                 self.from_days,
             );
@@ -862,8 +860,8 @@ impl Into<bson::Bson> for FastDeliveryUpdatePayload {
         if self.to_days.is_some() {
             partiel_doc.insert(
                 Store::fields()
-                    .delivery_strategies(true)
-                    .default(true)
+                    .delivery_strategies(false)
+                    .default(false)
                     .to_days,
                 self.to_days,
             );
@@ -872,8 +870,8 @@ impl Into<bson::Bson> for FastDeliveryUpdatePayload {
         if self.price.is_some() {
             partiel_doc.insert(
                 Store::fields()
-                    .delivery_strategies(true)
-                    .default(true)
+                    .delivery_strategies(false)
+                    .default(false)
                     .price,
                 self.price,
             );
@@ -884,8 +882,8 @@ impl Into<bson::Bson> for FastDeliveryUpdatePayload {
             FieldPatch::Null => {
                 partiel_doc.insert(
                     Store::fields()
-                        .delivery_strategies(true)
-                        .default(true)
+                        .delivery_strategies(false)
+                        .default(false)
                         .comment,
                     None::<String>,
                 );
@@ -893,34 +891,32 @@ impl Into<bson::Bson> for FastDeliveryUpdatePayload {
             FieldPatch::Value(value) => {
                 partiel_doc.insert(
                     Store::fields()
-                        .delivery_strategies(true)
-                        .default(true)
+                        .delivery_strategies(false)
+                        .default(false)
                         .comment,
                     value,
                 );
             }
         };
 
+        let field = format!("${}", Store::fields().delivery_strategies(false).fast);
+
         bson::Bson::Document(doc! {
-            Store::fields()
-                .delivery_strategies(true)
-                .fast: {
-                    "$cond": {
-                        "if": {
-                            "$eq": [
-                                "$$this",
-                                None::<String>
-                            ]
-                        },
-                        "then": full_doc,
-                        "else": {
-                            "$mergeObjects": [
-                                "$$this",
-                                partiel_doc
-                            ]
-                        }
-                    }
+            "$cond": {
+                "if": {
+                    "$eq": [
+                        &field,
+                        bson::Bson::Null
+                    ]
+                },
+                "then": full_doc,
+                "else": {
+                    "$mergeObjects": [
+                        field,
+                        partiel_doc
+                    ]
                 }
+            }
         })
     }
 }
