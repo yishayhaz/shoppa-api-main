@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::prelude::{types::*, *};
 use axum::async_trait;
 use bson::{doc, oid::ObjectId, Document};
 use mongodb::options::{AggregateOptions, FindOneAndUpdateOptions};
@@ -10,6 +10,31 @@ use shoppa_core::{
     },
     parser::FieldPatch,
 };
+
+#[derive(Debug, Serialize, Deserialize, Validate)]
+pub struct DeliveryStrategiesUpdatePayload {
+    pub default: FieldPatch<DefaultDeliveryUpdatePayload>,
+    pub fast: FieldPatch<FastDeliveryUpdatePayload>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+pub struct DefaultDeliveryUpdatePayload {
+    pub from_days: Option<u32>,
+    pub to_days: Option<u32>,
+    #[validate(range(min = 0.0))]
+    pub price: Option<f64>,
+    pub free_above: FieldPatch<f64>,
+    pub comment: FieldPatch<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+pub struct FastDeliveryUpdatePayload {
+    pub from_days: Option<u32>,
+    pub to_days: Option<u32>,
+    #[validate(range(min = 0.0))]
+    pub price: Option<f64>,
+    pub comment: FieldPatch<String>,
+}
 
 #[async_trait]
 pub trait StoreFunctions {
@@ -83,6 +108,7 @@ pub trait AdminStoreFunctions {
         business_type: Option<models::StoreBusinessType>,
         business_name: Option<String>,
         min_order: Option<u64>,
+        delivery_strategies: Option<DeliveryStrategiesUpdatePayload>,
         option: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Store>>;
 }
@@ -125,6 +151,7 @@ pub trait StoreUserStoreFunctions {
         contact_email: Option<String>,
         contact_phone: Option<String>,
         min_order: Option<u64>,
+        delivery_strategies: Option<DeliveryStrategiesUpdatePayload>,
         option: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Store>>;
 }
@@ -400,9 +427,14 @@ impl AdminStoreFunctions for DBConection {
         business_type: Option<models::StoreBusinessType>,
         business_name: Option<String>,
         min_order: Option<u64>,
+        delivery_strategies: Option<DeliveryStrategiesUpdatePayload>,
         option: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Store>> {
         let mut update = doc! {};
+
+        let delivery_strategies: Document = delivery_strategies.unwrap_or_default().into();
+
+        update.extend(delivery_strategies);
 
         if let Some(store_logo) = store_logo {
             if let Some(store_logo) = store_logo {
@@ -584,9 +616,14 @@ impl StoreUserStoreFunctions for DBConection {
         contact_email: Option<String>,
         contact_phone: Option<String>,
         min_order: Option<u64>,
+        delivery_strategies: Option<DeliveryStrategiesUpdatePayload>,
         option: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Store>> {
         let mut update = doc! {};
+
+        let delivery_strategies: Document = delivery_strategies.unwrap_or_default().into();
+
+        update.extend(delivery_strategies);
 
         if let Some(store_logo) = store_logo {
             update.insert(Store::fields().logo, store_logo.into_bson()?);
@@ -622,5 +659,165 @@ impl StoreUserStoreFunctions for DBConection {
 
         self.find_and_update_store_by_id(store_id, update, option, None)
             .await
+    }
+}
+
+impl Default for DeliveryStrategiesUpdatePayload {
+    fn default() -> Self {
+        Self {
+            default: FieldPatch::Missing,
+            fast: FieldPatch::Missing,
+        }
+    }
+}
+
+impl Into<Document> for DeliveryStrategiesUpdatePayload {
+    fn into(self) -> Document {
+        let mut doc = doc! {};
+
+        match self.default {
+            FieldPatch::Missing => {}
+            FieldPatch::Null => {
+                doc.insert(
+                    Store::fields().delivery_strategies(true).default,
+                    None::<String>,
+                );
+            }
+            FieldPatch::Value(payload) => {
+                if payload.from_days.is_some() {
+                    doc.insert(
+                        Store::fields()
+                            .delivery_strategies(true)
+                            .default(true)
+                            .from_days,
+                        payload.from_days,
+                    );
+                }
+                if payload.to_days.is_some() {
+                    doc.insert(
+                        Store::fields()
+                            .delivery_strategies(true)
+                            .default(true)
+                            .to_days,
+                        payload.to_days,
+                    );
+                }
+                if payload.price.is_some() {
+                    doc.insert(
+                        Store::fields()
+                            .delivery_strategies(true)
+                            .default(true)
+                            .price,
+                        payload.price,
+                    );
+                }
+                match payload.free_above {
+                    FieldPatch::Missing => {}
+                    FieldPatch::Null => {
+                        doc.insert(
+                            Store::fields()
+                                .delivery_strategies(true)
+                                .default(true)
+                                .free_above,
+                            None::<String>,
+                        );
+                    }
+                    FieldPatch::Value(payload) => {
+                        doc.insert(
+                            Store::fields()
+                                .delivery_strategies(true)
+                                .default(true)
+                                .free_above,
+                            payload,
+                        );
+                    }
+                }
+
+                match payload.comment {
+                    FieldPatch::Missing => {}
+                    FieldPatch::Null => {
+                        doc.insert(
+                            Store::fields()
+                                .delivery_strategies(true)
+                                .default(true)
+                                .comment,
+                            None::<String>,
+                        );
+                    }
+                    FieldPatch::Value(payload) => {
+                        doc.insert(
+                            Store::fields()
+                                .delivery_strategies(true)
+                                .default(true)
+                                .comment,
+                            payload,
+                        );
+                    }
+                }
+            }
+        }
+
+        match self.fast {
+            FieldPatch::Missing => {}
+            FieldPatch::Null => {
+                doc.insert(
+                    Store::fields().delivery_strategies(true).fast,
+                    None::<String>,
+                );
+            }
+            FieldPatch::Value(payload) => {
+                if payload.from_days.is_some() {
+                    doc.insert(
+                        Store::fields()
+                            .delivery_strategies(true)
+                            .default(true)
+                            .from_days,
+                        payload.from_days,
+                    );
+                }
+                if payload.to_days.is_some() {
+                    doc.insert(
+                        Store::fields()
+                            .delivery_strategies(true)
+                            .default(true)
+                            .to_days,
+                        payload.to_days,
+                    );
+                }
+                if payload.price.is_some() {
+                    doc.insert(
+                        Store::fields()
+                            .delivery_strategies(true)
+                            .default(true)
+                            .price,
+                        payload.price,
+                    );
+                }
+
+                match payload.comment {
+                    FieldPatch::Missing => {}
+                    FieldPatch::Null => {
+                        doc.insert(
+                            Store::fields()
+                                .delivery_strategies(true)
+                                .default(true)
+                                .comment,
+                            None::<String>,
+                        );
+                    }
+                    FieldPatch::Value(payload) => {
+                        doc.insert(
+                            Store::fields()
+                                .delivery_strategies(true)
+                                .default(true)
+                                .comment,
+                            payload,
+                        );
+                    }
+                }
+            }
+        }
+
+        doc
     }
 }
