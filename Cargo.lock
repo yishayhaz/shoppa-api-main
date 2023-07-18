@@ -2623,7 +2623,6 @@ dependencies = [
 [[package]]
 name = "shoppa-core"
 version = "0.1.0"
-source = "git+https://github.com/yishayhaz/shoppa-core#391df4049927cedc999b05e832c442567af9d8e0"
 dependencies = [
  "shoppa-core-private",
  "shoppa-db",
@@ -2635,7 +2634,6 @@ dependencies = [
 [[package]]
 name = "shoppa-core-private"
 version = "0.1.0"
-source = "git+https://github.com/yishayhaz/shoppa-core#391df4049927cedc999b05e832c442567af9d8e0"
 dependencies = [
  "argon2",
  "aws-sdk-s3",
@@ -2653,7 +2651,6 @@ dependencies = [
 [[package]]
 name = "shoppa-db"
 version = "0.1.0"
-source = "git+https://github.com/yishayhaz/shoppa-core#391df4049927cedc999b05e832c442567af9d8e0"
 dependencies = [
  "async-trait",
  "axum",
@@ -2675,7 +2672,6 @@ dependencies = [
 [[package]]
 name = "shoppa-email-sender"
 version = "0.1.0"
-source = "git+https://github.com/yishayhaz/shoppa-core#391df4049927cedc999b05e832c442567af9d8e0"
 dependencies = [
  "lazy_static",
  "reqwest",
@@ -2686,7 +2682,6 @@ dependencies = [
 [[package]]
 name = "shoppa-file-storage"
 version = "0.1.0"
-source = "git+https://github.com/yishayhaz/shoppa-core#391df4049927cedc999b05e832c442567af9d8e0"
 dependencies = [
  "aws-config",
  "aws-sdk-s3",
@@ -2700,7 +2695,6 @@ dependencies = [
 [[package]]
 name = "shoppa-security"
 version = "0.1.0"
-source = "git+https://github.com/yishayhaz/shoppa-core#391df4049927cedc999b05e832c442567af9d8e0"
 dependencies = [
  "chrono",
  "rusty_paseto",

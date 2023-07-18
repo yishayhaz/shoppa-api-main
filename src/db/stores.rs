@@ -13,7 +13,9 @@ use shoppa_core::{
 
 #[derive(Debug, Serialize, Deserialize, Validate)]
 pub struct DeliveryStrategiesUpdatePayload {
+    #[serde(default)]
     pub default: FieldPatch<DefaultDeliveryUpdatePayload>,
+    #[serde(default)]
     pub fast: FieldPatch<FastDeliveryUpdatePayload>,
 }
 
@@ -23,7 +25,9 @@ pub struct DefaultDeliveryUpdatePayload {
     pub to_days: Option<u32>,
     #[validate(range(min = 0.0))]
     pub price: Option<f64>,
+    #[serde(default)]
     pub free_above: FieldPatch<f64>,
+    #[serde(default)]
     pub comment: FieldPatch<String>,
 }
 
@@ -33,6 +37,7 @@ pub struct FastDeliveryUpdatePayload {
     pub to_days: Option<u32>,
     #[validate(range(min = 0.0))]
     pub price: Option<f64>,
+    #[serde(default)]
     pub comment: FieldPatch<String>,
 }
 
