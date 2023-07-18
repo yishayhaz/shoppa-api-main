@@ -131,6 +131,7 @@ pub async fn update_store_assets(
         None,
         None,
         None,
+        None,
     )
     .await?;
 
@@ -164,6 +165,7 @@ pub async fn update_store(
             payload.business_type,
             payload.business_name,
             payload.min_order,
+            payload.delivery_strategies,
             None,
         )
         .await?;

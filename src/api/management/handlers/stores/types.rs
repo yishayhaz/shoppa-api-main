@@ -1,13 +1,13 @@
+use crate::db::DeliveryStrategiesUpdatePayload;
 use crate::prelude::{types::*, *};
 use axum::{async_trait, extract::Multipart};
 use shoppa_core::{
     constans,
-    db::models::{Store, StoreBusinessType, StoreLocation, DeliveryStrategies},
-    validators::{image_file_field_validator, number_string_validator, phone_number_validator},
+    db::models::{DeliveryStrategies, Store, StoreBusinessType, StoreLocation},
     extractors::{FileFieldstr, FromMultipart},
     parser::{empty_string_as_none, FieldPatch},
+    validators::{image_file_field_validator, number_string_validator, phone_number_validator},
 };
-
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SearchStoresQueryParams {
     #[serde(default, deserialize_with = "empty_string_as_none")]
@@ -86,6 +86,7 @@ pub struct UpdateStorePayload {
     pub business_name: Option<String>,
     pub business_type: Option<StoreBusinessType>,
     pub min_order: Option<u64>,
+    pub delivery_strategies: Option<DeliveryStrategiesUpdatePayload>,
 }
 
 #[derive(Debug, Validate, Deserialize, Serialize)]
@@ -106,9 +107,7 @@ pub struct UpdateStoreLocationPayload {
     ))]
     pub street_number: Option<String>,
     #[serde(default)]
-    #[validate(length(
-        max = "constans::LOCATION_FREE_TEXT_MAX_LENGTH"
-    ))]
+    #[validate(length(max = "constans::LOCATION_FREE_TEXT_MAX_LENGTH"))]
     pub free_text: FieldPatch<String>,
     #[validate(custom = "number_string_validator")]
     pub phone: Option<String>,

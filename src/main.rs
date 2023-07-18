@@ -36,11 +36,15 @@ async fn main() {
     let storge_client = Arc::new(StorageClient::connect().await);
 
     let email_client = Arc::new(EmailClient::new(EmailAddress::new(
-        "api@shoppa.co.il".to_string(),
-        Some("API".to_string()),
+        "noreply@shoppa.co.il".to_string(),
+        Some("שופה".to_string()),
     )));
 
-    let db = Arc::new(DBConection::connect().await.expect("Failed to connect to DB"));
+    let db = Arc::new(
+        DBConection::connect()
+            .await
+            .expect("Failed to connect to DB"),
+    );
 
     let app = Router::new()
         .nest("/api/v1", api::v1::router())
