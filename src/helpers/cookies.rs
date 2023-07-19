@@ -13,7 +13,7 @@ pub trait CookieManager {
 
     fn set_access_cookie(&self, user: &User) -> Result<()>;
 
-    fn get_access_cookie(&self) -> Result<Option<String>>;
+    fn get_access_cookie(&self) -> Option<String>;
 
     fn delete_access_cookie(&self);
 }
@@ -55,17 +55,17 @@ impl CookieManager for Cookies {
         Ok(())
     }
 
-    fn get_access_cookie(&self) -> Result<Option<String>> {
+    fn get_access_cookie(&self) -> Option<String> {
         let cookie = self.get(&Cookeys::AccessToken.to_string());
 
-        let cookie = match cookie {
-            Some(cookie) => cookie,
-            None => return Ok(None),
-        };
+        if let Some(cookie) = cookie {
+            if cookie.value().is_empty() {
+                return None;
+            }
+            return Some(cookie.value().to_string());
+        }
 
-        let cookie = cookie.value().to_string();
-
-        Ok(Some(cookie))
+        None
     }
 
     fn delete_access_cookie(&self) {
