@@ -6,8 +6,9 @@ use crate::{
     prelude::*,
     tokens::{StoreUserRegistrationTokenData, STORE_USER_REGISTRATION_TOKEN_MANAGER},
 };
+use axum::extract::Path;
 use axum::response::IntoResponse;
-use bson::doc;
+use bson::{doc, oid::ObjectId};
 use shoppa_core::{
     db::models::{DBModel, StoreUser},
     extractors::JsonWithValidation,
@@ -62,4 +63,14 @@ pub async fn create_store_user(
     let _ = email_client.send(email).await;
 
     Ok(ResponseBuilder::success(Some(store_user), None, None).into_response())
+}
+
+pub async fn get_store_users(db: AxumDBExtansion, Path(store_id): Path<ObjectId>) -> HandlerResult {
+    let filter = doc! {
+        "store": store_id,
+    };
+
+    let users = db.get_store_users(filter, None, None, None).await?;
+
+    Ok(ResponseBuilder::success(Some(users), None, None).into_response())
 }

@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::prelude::{types::*, *};
 use axum::async_trait;
 use bson::{doc, oid::ObjectId, Document};
 use mongodb::options::{AggregateOptions, FindOneAndUpdateOptions};
@@ -10,6 +10,36 @@ use shoppa_core::{
     },
     parser::FieldPatch,
 };
+
+#[derive(Debug, Serialize, Deserialize, Validate)]
+pub struct DeliveryStrategiesUpdatePayload {
+    #[serde(default)]
+    pub default: FieldPatch<DefaultDeliveryUpdatePayload>,
+    #[serde(default)]
+    pub fast: FieldPatch<FastDeliveryUpdatePayload>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+pub struct DefaultDeliveryUpdatePayload {
+    pub from_days: Option<u32>,
+    pub to_days: Option<u32>,
+    #[validate(range(min = 0.0))]
+    pub price: Option<f64>,
+    #[serde(default)]
+    pub free_above: FieldPatch<f64>,
+    #[serde(default)]
+    pub comment: FieldPatch<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+pub struct FastDeliveryUpdatePayload {
+    pub from_days: Option<u32>,
+    pub to_days: Option<u32>,
+    #[validate(range(min = 0.0))]
+    pub price: Option<f64>,
+    #[serde(default)]
+    pub comment: FieldPatch<String>,
+}
 
 #[async_trait]
 pub trait StoreFunctions {
@@ -83,6 +113,7 @@ pub trait AdminStoreFunctions {
         business_type: Option<models::StoreBusinessType>,
         business_name: Option<String>,
         min_order: Option<u64>,
+        delivery_strategies: Option<DeliveryStrategiesUpdatePayload>,
         option: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Store>>;
 }
@@ -125,6 +156,7 @@ pub trait StoreUserStoreFunctions {
         contact_email: Option<String>,
         contact_phone: Option<String>,
         min_order: Option<u64>,
+        delivery_strategies: Option<DeliveryStrategiesUpdatePayload>,
         option: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Store>>;
 }
@@ -400,9 +432,42 @@ impl AdminStoreFunctions for DBConection {
         business_type: Option<models::StoreBusinessType>,
         business_name: Option<String>,
         min_order: Option<u64>,
+        delivery_strategies: Option<DeliveryStrategiesUpdatePayload>,
         option: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Store>> {
         let mut update = doc! {};
+
+        let delivery_strategies = delivery_strategies.unwrap_or_default();
+
+        let mut pipeline_update = false;
+
+        match delivery_strategies.fast {
+            FieldPatch::Missing => {}
+            FieldPatch::Null => {
+                update.insert(
+                    Store::fields().delivery_strategies(true).fast,
+                    None::<String>,
+                );
+            }
+            FieldPatch::Value(value) => {
+                pipeline_update = true;
+                update.insert(Store::fields().delivery_strategies(true).fast, value);
+            }
+        };
+
+        match delivery_strategies.default {
+            FieldPatch::Missing => {}
+            FieldPatch::Null => {
+                update.insert(
+                    Store::fields().delivery_strategies(true).default,
+                    None::<String>,
+                );
+            }
+            FieldPatch::Value(value) => {
+                pipeline_update = true;
+                update.insert(Store::fields().delivery_strategies(true).default, value);
+            }
+        };
 
         if let Some(store_logo) = store_logo {
             if let Some(store_logo) = store_logo {
@@ -462,6 +527,12 @@ impl AdminStoreFunctions for DBConection {
         let update = doc! {
             "$set": update
         };
+
+        if pipeline_update {
+            return self
+                .find_and_update_store_by_id(store_id, vec![update], option, None)
+                .await;
+        }
 
         self.find_and_update_store_by_id(store_id, update, option, None)
             .await
@@ -584,9 +655,42 @@ impl StoreUserStoreFunctions for DBConection {
         contact_email: Option<String>,
         contact_phone: Option<String>,
         min_order: Option<u64>,
+        delivery_strategies: Option<DeliveryStrategiesUpdatePayload>,
         option: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<Store>> {
         let mut update = doc! {};
+
+        let delivery_strategies = delivery_strategies.unwrap_or_default();
+
+        let mut pipeline_update = false;
+
+        match delivery_strategies.fast {
+            FieldPatch::Missing => {}
+            FieldPatch::Null => {
+                update.insert(
+                    Store::fields().delivery_strategies(true).fast,
+                    None::<String>,
+                );
+            }
+            FieldPatch::Value(value) => {
+                pipeline_update = true;
+                update.insert(Store::fields().delivery_strategies(true).fast, value);
+            }
+        };
+
+        match delivery_strategies.default {
+            FieldPatch::Missing => {}
+            FieldPatch::Null => {
+                update.insert(
+                    Store::fields().delivery_strategies(true).default,
+                    None::<String>,
+                );
+            }
+            FieldPatch::Value(value) => {
+                pipeline_update = true;
+                update.insert(Store::fields().delivery_strategies(true).default, value);
+            }
+        };
 
         if let Some(store_logo) = store_logo {
             update.insert(Store::fields().logo, store_logo.into_bson()?);
@@ -620,7 +724,245 @@ impl StoreUserStoreFunctions for DBConection {
             "$set": update
         };
 
+        if pipeline_update {
+            return self
+                .find_and_update_store_by_id(store_id, vec![update], option, None)
+                .await;
+        }
+
         self.find_and_update_store_by_id(store_id, update, option, None)
             .await
+    }
+}
+
+impl Default for DeliveryStrategiesUpdatePayload {
+    fn default() -> Self {
+        Self {
+            default: FieldPatch::Missing,
+            fast: FieldPatch::Missing,
+        }
+    }
+}
+
+impl Into<bson::Bson> for DefaultDeliveryUpdatePayload {
+    fn into(self) -> bson::Bson {
+        let mut partiel_doc = doc! {};
+
+        let full_doc = self.full_doc();
+
+        if self.from_days.is_some() {
+            partiel_doc.insert(
+                Store::fields()
+                    .delivery_strategies(false)
+                    .default(false)
+                    .from_days,
+                self.from_days,
+            );
+        };
+
+        if self.to_days.is_some() {
+            partiel_doc.insert(
+                Store::fields()
+                    .delivery_strategies(false)
+                    .default(false)
+                    .to_days,
+                self.to_days,
+            );
+        };
+
+        if self.price.is_some() {
+            partiel_doc.insert(
+                Store::fields()
+                    .delivery_strategies(false)
+                    .default(false)
+                    .price,
+                self.price,
+            );
+        };
+
+        match self.free_above {
+            FieldPatch::Missing => {}
+            FieldPatch::Null => {
+                partiel_doc.insert(
+                    Store::fields()
+                        .delivery_strategies(false)
+                        .default(false)
+                        .free_above,
+                    None::<String>,
+                );
+            }
+            FieldPatch::Value(value) => {
+                partiel_doc.insert(
+                    Store::fields()
+                        .delivery_strategies(false)
+                        .default(false)
+                        .free_above,
+                    value,
+                );
+            }
+        }
+
+        match self.comment {
+            FieldPatch::Missing => {}
+            FieldPatch::Null => {
+                partiel_doc.insert(
+                    Store::fields()
+                        .delivery_strategies(false)
+                        .default(false)
+                        .comment,
+                    None::<String>,
+                );
+            }
+            FieldPatch::Value(value) => {
+                partiel_doc.insert(
+                    Store::fields()
+                        .delivery_strategies(false)
+                        .default(false)
+                        .comment,
+                    value,
+                );
+            }
+        };
+
+        let field = format!("${}", Store::fields().delivery_strategies(true).default);
+
+        bson::Bson::Document(doc! {
+            "$cond": {
+                "if": {
+                    "$eq": [
+                        &field,
+                        None::<String>
+                    ]
+                },
+                "then": full_doc,
+                "else": {
+                    "$mergeObjects": [
+                        field,
+                        partiel_doc
+                    ]
+                }
+            }
+        })
+    }
+}
+
+impl Into<bson::Bson> for FastDeliveryUpdatePayload {
+    fn into(self) -> bson::Bson {
+        let mut partiel_doc = doc! {};
+
+        let full_doc = self.full_doc();
+
+        if self.from_days.is_some() {
+            partiel_doc.insert(
+                Store::fields()
+                    .delivery_strategies(false)
+                    .default(false)
+                    .from_days,
+                self.from_days,
+            );
+        };
+
+        if self.to_days.is_some() {
+            partiel_doc.insert(
+                Store::fields()
+                    .delivery_strategies(false)
+                    .default(false)
+                    .to_days,
+                self.to_days,
+            );
+        };
+
+        if self.price.is_some() {
+            partiel_doc.insert(
+                Store::fields()
+                    .delivery_strategies(false)
+                    .default(false)
+                    .price,
+                self.price,
+            );
+        };
+
+        match self.comment {
+            FieldPatch::Missing => {}
+            FieldPatch::Null => {
+                partiel_doc.insert(
+                    Store::fields()
+                        .delivery_strategies(false)
+                        .default(false)
+                        .comment,
+                    None::<String>,
+                );
+            }
+            FieldPatch::Value(value) => {
+                partiel_doc.insert(
+                    Store::fields()
+                        .delivery_strategies(false)
+                        .default(false)
+                        .comment,
+                    value,
+                );
+            }
+        };
+
+        let field = format!("${}", Store::fields().delivery_strategies(false).fast);
+
+        bson::Bson::Document(doc! {
+            "$cond": {
+                "if": {
+                    "$eq": [
+                        &field,
+                        bson::Bson::Null
+                    ]
+                },
+                "then": full_doc,
+                "else": {
+                    "$mergeObjects": [
+                        field,
+                        partiel_doc
+                    ]
+                }
+            }
+        })
+    }
+}
+
+impl DefaultDeliveryUpdatePayload {
+    fn can_convert_to_full_doc(&self) -> bool {
+        // Only if all required fields are present
+        self.from_days.is_some() && self.to_days.is_some() && self.price.is_some()
+    }
+
+    fn full_doc(&self) -> Option<Document> {
+        if !self.can_convert_to_full_doc() {
+            return None;
+        }
+
+        Some(doc! {
+            Store::fields().delivery_strategies(true).default(false).price: self.price,
+            Store::fields().delivery_strategies(true).default(false).from_days: self.from_days,
+            Store::fields().delivery_strategies(true).default(false).to_days: self.to_days,
+            Store::fields().delivery_strategies(true).default(false).free_above: self.free_above.as_ref().into_option(),
+            Store::fields().delivery_strategies(true).default(false).comment: self.comment.as_ref().into_option()
+        })
+    }
+}
+
+impl FastDeliveryUpdatePayload {
+    fn can_convert_to_full_doc(&self) -> bool {
+        // Only if all required fields are present
+        self.from_days.is_some() && self.to_days.is_some() && self.price.is_some()
+    }
+
+    fn full_doc(&self) -> Option<Document> {
+        if !self.can_convert_to_full_doc() {
+            return None;
+        }
+
+        Some(doc! {
+            Store::fields().delivery_strategies(true).fast(false).price: self.price,
+            Store::fields().delivery_strategies(true).fast(false).from_days: self.from_days,
+            Store::fields().delivery_strategies(true).fast(false).to_days: self.to_days,
+            Store::fields().delivery_strategies(true).fast(false).comment: self.comment.as_ref().into_option()
+        })
     }
 }
