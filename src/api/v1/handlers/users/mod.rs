@@ -1,5 +1,5 @@
-use axum::{routing, Router};
-
+use crate::api::v1::middlewares;
+use axum::{middleware, routing, Router};
 mod cart;
 mod get;
 mod password;
@@ -7,10 +7,11 @@ mod types;
 
 pub fn router() -> Router {
     Router::new()
-        .nest("/cart", cart::router())
         .route("/me", routing::get(get::get_me))
         .route(
             "/update-password",
             routing::patch(password::change_password),
         )
+        .route_layer(middleware::from_fn(middlewares::login_required))
+        .nest("/cart", cart::router())
 }
