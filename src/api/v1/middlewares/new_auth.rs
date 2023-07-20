@@ -46,7 +46,6 @@ pub async fn login_required<B>(
 
     let access_cookie = &cookies
         .get_access_cookie()
-        .map_err(|e| e.into_response())?
         .ok_or(ResponseBuilder::error("", Some(()), None, Some(401)).into_response())?;
 
     if let Ok(data) = USER_TOKEN_MANAGER.decode_token(access_cookie) {
@@ -69,7 +68,7 @@ pub async fn login_required_or_create_guest<B>(
         .get::<Cookies>()
         .ok_or(Error::Static("FAILD TO GET COOKIES"))?;
 
-    if let Some(access_cookie) = &cookies.get_access_cookie()? {
+    if let Some(access_cookie) = &cookies.get_access_cookie() {
         if let Ok(data) = USER_TOKEN_MANAGER.decode_token(access_cookie) {
             req.extensions_mut()
                 .insert(CurrentUser::new(data.user_id, data.secret, data.guest));
@@ -116,7 +115,7 @@ where
 }
 
 impl CurrentUser {
-    fn new(user_id: ObjectId, token_secret: String, guest: bool) -> Self {
+    pub(super) fn new(user_id: ObjectId, token_secret: String, guest: bool) -> Self {
         Self {
             user_id,
             token_secret,

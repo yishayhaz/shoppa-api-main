@@ -12,4 +12,5 @@ pub fn router() -> Router {
         .nest("/blog", handlers::blog::router())
         .nest("/contact-us", handlers::contact_us::router())
         .nest("/stores", handlers::stores::router())
+        .nest("/auth", handlers::auth::router())
 }
