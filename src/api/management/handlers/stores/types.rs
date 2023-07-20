@@ -38,6 +38,7 @@ pub struct CreateStorePayload {
     #[validate(custom = "number_string_validator")]
     pub legal_id: String,
     pub legal_name: String,
+    pub legal_address: String,
     pub business_type: StoreBusinessType,
     pub min_order: Option<u64>,
     pub delivery_strategies: Option<DeliveryStrategies>,
@@ -85,6 +86,7 @@ pub struct UpdateStorePayload {
     pub legal_id: Option<String>,
     pub business_name: Option<String>,
     pub business_type: Option<StoreBusinessType>,
+    pub legal_address: Option<String>,
     pub min_order: Option<u64>,
     pub delivery_strategies: Option<DeliveryStrategiesUpdatePayload>,
 }
@@ -189,6 +191,7 @@ impl Into<Store> for CreateStorePayload {
             self.legal_id,
             self.business_type,
             self.legal_name,
+            self.legal_address,
             self.min_order,
             self.delivery_strategies,
         )
