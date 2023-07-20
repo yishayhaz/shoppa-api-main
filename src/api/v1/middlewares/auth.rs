@@ -1,15 +1,15 @@
 use crate::helpers::{
     cookies::CookieManager,
     security::{decode_login_token, LoginTokenData},
-    types::{Cookeys},
+    types::Cookeys,
 };
-use shoppa_core::ResponseBuilder;
 use axum::{
     async_trait,
     extract::FromRequestParts,
     http::request::Parts,
     response::{IntoResponse, Response},
 };
+use shoppa_core::ResponseBuilder;
 use tower_cookies::Cookies;
 
 pub struct GuestOnly(pub ());

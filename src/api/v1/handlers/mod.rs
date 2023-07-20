@@ -5,3 +5,4 @@ pub mod contact_us;
 pub mod products;
 pub mod stores;
 pub mod users;
+pub mod auth;
