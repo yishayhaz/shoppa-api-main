@@ -1,16 +1,14 @@
 use super::types::{LoginPayload, SignupPayload};
 use crate::api::v1::middlewares::CurrentUser;
-use crate::db::UserFunctions;
-use crate::helpers::cookies::CookieManager;
-use crate::{db::AxumDBExtansion, prelude::*};
+use crate::{db::{AxumDBExtansion, UserFunctions}, prelude::*, helpers::cookies::CookieManager};
 use axum::{
     extract::{Json, Query, Extension},
     response::IntoResponse,
 };
-use shoppa_core::ResponseBuilder;
 use shoppa_core::{
     db::models::{EmbeddedDocument, ProductItemStatus, ProductStatus},
-    extractors::JsonWithValidation,
+    extractors::JsonWithValidation,ResponseBuilder,
+    security
 };
 use tower_cookies::Cookies;
 
@@ -21,6 +19,24 @@ pub async fn login(
     JsonWithValidation(payload): JsonWithValidation<LoginPayload>,
 ) -> HandlerResult {
    
+   let user = db
+        .get_user_by_email(&payload.email, None, None)
+        .await?;
+
+    let not_found_response = ResponseBuilder::<()>::error("UserNotFound", None, None, Some(404)).into_response();
+
+    if user.is_none() {
+        // we pretend that the user exists to avoid timing attacks
+        // TODO insert a valid password hash here
+        security::verify_password(&payload.password, "")?;
+        return Ok(not_found_response);
+    }
+
+    let user = user.unwrap();
+
+    if !security::verify_password(&payload.password, &user.password.unwrap_or_default())? {
+        return Ok(not_found_response);
+    }
 
     Ok(ResponseBuilder::<()>::success(None, None, None).into_response())
 }
