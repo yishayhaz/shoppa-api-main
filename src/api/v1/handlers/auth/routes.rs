@@ -1,4 +1,4 @@
-use super::types::LoginPayload;
+use super::types::{LoginPayload, SignupPayload};
 use crate::api::v1::middlewares::CurrentUser;
 use crate::db::UserFunctions;
 use crate::helpers::cookies::CookieManager;
@@ -35,3 +35,14 @@ pub async fn logout(
     Ok(ResponseBuilder::<()>::success(None, None, None).into_response())
 }
 
+pub async fn signup(
+    db: AxumDBExtansion,
+    cookies: Cookies,
+    Extension(mut current_user): Extension<Option<CurrentUser>>,
+    JsonWithValidation(payload): JsonWithValidation<SignupPayload>,
+) -> HandlerResult {
+   
+   tracing::info!("{:?}", payload.date_of_birth);
+
+    Ok(ResponseBuilder::<()>::success(None, None, None).into_response())
+}

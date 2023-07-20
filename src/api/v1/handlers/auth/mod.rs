@@ -15,4 +15,9 @@ pub fn router() -> Router {
             routing::delete(routes::logout)
                 .route_layer(middleware::from_fn(middlewares::login_required)),
         )
+        .route(
+            "/signup",
+            routing::post(routes::signup)
+                .route_layer(middleware::from_fn(middlewares::guest_required)),
+        )
 }
