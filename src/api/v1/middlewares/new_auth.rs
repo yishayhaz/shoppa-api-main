@@ -157,6 +157,10 @@ impl CurrentUser {
         self.user.as_ref()
     }
 
+    pub fn user(self) -> Option<User> {
+        self.user
+    }
+
     fn set_user(&mut self, user: User) {
         self.user = Some(user);
     }
