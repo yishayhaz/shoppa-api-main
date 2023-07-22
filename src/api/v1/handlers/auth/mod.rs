@@ -20,4 +20,5 @@ pub fn router() -> Router {
             routing::post(routes::signup)
                 .route_layer(middleware::from_fn(middlewares::guest_required)),
         )
+        .route("/me", routing::get(routes::get_me))
 }

@@ -5,15 +5,29 @@ use mongodb::{
     options::{AggregateOptions, FindOneAndUpdateOptions, FindOneOptions, UpdateOptions},
     results::UpdateResult,
 };
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use shoppa_core::db::{
     aggregations,
     models::{
         CartItem, FileTypes, ItemVariants, Product, ProductItemStatus, ProductStatus, Store, User,
-        UserStatus, Variants,
+        UserStatus, Variants, DBModel
     },
     populate::UsersPopulate,
     DBConection,
 };
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UserAsGetMe {
+    pub id: ObjectId,
+    pub email: Option<String>,
+    pub name: Option<String>,
+    pub phone_number: Option<String>,
+    pub status: UserStatus,
+    pub created_at: DateTime<Utc>,
+    pub last_login: Option<DateTime<Utc>>,
+    pub total_cart_items: u32,
+}
 
 #[async_trait]
 pub trait UserFunctions {
@@ -71,8 +85,8 @@ pub trait UserFunctions {
     ) -> Result<Vec<Document>>;
 }
 
-#[async_trait]
-pub trait UserAdminFunctions {}
+// #[async_trait]
+// pub trait UserAdminFunctions {}
 
 #[async_trait]
 impl UserFunctions for DBConection {
@@ -436,3 +450,22 @@ impl UserFunctions for DBConection {
         self.aggregate_users(pipeline, options, None).await
     }
 }
+
+impl From<User> for UserAsGetMe {
+    fn from(user: User) -> Self {
+        Self {
+            id: user.id().unwrap().clone(),
+            created_at: user.created_at().clone(),
+            email: user.email,
+            name: user.name,
+            phone_number: user.phone_number,
+            status: user.status,
+            last_login: user.last_login,
+            total_cart_items: user.cart.items.into_iter().fold(0, |acc, item| {
+                acc + item.quantity
+            })
+        }
+    }
+}
+
+

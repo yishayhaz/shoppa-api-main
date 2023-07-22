@@ -1,7 +1,7 @@
 use super::types::{LoginPayload, SignupPayload};
 use crate::api::v1::middlewares::CurrentUser;
 use crate::{
-    db::{AxumDBExtansion, UserFunctions},
+    db::{AxumDBExtansion, UserFunctions, UserAsGetMe},
     helpers::cookies::CookieManager,
     prelude::*,
 };
@@ -64,7 +64,10 @@ pub async fn login(
     };
 
     cookies.set_access_cookie(&user)?;
-    Ok(ResponseBuilder::<()>::success(None, None, None).into_response())
+
+    let get_me: UserAsGetMe = user.into();
+
+    Ok(ResponseBuilder::success(Some(get_me), None, None).into_response())
 }
 
 pub async fn logout(
@@ -96,5 +99,26 @@ pub async fn signup(
 
     cookies.set_access_cookie(&user)?;
 
-    Ok(ResponseBuilder::<()>::success(None, None, None).into_response())
+    let get_me: UserAsGetMe = user.into();
+
+    Ok(ResponseBuilder::success(Some(get_me), None, None).into_response())
+}
+
+pub async fn get_me(
+    db: AxumDBExtansion,
+    cookies: Cookies,
+    mut current_user: CurrentUser,
+) -> HandlerResult {
+    
+    current_user.fetch(&db, None).await?;
+
+    if !current_user.user_exists(){
+        cookies.delete_access_cookie();
+        return Ok(ResponseBuilder::<()>::error("UserNotFound", None, None, Some(404)).into_response());
+    }
+
+    let get_me: UserAsGetMe = current_user.user().unwrap().into();
+
+    Ok(ResponseBuilder::success(Some(get_me), None, None).into_response())
+
 }
