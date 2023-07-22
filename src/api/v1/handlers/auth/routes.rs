@@ -6,15 +6,19 @@ use crate::{
     prelude::*,
 };
 use axum::{extract::Extension, response::IntoResponse};
+use bson::doc;
 use shoppa_core::{
-    constans, db::models::User, extractors::JsonWithValidation, security, ResponseBuilder,
+    constans,
+    db::models::{DBModel, User},
+    extractors::JsonWithValidation,
+    security, ResponseBuilder,
 };
 use tower_cookies::Cookies;
 
 pub async fn login(
     db: AxumDBExtansion,
     cookies: Cookies,
-    Extension(mut current_user): Extension<Option<CurrentUser>>,
+    Extension(current_user): Extension<Option<CurrentUser>>,
     JsonWithValidation(payload): JsonWithValidation<LoginPayload>,
 ) -> HandlerResult {
     let user = db.get_user_by_email(&payload.email, None, None).await?;
@@ -28,7 +32,7 @@ pub async fn login(
         return Ok(not_found_response);
     }
 
-    let user = user.unwrap();
+    let mut user = user.unwrap();
 
     let password = match user.password {
         Some(ref password) => password.as_str(),
@@ -39,8 +43,24 @@ pub async fn login(
         return Ok(not_found_response);
     }
 
-    if let Some(ref mut current_user) = current_user {
-        todo!("merge carts")
+    if let Some(mut current_user) = current_user {
+        current_user.fetch(&db, None).await?;
+        if current_user.user_exists() {
+            user.cart = current_user.user().unwrap().cart + user.cart;
+
+            // If there was error updating the user cart we just ignore it
+            let _ = db.update_user_by_id(
+                user.id().unwrap(),
+                doc! {
+                    "$set": {
+                        User::fields().cart: &user.cart
+                    }
+                },
+                None,
+                None,
+            )
+            .await;
+        }
     };
 
     cookies.set_access_cookie(&user)?;
