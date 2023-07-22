@@ -19,6 +19,7 @@ use shoppa_core::db::{
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserAsGetMe {
+    #[serde(rename = "_id")]
     pub id: ObjectId,
     pub email: Option<String>,
     pub name: Option<String>,
