@@ -1,17 +1,17 @@
 use crate::prelude::*;
 use axum::async_trait;
 use bson::{doc, oid::ObjectId, Document};
+use chrono::{DateTime, Utc};
 use mongodb::{
     options::{AggregateOptions, FindOneAndUpdateOptions, FindOneOptions, UpdateOptions},
     results::UpdateResult,
 };
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use shoppa_core::db::{
     aggregations,
     models::{
-        CartItem, FileTypes, ItemVariants, Product, ProductItemStatus, ProductStatus, Store, User,
-        UserStatus, Variants, DBModel
+        CartItem, DBModel, FileTypes, ItemVariants, Product, ProductItemStatus, ProductStatus,
+        Store, User, UserStatus, Variants,
     },
     populate::UsersPopulate,
     DBConection,
@@ -84,6 +84,12 @@ pub trait UserFunctions {
         user_id: &ObjectId,
         options: Option<AggregateOptions>,
     ) -> Result<Vec<Document>>;
+
+    async fn set_user_last_login(
+        &self,
+        user_id: &ObjectId,
+        options: Option<FindOneAndUpdateOptions>,
+    ) -> Result<Option<User>>;
 }
 
 // #[async_trait]
@@ -450,6 +456,21 @@ impl UserFunctions for DBConection {
 
         self.aggregate_users(pipeline, options, None).await
     }
+
+    async fn set_user_last_login(
+        &self,
+        user_id: &ObjectId,
+        options: Option<FindOneAndUpdateOptions>,
+    ) -> Result<Option<User>> {
+        let update = doc! {
+            "$currentDate": {
+                User::fields().last_login: true
+            }
+        };
+
+        self.find_and_update_user_by_id(user_id, update, options, None)
+            .await
+    }
 }
 
 impl From<User> for UserAsGetMe {
@@ -462,11 +483,11 @@ impl From<User> for UserAsGetMe {
             phone_number: user.phone_number,
             status: user.status,
             last_login: user.last_login,
-            total_cart_items: user.cart.items.into_iter().fold(0, |acc, item| {
-                acc + item.quantity
-            })
+            total_cart_items: user
+                .cart
+                .items
+                .into_iter()
+                .fold(0, |acc, item| acc + item.quantity),
         }
     }
 }
-
-

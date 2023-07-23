@@ -1,7 +1,7 @@
 use super::types::{LoginPayload, SignupPayload};
 use crate::api::v1::middlewares::CurrentUser;
 use crate::{
-    db::{AxumDBExtansion, UserFunctions, UserAsGetMe},
+    db::{AxumDBExtansion, UserAsGetMe, UserFunctions},
     helpers::cookies::CookieManager,
     prelude::*,
 };
@@ -49,21 +49,28 @@ pub async fn login(
             user.cart = current_user.user().unwrap().cart + user.cart;
 
             // If there was error updating the user cart we just ignore it
-            let _ = db.update_user_by_id(
-                user.id().unwrap(),
-                doc! {
-                    "$set": {
-                        User::fields().cart: &user.cart
-                    }
-                },
-                None,
-                None,
-            )
-            .await;
+            let _ = db
+                .update_user_by_id(
+                    user.id().unwrap(),
+                    doc! {
+                        "$set": {
+                            User::fields().cart: &user.cart
+                        }
+                    },
+                    None,
+                    None,
+                )
+                .await;
         }
     };
 
     cookies.set_access_cookie(&user)?;
+
+    let user_id = user.id()?.clone();
+
+    tokio::spawn(async move {
+        let _ = db.set_user_last_login(&user_id, None).await;
+    });
 
     let get_me: UserAsGetMe = user.into();
 
@@ -95,6 +102,8 @@ pub async fn signup(
         }
     };
 
+    user.last_login = Some(chrono::Utc::now());
+
     let user = db.insert_new_user(user, None, None).await?;
 
     cookies.set_access_cookie(&user)?;
@@ -109,16 +118,16 @@ pub async fn get_me(
     cookies: Cookies,
     mut current_user: CurrentUser,
 ) -> HandlerResult {
-    
     current_user.fetch(&db, None).await?;
 
-    if !current_user.user_exists(){
+    if !current_user.user_exists() {
         cookies.delete_access_cookie();
-        return Ok(ResponseBuilder::<()>::error("UserNotFound", None, None, Some(404)).into_response());
+        return Ok(
+            ResponseBuilder::<()>::error("UserNotFound", None, None, Some(404)).into_response(),
+        );
     }
 
     let get_me: UserAsGetMe = current_user.user().unwrap().into();
 
     Ok(ResponseBuilder::success(Some(get_me), None, None).into_response())
-
 }
