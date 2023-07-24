@@ -483,11 +483,7 @@ impl From<User> for UserAsGetMe {
             phone_number: user.phone_number,
             status: user.status,
             last_login: user.last_login,
-            total_cart_items: user
-                .cart
-                .items
-                .into_iter()
-                .fold(0, |acc, item| acc + item.quantity),
+            total_cart_items: user.cart.items.len() as u32,
         }
     }
 }
