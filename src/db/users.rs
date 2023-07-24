@@ -432,7 +432,11 @@ impl UserFunctions for DBConection {
                 "store",
                 Some(vec![aggregations::project(
                     aggregations::ProjectIdOptions::Keep,
-                    [Store::fields().name, Store::fields().min_order],
+                    [
+                        Store::fields().name,
+                        Store::fields().min_order,
+                        Store::fields().delivery_strategies,
+                    ],
                     None,
                 )]),
                 None,
