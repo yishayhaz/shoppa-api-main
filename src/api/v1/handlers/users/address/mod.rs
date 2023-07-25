@@ -1,5 +1,4 @@
-use crate::api::v1::middlewares;
-use axum::{middleware, routing, Router};
+use axum::{routing, Router};
 mod routes;
 mod types;
 
@@ -12,5 +11,4 @@ pub fn router() -> Router {
         )
         .route("/", routing::get(routes::get_user_addresses))
         .route("/", routing::post(routes::add_user_address))
-        .route_layer(middleware::from_fn(middlewares::login_required))
 }

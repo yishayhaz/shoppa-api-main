@@ -10,8 +10,8 @@ use serde::{Deserialize, Serialize};
 use shoppa_core::db::{
     aggregations,
     models::{
-        Address, CartItem, DBModel, FileTypes, ItemVariants, Product, ProductItemStatus,
-        ProductStatus, Store, User, UserStatus, Variants,
+        Address, CartItem, DBModel, EmbeddedDocument, FileTypes, ItemVariants, Product,
+        ProductItemStatus, ProductStatus, Store, User, UserStatus, Variants,
     },
     populate::UsersPopulate,
     DBConection,
@@ -90,6 +90,32 @@ pub trait UserFunctions {
         user_id: &ObjectId,
         options: Option<FindOneAndUpdateOptions>,
     ) -> Result<Option<User>>;
+
+    async fn add_user_address<T>(
+        &self,
+        user_id: &ObjectId,
+        address: T,
+        options: Option<UpdateOptions>,
+    ) -> Result<UpdateResult>
+    where
+        T: Into<Address> + Send + Sync;
+
+    async fn edit_user_address<T>(
+        &self,
+        user_id: &ObjectId,
+        address_id: &ObjectId,
+        address_update: T,
+        options: Option<UpdateOptions>,
+    ) -> Result<UpdateResult>
+    where
+        T: Into<Document> + Send + Sync;
+
+    async fn delete_user_address(
+        &self,
+        user_id: &ObjectId,
+        address_id: &ObjectId,
+        options: Option<UpdateOptions>,
+    ) -> Result<UpdateResult>;
 }
 
 // #[async_trait]
@@ -474,6 +500,102 @@ impl UserFunctions for DBConection {
 
         self.find_and_update_user_by_id(user_id, update, options, None)
             .await
+    }
+
+    async fn add_user_address<T>(
+        &self,
+        user_id: &ObjectId,
+        address: T,
+        options: Option<UpdateOptions>,
+    ) -> Result<UpdateResult>
+    where
+        T: Into<Address> + Send + Sync,
+    {
+        let address: Address = address.into();
+
+        let filters = doc! {
+            User::fields().id: user_id,
+            User::fields().status: {
+                "$nin": [UserStatus::Deleted, UserStatus::Banned]
+            }
+        };
+
+        let update = doc! {
+            "$push": {
+                User::fields().addresses: address.into_bson()?
+            },
+            // "$currentDate": {
+            //     User::fields().updated_at: true
+            // }
+        };
+
+        self.update_user(filters, update, options, None).await
+    }
+
+    async fn edit_user_address<T>(
+        &self,
+        user_id: &ObjectId,
+        address_id: &ObjectId,
+        address_update: T,
+        options: Option<UpdateOptions>,
+    ) -> Result<UpdateResult>
+    where
+        T: Into<Document> + Send + Sync,
+    {
+        let filters = doc! {
+            User::fields().id: user_id,
+            User::fields().status: {
+                "$nin": [UserStatus::Deleted, UserStatus::Banned]
+            },
+            User::fields().addresses(true).id: address_id
+        };
+
+        let address_update: Document = address_update.into();
+        tracing::info!("address_update: {:?}", &address_update);
+        let address_update: Document = address_update
+            .into_iter()
+            .map(|(mut key, value)| {
+                key = format!("{}.$.{}", User::fields().addresses, key);
+                (key, value)
+            })
+            .collect();
+        tracing::info!("address_update: {:?}", &address_update);
+
+        let update = doc! {
+            "$set": address_update,
+            "$currentDate": {
+                format!("{}.$.{}", User::fields().addresses, User::fields().addresses(false).updated_at): true
+            }
+        };
+
+        self.update_user(filters, update, options, None).await
+    }
+
+    async fn delete_user_address(
+        &self,
+        user_id: &ObjectId,
+        address_id: &ObjectId,
+        options: Option<UpdateOptions>,
+    ) -> Result<UpdateResult> {
+        let filters = doc! {
+            User::fields().id: user_id,
+            User::fields().status: {
+                "$nin": [UserStatus::Deleted, UserStatus::Banned]
+            }
+        };
+
+        let update = doc! {
+            "$pull": {
+                User::fields().addresses: {
+                    Address::fields().id: address_id
+                }
+            },
+            // "$currentDate": {
+            //     User::fields().updated_at: true
+            // }
+        };
+
+        self.update_user(filters, update, options, None).await
     }
 }
 
