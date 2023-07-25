@@ -1,5 +1,6 @@
 use crate::api::v1::middlewares;
 use axum::{middleware, routing, Router};
+mod address;
 mod cart;
 mod password;
 mod types;
@@ -12,4 +13,5 @@ pub fn router() -> Router {
         )
         .route_layer(middleware::from_fn(middlewares::login_required))
         .nest("/cart", cart::router())
+        .nest("/addresses", address::router())
 }

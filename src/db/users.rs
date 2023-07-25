@@ -10,8 +10,8 @@ use serde::{Deserialize, Serialize};
 use shoppa_core::db::{
     aggregations,
     models::{
-        CartItem, DBModel, FileTypes, ItemVariants, Product, ProductItemStatus, ProductStatus,
-        Store, User, UserStatus, Variants,
+        Address, CartItem, DBModel, FileTypes, ItemVariants, Product, ProductItemStatus,
+        ProductStatus, Store, User, UserStatus, Variants,
     },
     populate::UsersPopulate,
     DBConection,
