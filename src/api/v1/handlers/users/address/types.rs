@@ -71,10 +71,10 @@ pub struct EditUserAddress {
     #[serde(default)]
     pub floor: FieldPatch<i16>,
     #[serde(default)]
-    #[validate(length(
-        min = "constans::APARTMENT_MIN_LENGTH",
-        max = "constans::APARTMENT_MAX_LENGTH"
-    ))]
+    // #[validate(length(
+    //     min = "constans::APARTMENT_MIN_LENGTH",
+    //     max = "constans::APARTMENT_MAX_LENGTH"
+    // ))]
     pub apartment: FieldPatch<String>,
     #[validate(
         custom = "number_string_validator",
