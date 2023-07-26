@@ -9,7 +9,10 @@ use axum::{
 };
 use shoppa_core::ResponseBuilder;
 use shoppa_core::{
-    db::models::{EmbeddedDocument, ProductItemStatus, ProductStatus},
+    db::{
+        models::{EmbeddedDocument, ProductItemStatus, ProductStatus},
+        populate::{FieldPopulate, PopulateOptions, UsersPopulate},
+    },
     extractors::JsonWithValidation,
 };
 use tower_cookies::Cookies;
@@ -206,4 +209,26 @@ pub async fn edit_product_in_cart(
     }
 
     Ok(ResponseBuilder::<()>::success(None, None, None).into_response())
+}
+
+pub async fn start_checkout(
+    db: AxumDBExtansion,
+    mut current_user: CurrentUser,
+    cookies: Cookies,
+) -> HandlerResult {
+    let populate = UsersPopulate {
+        cart_products: FieldPopulate::Field,
+        options: None,
+    };
+    
+    current_user.force_fetch(&db, Some(populate)).await?;
+
+    if !current_user.user_exists() {
+        cookies.delete_access_cookie();
+        return Ok(
+            ResponseBuilder::<()>::error("User not found", None, None, None).into_response(),
+        );
+    }
+
+    Ok(ResponseBuilder::success(current_user.user(), None, None).into_response())
 }

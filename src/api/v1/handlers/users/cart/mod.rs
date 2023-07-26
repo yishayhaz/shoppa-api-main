@@ -5,6 +5,11 @@ mod types;
 
 pub fn router() -> Router {
     Router::new()
+        .route(
+            "/checkout",
+            routing::patch(routes::start_checkout)
+                .route_layer(middleware::from_fn(middlewares::guest_user_not_allowed)),
+        )
         .route("/", routing::get(routes::get_full_cart))
         .route("/", routing::delete(routes::remove_product_from_cart))
         .route("/", routing::patch(routes::edit_product_in_cart))

@@ -164,6 +164,16 @@ impl CurrentUser {
         Ok(())
     }
 
+    pub async fn force_fetch(
+        &mut self,
+        db: &AxumDBExtansion,
+        populate: Option<UsersPopulate>,
+    ) -> Result<()> {
+        self.user = None;
+
+        self.fetch(db, populate).await
+    }
+
     pub fn user_exists(&self) -> bool {
         self.user_exists
     }
