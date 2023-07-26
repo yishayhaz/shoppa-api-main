@@ -44,6 +44,7 @@ pub struct AddUserAddress {
 
 #[derive(Debug, Deserialize, Validate)]
 pub struct EditUserAddress {
+    #[serde(default)]
     pub free_text: FieldPatch<String>,
     #[validate(length(
         min = "constans::CITY_NAME_MIN_LENGTH",
@@ -60,13 +61,16 @@ pub struct EditUserAddress {
         max = "constans::STREET_NUMBER_MAX_LENGTH"
     ))]
     pub street_number: Option<String>,
+    #[serde(default)]
     #[validate(length(
         min = "constans::ENTRANCE_MIN_LENGTH",
         max = "constans::ENTRANCE_MAX_LENGTH"
     ))]
     pub entrance: FieldPatch<String>,
     // #[validate(range(min = "constans::FLOOR_MIN", max = "constans::FLOOR_MAX"))]
+    #[serde(default)]
     pub floor: FieldPatch<i16>,
+    #[serde(default)]
     #[validate(length(
         min = "constans::APARTMENT_MIN_LENGTH",
         max = "constans::APARTMENT_MAX_LENGTH"
