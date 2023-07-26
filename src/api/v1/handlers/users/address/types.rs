@@ -62,10 +62,10 @@ pub struct EditUserAddress {
     ))]
     pub street_number: Option<String>,
     #[serde(default)]
-    #[validate(length(
-        min = "constans::ENTRANCE_MIN_LENGTH",
-        max = "constans::ENTRANCE_MAX_LENGTH"
-    ))]
+    // #[validate(length(
+    //     min = "constans::ENTRANCE_MIN_LENGTH",
+    //     max = "constans::ENTRANCE_MAX_LENGTH"
+    // ))]
     pub entrance: FieldPatch<String>,
     // #[validate(range(min = "constans::FLOOR_MIN", max = "constans::FLOOR_MAX"))]
     #[serde(default)]
