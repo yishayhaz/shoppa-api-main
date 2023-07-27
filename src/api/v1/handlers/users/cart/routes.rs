@@ -5,16 +5,21 @@ use crate::helpers::cookies::CookieManager;
 use crate::{db::AxumDBExtansion, prelude::*};
 use axum::{
     extract::{Json, Query},
-    response::IntoResponse,
+    response::{IntoResponse, Response},
 };
+use bson::{doc, oid::ObjectId};
 use shoppa_core::ResponseBuilder;
 use shoppa_core::{
     db::{
-        models::{EmbeddedDocument, ProductItemStatus, ProductStatus, CheckOutSessionPart},
-        populate::{FieldPopulate, PopulateOptions, UsersPopulate},
+        models::{
+            CheckOutSession, CheckOutSessionPart, CheckOutSessionPartItem, DBModel,
+            EmbeddedDocument, ProductItemStatus, ProductStatus, Store,
+        },
+        populate::{FieldPopulate, UsersPopulate},
     },
     extractors::JsonWithValidation,
 };
+use std::collections::HashMap;
 use tower_cookies::Cookies;
 
 pub async fn add_product_to_cart(
@@ -230,6 +235,8 @@ pub async fn start_checkout(
         );
     }
 
+    let mut checkout_session = CheckOutSession::new(current_user.user_id.clone());
+
     let user = current_user.user().unwrap();
 
     if user.cart.items.is_empty() {
@@ -244,10 +251,147 @@ pub async fn start_checkout(
         );
     }
 
+    let mut checkout_parts: HashMap<&ObjectId, CheckOutSessionPart> = HashMap::new();
+
+    // grouping items by store
+    user.cart.items.iter().for_each(|item| {
+        let product = item
+            .product
+            .as_populated()
+            .expect("Product is not populated");
+
+        let product_item = product
+            .items
+            .get(0)
+            .expect("Product has no items in start checkout");
+
+        let checkout_part =
+            checkout_parts
+                .entry(product.store_id())
+                .or_insert_with(|| CheckOutSessionPart {
+                    store: product.store_id().clone(),
+                    items_total: 0.0,
+                    delivery_cost: 0.0,
+                    items: Vec::new(),
+                    // In the future the user will send the desired delivery strategy
+                    delivery_strategy: "default".to_string(),
+                });
+
+        checkout_part.items.push(CheckOutSessionPartItem {
+            product: product.id().unwrap().clone(),
+            item_id: product_item.id().clone(),
+            quantity: item.quantity,
+            price: product_item.price,
+        });
+
+        checkout_part.items_total += product_item.price * item.quantity as f64;
+    });
+    
+    // getting stores from db
+    let stores = db
+        .get_stores(
+            doc! {
+                Store::fields().id: {
+                    "$in": checkout_parts.keys().collect::<Vec<_>>()
+                }
+            },
+            None,
+            None,
+            None,
+        )
+        .await?;
+
+    // checking if all stores were found
+    if stores.len() != checkout_parts.len() {
+        return Ok(
+            ResponseBuilder::<()>::error("Some stores not found", None, None, None).into_response(),
+        );
+    }
+
+    // making sure all stores have a default delivery strategy
+    for store in &stores {
+        if store.delivery_strategies.default.is_none() {
+            return Ok(ResponseBuilder::<()>::error(
+                "Some stores have no delivery strategies",
+                None,
+                None,
+                None,
+            )
+            .into_response());
+        }
+    }
+
     // Includes all products in cart + delivery
     let mut total_price = 0.0;
 
-    let mut checkout_parts: Vec<CheckOutSessionPart> = Vec::new();
+    // Adding delivery cost to each part
+    let checkout_parts: Vec<StdResult<CheckOutSessionPart, Response>> = checkout_parts
+        .into_iter()
+        .map(|(store_id, mut part)| {
+            let store = stores
+                .iter()
+                .find(|store| store.id().unwrap() == store_id)
+                .expect("Store not found");
 
-    Ok(ResponseBuilder::success(Some(()), None, None).into_response())
+            // checking if items total is above store min order
+            if part.items_total < store.min_order as f64 {
+                return Err(ResponseBuilder::<()>::error(
+                    "Some items in cart are below store min order",
+                    None,
+                    None,
+                    None,
+                )
+                .into_response());
+            };
+
+            // checking if store as a free above policy
+            if let Some(free_above) = store
+                .delivery_strategies
+                .default
+                .as_ref()
+                .unwrap()
+                .free_above
+            {
+                // if it does, check if the items total is above it
+                if part.items_total < free_above as f64 {
+                    part.delivery_cost = store.delivery_strategies.default.as_ref().unwrap().price;
+                } else {
+                    part.delivery_cost = 0.0;
+                }
+            }
+            // if it doesn't, set the delivery cost to the provided price
+            else {
+                part.delivery_cost = store.delivery_strategies.default.as_ref().unwrap().price;
+            }
+
+            // adding delivery cost and total part items to total price
+            total_price += part.items_total + part.delivery_cost;
+
+            Ok(part)
+        })
+        .collect();
+
+    // return an error if any of the checkout parts is an error
+    if checkout_parts.iter().any(|part| part.is_err()) {
+        let r = checkout_parts
+            .into_iter()
+            .find(|part| part.is_err())
+            .unwrap();
+
+        return Ok(r.unwrap_err());
+    }
+
+    let checkout_parts = checkout_parts
+        .into_iter()
+        .map(|part| part.unwrap())
+        .collect::<Vec<_>>();
+
+    checkout_session.parts = checkout_parts;
+    checkout_session.total = total_price;
+
+    let checkout_session = db
+        .insert_new_checkout_session(checkout_session, None)
+        .await?;
+
+    Ok(ResponseBuilder::success(Some(checkout_session), None, None).into_response())
 }
