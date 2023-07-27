@@ -10,7 +10,7 @@ use axum::{
 use shoppa_core::ResponseBuilder;
 use shoppa_core::{
     db::{
-        models::{EmbeddedDocument, ProductItemStatus, ProductStatus},
+        models::{EmbeddedDocument, ProductItemStatus, ProductStatus, CheckOutSessionPart},
         populate::{FieldPopulate, PopulateOptions, UsersPopulate},
     },
     extractors::JsonWithValidation,
@@ -220,7 +220,7 @@ pub async fn start_checkout(
         cart_products: FieldPopulate::Field,
         options: None,
     };
-    
+
     current_user.force_fetch(&db, Some(populate)).await?;
 
     if !current_user.user_exists() {
@@ -230,5 +230,24 @@ pub async fn start_checkout(
         );
     }
 
-    Ok(ResponseBuilder::success(current_user.user(), None, None).into_response())
+    let user = current_user.user().unwrap();
+
+    if user.cart.items.is_empty() {
+        return Ok(ResponseBuilder::<()>::error("Cart is empty", None, None, None).into_response());
+    }
+    // If one is populated, all are populated
+    if user.cart.items.get(0).unwrap().product.is_not_populated() {
+        // This is not supposed to happen
+        return Ok(
+            ResponseBuilder::<()>::error("CartItemNotPopulated", None, None, Some(500))
+                .into_response(),
+        );
+    }
+
+    // Includes all products in cart + delivery
+    let mut total_price = 0.0;
+
+    let mut checkout_parts: Vec<CheckOutSessionPart> = Vec::new();
+
+    Ok(ResponseBuilder::success(Some(()), None, None).into_response())
 }
