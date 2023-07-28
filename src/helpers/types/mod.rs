@@ -20,6 +20,8 @@ pub enum Cookeys {
     DebugingCookie,
     #[strum(to_string = "government_pigeon")]
     StoreUserAccessToken,
+    #[strum(to_string = "pigeon_who_loves_to_eat_cookies")]
+    CheckoutSession
 }
 
 #[derive(EnumString, Display)]

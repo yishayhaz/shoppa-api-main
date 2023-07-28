@@ -1,24 +1,81 @@
 use crate::{
     helpers::{env::ENV_VARS, types::Cookeys},
     prelude::*,
-    tokens::USER_TOKEN_MANAGER,
+    tokens::{CHECKOUT_SESSION_TOKEN_MANAGER, USER_TOKEN_MANAGER},
 };
-use shoppa_core::{constans::MAX_COOKIE_EXP, db::models::User};
+use shoppa_core::{
+    constans::MAX_COOKIE_EXP,
+    db::models::{CheckOutSession, User},
+};
 use tower_cookies::{cookie::time::Duration, Cookie, Cookies};
 
 pub trait CookieManager {
+    fn get_cookie(&self, key: &Cookeys) -> Option<Cookie<'_>>;
+
     fn set_cookie(&self, key: &Cookeys, value: String, exp: i64, http_only: bool);
 
     fn delete_cookie(&self, key: &Cookeys);
 
-    fn set_access_cookie(&self, user: &User) -> Result<()>;
+    fn set_access_cookie(&self, user: &User) -> Result<()> {
+        let login_token = USER_TOKEN_MANAGER.generate_token(user, None)?;
 
-    fn get_access_cookie(&self) -> Option<String>;
+        self.set_cookie(&Cookeys::AccessToken, login_token, MAX_COOKIE_EXP, true);
 
-    fn delete_access_cookie(&self);
+        Ok(())
+    }
+
+    fn get_access_cookie(&self) -> Option<String> {
+        let cookie = self.get_cookie(&Cookeys::AccessToken);
+
+        if let Some(cookie) = cookie {
+            if cookie.value().is_empty() {
+                return None;
+            }
+            return Some(cookie.value().to_string());
+        }
+
+        None
+    }
+
+    fn delete_access_cookie(&self) {
+        self.delete_cookie(&Cookeys::AccessToken);
+    }
+
+    fn set_checkout_session_cookie(&self, checkout_session: &CheckOutSession) -> Result<()> {
+        self.set_cookie(
+            &Cookeys::CheckoutSession,
+            CHECKOUT_SESSION_TOKEN_MANAGER.generate_token(checkout_session, None)?,
+            // 30 minutes
+            60 * 30,
+            true,
+        );
+
+        Ok(())
+    }
+
+    fn get_checkout_session_cookie(&self) -> Option<String> {
+        let cookie = self.get_cookie(&Cookeys::CheckoutSession);
+
+        if let Some(cookie) = cookie {
+            if cookie.value().is_empty() {
+                return None;
+            }
+            return Some(cookie.value().to_string());
+        }
+
+        None
+    }
+
+    fn delete_checkout_session_cookie(&self) {
+        self.delete_cookie(&Cookeys::CheckoutSession);
+    }
 }
 
 impl CookieManager for Cookies {
+    fn get_cookie(&self, key: &Cookeys) -> Option<Cookie<'_>> {
+        self.get(&key.to_string())
+    }
+
     fn set_cookie(&self, key: &Cookeys, value: String, exp: i64, http_only: bool) {
         let mut cookie = Cookie::new(key.to_string(), value);
 
@@ -45,30 +102,5 @@ impl CookieManager for Cookies {
         cookie.set_path("/");
 
         self.add(cookie);
-    }
-
-    fn set_access_cookie(&self, user: &User) -> Result<()> {
-        let login_token = USER_TOKEN_MANAGER.generate_token(user, None)?;
-
-        self.set_cookie(&Cookeys::AccessToken, login_token, MAX_COOKIE_EXP, true);
-
-        Ok(())
-    }
-
-    fn get_access_cookie(&self) -> Option<String> {
-        let cookie = self.get(&Cookeys::AccessToken.to_string());
-
-        if let Some(cookie) = cookie {
-            if cookie.value().is_empty() {
-                return None;
-            }
-            return Some(cookie.value().to_string());
-        }
-
-        None
-    }
-
-    fn delete_access_cookie(&self) {
-        self.delete_cookie(&Cookeys::AccessToken);
     }
 }
