@@ -418,5 +418,7 @@ pub async fn start_checkout(
         .insert_new_checkout_session(checkout_session, None)
         .await?;
 
+    cookies.set_checkout_session_cookie(&checkout_session)?;
+
     Ok(ResponseBuilder::success(Some(checkout_session), None, None).into_response())
 }
