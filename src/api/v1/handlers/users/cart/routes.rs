@@ -1,14 +1,16 @@
 use super::types::{AddProductToCartPayload, EditProductInCartPayload, RemoveProductFromCartQuery};
-use crate::api::v1::middlewares::CurrentUser;
-use crate::db::UserFunctions;
-use crate::helpers::cookies::CookieManager;
-use crate::{db::AxumDBExtansion, prelude::*};
+use crate::{
+    api::v1::middlewares::CurrentUser,
+    db::{AxumDBExtansion, UserFunctions},
+    helpers::cookies::CookieManager,
+    prelude::*,
+};
 use axum::{
     extract::{Json, Query},
-    response::{IntoResponse, Response},
+    response::IntoResponse,
 };
 use bson::{doc, oid::ObjectId};
-use shoppa_core::ResponseBuilder;
+use serde_json::json;
 use shoppa_core::{
     db::{
         models::{
@@ -18,6 +20,7 @@ use shoppa_core::{
         populate::{FieldPopulate, UsersPopulate},
     },
     extractors::JsonWithValidation,
+    ResponseBuilder,
 };
 use std::collections::HashMap;
 use tower_cookies::Cookies;
@@ -253,6 +256,8 @@ pub async fn start_checkout(
 
     let mut checkout_parts: HashMap<&ObjectId, CheckOutSessionPart> = HashMap::new();
 
+    let mut errors = Vec::new();
+
     // grouping items by store
     user.cart.items.iter().for_each(|item| {
         let product = item
@@ -277,6 +282,33 @@ pub async fn start_checkout(
                     delivery_strategy: "default".to_string(),
                 });
 
+        if product.status != ProductStatus::Active {
+            errors.push(json!({
+                "product": product.id().unwrap(),
+                "error": "Product is not active"
+            }));
+            return;
+        }
+
+        if product_item.status != ProductItemStatus::Active {
+            errors.push(json!({
+                "product": product.id().unwrap(),
+                "item": product_item.id(),
+                "error": "Product item is not active"
+            }));
+            return;
+        }
+
+        if item.quantity as u64 > product_item.in_storage {
+            errors.push(json!({
+                "product": product.id().unwrap(),
+                "item": product_item.id(),
+                "in_storage": product_item.in_storage,
+                "error": "Not enough items in storage"
+            }));
+            return;
+        }
+
         checkout_part.items.push(CheckOutSessionPartItem {
             product: product.id().unwrap().clone(),
             item_id: product_item.id().clone(),
@@ -286,7 +318,11 @@ pub async fn start_checkout(
 
         checkout_part.items_total += product_item.price * item.quantity as f64;
     });
-    
+
+    if !errors.is_empty() {
+        return Ok(ResponseBuilder::error("", Some(errors), None, None).into_response());
+    }
+
     // getting stores from db
     let stores = db
         .get_stores(
@@ -325,9 +361,10 @@ pub async fn start_checkout(
     let mut total_price = 0.0;
 
     // Adding delivery cost to each part
-    let checkout_parts: Vec<StdResult<CheckOutSessionPart, Response>> = checkout_parts
+    let checkout_parts: Vec<CheckOutSessionPart> = checkout_parts
         .into_iter()
         .map(|(store_id, mut part)| {
+            // Not possible to fail
             let store = stores
                 .iter()
                 .find(|store| store.id().unwrap() == store_id)
@@ -335,13 +372,12 @@ pub async fn start_checkout(
 
             // checking if items total is above store min order
             if part.items_total < store.min_order as f64 {
-                return Err(ResponseBuilder::<()>::error(
-                    "Some items in cart are below store min order",
-                    None,
-                    None,
-                    None,
-                )
-                .into_response());
+                errors.push(json!({
+                    "store": store.id().unwrap(),
+                    "min_order": store.min_order,
+                    "items_total": part.items_total,
+                    "error": "Items total is below store min order"
+                }));
             };
 
             // checking if store as a free above policy
@@ -367,24 +403,13 @@ pub async fn start_checkout(
             // adding delivery cost and total part items to total price
             total_price += part.items_total + part.delivery_cost;
 
-            Ok(part)
+            part
         })
         .collect();
 
-    // return an error if any of the checkout parts is an error
-    if checkout_parts.iter().any(|part| part.is_err()) {
-        let r = checkout_parts
-            .into_iter()
-            .find(|part| part.is_err())
-            .unwrap();
-
-        return Ok(r.unwrap_err());
+    if !errors.is_empty() {
+        return Ok(ResponseBuilder::error("", Some(errors), None, None).into_response());
     }
-
-    let checkout_parts = checkout_parts
-        .into_iter()
-        .map(|part| part.unwrap())
-        .collect::<Vec<_>>();
 
     checkout_session.parts = checkout_parts;
     checkout_session.total = total_price;
