@@ -1,4 +1,6 @@
-use super::types::{AddProductToCartPayload, EditProductInCartPayload, RemoveProductFromCartQuery};
+use super::types::{
+    AddProductToCartPayload, EditProductInCartPayload, PayCartPayload, RemoveProductFromCartQuery,
+};
 use crate::{
     api::v1::middlewares::{CurrentCheckOutSession, CurrentUser},
     db::{AxumDBExtansion, CheckoutSessionFunctions, UserFunctions},
@@ -15,11 +17,12 @@ use shoppa_core::{
     db::{
         models::{
             CheckOutSession, CheckOutSessionPart, CheckOutSessionPartItem, DBModel,
-            EmbeddedDocument, ProductItemStatus, ProductStatus, Store,
+            EmbeddedDocument, ProductItemStatus, ProductStatus, Store, Order
         },
         populate::{FieldPopulate, UsersPopulate},
     },
     extractors::JsonWithValidation,
+    payments::types::ChargeCreditCard,
     ResponseBuilder,
 };
 use std::collections::HashMap;
@@ -426,9 +429,10 @@ pub async fn start_checkout(
 pub async fn checkout_pay(
     db: AxumDBExtansion,
     payment_client: AxumPaymentClientExtension,
-    current_user: CurrentUser,
+    mut current_user: CurrentUser,
     current_checkout_session: CurrentCheckOutSession,
     cookies: Cookies,
+    JsonWithValidation(payload): JsonWithValidation<PayCartPayload>,
 ) -> HandlerResult {
     let session = db
         .get_checkout_session_by_user(&current_user.user_id, None, None)
@@ -452,8 +456,55 @@ pub async fn checkout_pay(
         );
     }
 
-    todo!();
+    current_user.fetch(&db, None).await?;
 
-    payment_client.charge_credit_card(charge_cc).await;
-    
+    if !current_user.user_exists() {
+        cookies.delete_access_cookie();
+        return Ok(
+            ResponseBuilder::<()>::error("User not found", None, None, None).into_response(),
+        );
+    }
+
+    let user = current_user.user().unwrap();
+
+    let address = match user
+        .addresses
+        .iter()
+        .find(|address| address.id() == &payload.address_id)
+    {
+        Some(address) => address,
+        None => {
+            return Ok(
+                ResponseBuilder::<()>::error("Address not found", None, None, None).into_response(),
+            );
+        }
+    };
+
+    if user.phone_number.is_none() {
+        // TODO update user phone number with the one provided
+        // do it as a background task after payment succeeded
+    }
+    // TODO start db session and insert order, commit only if payment succeeded
+    // also update the items quantity in storage (using one query, with update many )
+    // let order = Order::new(
+    //     user.id().unwrap().clone(),
+    //     address.clone(),
+    //     payload.phone,
+    //     payload.email,
+    //     session.total,
+    //     session.parts.clone(),
+    // );
+
+    let charge_res = payment_client
+        .charge_credit_card(ChargeCreditCard {
+            customer_id: user.id().unwrap().clone(),
+            amount: session.total,
+            // user is not guest so he must have a name
+            customer_name: user.name.unwrap_or_default().clone(),
+            credit_card: payload.credit_card,
+            currency_code: None,
+        })
+        .await;
+
+    todo!()
 }
