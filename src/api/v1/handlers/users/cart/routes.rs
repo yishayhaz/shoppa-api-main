@@ -1,8 +1,8 @@
 use super::types::{AddProductToCartPayload, EditProductInCartPayload, RemoveProductFromCartQuery};
 use crate::{
-    api::v1::middlewares::CurrentUser,
-    db::{AxumDBExtansion, UserFunctions},
-    helpers::cookies::CookieManager,
+    api::v1::middlewares::{CurrentCheckOutSession, CurrentUser},
+    db::{AxumDBExtansion, CheckoutSessionFunctions, UserFunctions},
+    helpers::{cookies::CookieManager, types::AxumPaymentClientExtension},
     prelude::*,
 };
 use axum::{
@@ -421,4 +421,39 @@ pub async fn start_checkout(
     cookies.set_checkout_session_cookie(&checkout_session)?;
 
     Ok(ResponseBuilder::success(Some(checkout_session), None, None).into_response())
+}
+
+pub async fn checkout_pay(
+    db: AxumDBExtansion,
+    payment_client: AxumPaymentClientExtension,
+    current_user: CurrentUser,
+    current_checkout_session: CurrentCheckOutSession,
+    cookies: Cookies,
+) -> HandlerResult {
+    let session = db
+        .get_checkout_session_by_user(&current_user.user_id, None, None)
+        .await?;
+
+    if session.is_none() {
+        cookies.delete_checkout_session_cookie();
+        return Ok(
+            ResponseBuilder::<()>::error("Checkout session not found", None, None, None)
+                .into_response(),
+        );
+    }
+
+    let session = session.unwrap();
+
+    if session.secret != current_checkout_session.secret {
+        cookies.delete_checkout_session_cookie();
+        return Ok(
+            ResponseBuilder::<()>::error("Checkout session changed", None, None, None)
+                .into_response(),
+        );
+    }
+
+    todo!();
+
+    payment_client.charge_credit_card(charge_cc).await;
+    
 }

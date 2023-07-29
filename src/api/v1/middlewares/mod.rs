@@ -1,9 +1,13 @@
-mod auth;
 mod anti_auth;
-pub use auth::{login_required, CurrentUser, login_required_or_create_guest, guest_user_not_allowed};
-pub use anti_auth::guest_required;
+mod auth;
+mod checkout_session;
 use crate::helpers::env::ENV_VARS;
+pub use anti_auth::guest_required;
+pub use auth::{
+    guest_user_not_allowed, login_required, login_required_or_create_guest, CurrentUser,
+};
 use axum::{async_trait, extract::FromRequestParts, http::request::Parts};
+pub use checkout_session::{checkout_session_required, CurrentCheckOutSession};
 
 pub struct OnlyInDev();
 
