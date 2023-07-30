@@ -26,7 +26,7 @@ pub struct RemoveProductFromCartQuery {
 pub struct PayCartPayload {
     pub address_id: ObjectId,
     #[validate(custom = "validators::phone_number_validator")]
-    pub phone: String,
+    pub phone_number: String,
     #[validate(email)]
     pub email: String,
     #[validate]
