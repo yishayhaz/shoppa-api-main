@@ -8,7 +8,7 @@ pub fn router() -> Router {
         .route("/checkout", routing::patch(routes::start_checkout))
         .route(
             "/pay",
-            routing::get(routes::checkout_pay)
+            routing::post(routes::checkout_pay)
                 .route_layer(middleware::from_fn(middlewares::checkout_session_required)),
         )
         .route_layer(middleware::from_fn(middlewares::guest_user_not_allowed))
