@@ -31,6 +31,7 @@ pub struct PayCartPayload {
     pub email: String,
     #[validate]
     pub credit_card: CreditCard,
+    pub card_holder_name: String,
     #[serde(default)]
     pub utms: HashMap<ObjectId, String>,
 }

@@ -17,12 +17,12 @@ use shoppa_core::{
     db::{
         models::{
             CheckOutSession, CheckOutSessionPart, CheckOutSessionPartItem, DBModel,
-            EmbeddedDocument, ProductItemStatus, ProductStatus, Store, Order
+            EmbeddedDocument, Order, OrderInfo, ProductItemStatus, ProductStatus, Store,
         },
         populate::{FieldPopulate, UsersPopulate},
     },
     extractors::JsonWithValidation,
-    payments::types::ChargeCreditCard,
+    payments::types::{ChargeCreditCard, ChargeResult},
     ResponseBuilder,
 };
 use std::collections::HashMap;
@@ -432,13 +432,13 @@ pub async fn checkout_pay(
     mut current_user: CurrentUser,
     current_checkout_session: CurrentCheckOutSession,
     cookies: Cookies,
-    JsonWithValidation(payload): JsonWithValidation<PayCartPayload>,
+    JsonWithValidation(mut payload): JsonWithValidation<PayCartPayload>,
 ) -> HandlerResult {
-    let session = db
+    let checkout_session = db
         .get_checkout_session_by_user(&current_user.user_id, None, None)
         .await?;
 
-    if session.is_none() {
+    if checkout_session.is_none() {
         cookies.delete_checkout_session_cookie();
         return Ok(
             ResponseBuilder::<()>::error("Checkout session not found", None, None, None)
@@ -446,9 +446,9 @@ pub async fn checkout_pay(
         );
     }
 
-    let session = session.unwrap();
+    let checkout_session = checkout_session.unwrap();
 
-    if session.secret != current_checkout_session.secret {
+    if checkout_session.secret != current_checkout_session.secret {
         cookies.delete_checkout_session_cookie();
         return Ok(
             ResponseBuilder::<()>::error("Checkout session changed", None, None, None)
@@ -484,27 +484,86 @@ pub async fn checkout_pay(
         // TODO update user phone number with the one provided
         // do it as a background task after payment succeeded
     }
-    // TODO start db session and insert order, commit only if payment succeeded
-    // also update the items quantity in storage (using one query, with update many )
-    // let order = Order::new(
-    //     user.id().unwrap().clone(),
-    //     address.clone(),
-    //     payload.phone,
-    //     payload.email,
-    //     session.total,
-    //     session.parts.clone(),
-    // );
 
-    let charge_res = payment_client
+    let mut db_session = db.start_session().await?;
+
+    let order = Order::new(
+        Default::default(),
+        checkout_session.total,
+        user.id().unwrap().clone(),
+        address.clone(),
+        OrderInfo {
+            email: payload.email,
+            phone_number: payload.phone_number,
+        },
+        checkout_session
+            .parts
+            .into_iter()
+            .map(|part| {
+                let utm = payload.utms.remove(&part.store);
+                part.into_order_part(utm)
+            })
+            .collect(),
+    );
+
+    let order = match db
+        .insert_new_order(order, None, Some(&mut db_session))
+        .await
+    {
+        Ok(order) => order,
+        Err(e) => {
+            // If the abort is not successful,
+            // we can ignore it here since we are only inserting a document
+            // so no documents will be locked in the transaction
+            let _ = db_session.abort_transaction().await;
+            return Err(e);
+        }
+    };
+
+    let charge_res = match payment_client
         .charge_credit_card(ChargeCreditCard {
             customer_id: user.id().unwrap().clone(),
-            amount: session.total,
+            amount: checkout_session.total,
             // user is not guest so he must have a name
             customer_name: user.name.unwrap_or_default().clone(),
             credit_card: payload.credit_card,
             currency_code: None,
         })
-        .await;
+        .await
+    {
+        Ok(res) => res,
+        Err(_) => {
+            // same comment as above
+            let _ = db_session.abort_transaction().await;
+            return Ok(ResponseBuilder::<()>::error(
+                "Failed to charge credit card",
+                None,
+                None,
+                Some(500),
+            )
+            .into_response());
+        }
+    };
 
-    todo!()
+    let trans_data = match charge_res {
+        ChargeResult::Failure(err) => {
+            // same comment as above
+            let _ = db_session.abort_transaction().await;
+            return Ok(ResponseBuilder::error(
+                "Failed to charge credit card",
+                Some(err),
+                None,
+                Some(500),
+            )
+            .into_response());
+        }
+        ChargeResult::Success(data) => data,
+    };
+
+    db.commit_transaction(&mut db_session, Some(16)).await?;
+    // TODO update the order with the transaction data
+    // TODO update the items quantity in storage (using one query, with update many )
+    // TODO send email to user + stores
+
+    Ok(ResponseBuilder::<()>::success(None, None, Some(201)).into_response())
 }
