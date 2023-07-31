@@ -3,7 +3,9 @@ use super::types::{
 };
 use crate::{
     api::v1::middlewares::{CurrentCheckOutSession, CurrentUser},
-    db::{AxumDBExtansion, CheckoutSessionFunctions, UserFunctions},
+    db::{
+        AxumDBExtansion, CheckoutSessionFunctions, OrderFunctions, ProductFunctions, UserFunctions,
+    },
     helpers::{cookies::CookieManager, types::AxumPaymentClientExtension},
     prelude::*,
 };
@@ -27,6 +29,7 @@ use shoppa_core::{
 };
 use std::collections::HashMap;
 use tower_cookies::Cookies;
+// use futures::
 
 pub async fn add_product_to_cart(
     db: AxumDBExtansion,
@@ -480,21 +483,13 @@ pub async fn checkout_pay(
         }
     };
 
-    if user.phone_number.is_none() {
-        // TODO update user phone number with the one provided
-        // do it as a background task after payment succeeded
-    }
-
     let mut db_session = db.start_session().await?;
 
     if db_session.start_transaction(None).await.is_err() {
-        return Ok(ResponseBuilder::<()>::error(
-            "Failed to start transaction",
-            None,
-            None,
-            None,
-        )
-        .into_response());
+        return Ok(
+            ResponseBuilder::<()>::error("Failed to start transaction", None, None, None)
+                .into_response(),
+        );
     }
 
     let order = Order::new(
@@ -535,7 +530,7 @@ pub async fn checkout_pay(
             customer_id: user.id().unwrap().clone(),
             amount: checkout_session.total,
             // user is not guest so he must have a name
-            customer_name: user.name.unwrap_or_default().clone(),
+            customer_name: user.name.as_ref().unwrap_or(&String::new()).clone(),
             credit_card: payload.credit_card,
             currency_code: None,
         })
@@ -554,15 +549,15 @@ pub async fn checkout_pay(
             .into_response());
         }
     };
- 
-    let trans_data = match charge_res {
+
+    let transaction_info = match charge_res {
         ChargeResult::Failure(err) => {
             // same comment as above
             let _ = db_session.abort_transaction().await;
-            return Ok(ResponseBuilder::error(
+            return Ok(ResponseBuilder::<()>::error(
                 "Failed to charge credit card",
-                Some(err),
                 None,
+                Some(&err),
                 Some(400),
             )
             .into_response());
@@ -571,10 +566,26 @@ pub async fn checkout_pay(
     };
 
     db.commit_transaction(&mut db_session, Some(16)).await?;
-    // TODO update the order with the transaction data
-    // TODO update the items quantity in storage (using one query, with update many )
-    // TODO send email to user + stores
-    // TODO clear user cart + update his phone number if needed
+
+    tokio::spawn(async move {
+
+        // adding payment info to order
+        let fn1 = db
+            .update_order_after_payment(&order, transaction_info, payload.card_holder_name);
+        // clear user cart + update his phone number if needed
+        let fn2 = db.update_user_after_order(&user, &order);
+        // update products storage
+        let fn3 = db.update_products_storage_by_order(&order, None);
+
+        // to take advantage of async we will all of them only after calling all of them
+        let _ = fn1.await;
+        let _ = fn2.await;
+        let _ = fn3.await;
+
+        // TODO send email to user + stores
+    });
+
+    cookies.delete_checkout_session_cookie();
 
     Ok(ResponseBuilder::<()>::success(None, None, Some(201)).into_response())
 }

@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use shoppa_core::db::{
     aggregations,
     models::{
-        Address, CartItem, DBModel, EmbeddedDocument, FileTypes, ItemVariants, Product,
+        Address, CartItem, DBModel, EmbeddedDocument, FileTypes, ItemVariants, Order, Product,
         ProductItemStatus, ProductStatus, Store, User, UserStatus, Variants,
     },
     populate::UsersPopulate,
@@ -116,6 +116,8 @@ pub trait UserFunctions {
         address_id: &ObjectId,
         options: Option<UpdateOptions>,
     ) -> Result<UpdateResult>;
+
+    async fn update_user_after_order(&self, user: &User, order: &Order) -> Result<UpdateResult>;
 }
 
 // #[async_trait]
@@ -596,6 +598,32 @@ impl UserFunctions for DBConection {
         };
 
         self.update_user(filters, update, options, None).await
+    }
+
+    async fn update_user_after_order(&self, user: &User, order: &Order) -> Result<UpdateResult> {
+        let mut set = doc! {
+            User::fields().cart(true).items: [],
+        };
+
+        if user.phone_number.is_none() {
+            set.insert(User::fields().phone_number, order.info.phone_number.clone());
+        }
+
+        let mut update = doc! {
+            "$set": set,
+        };
+
+        if user.phone_number.is_none() {
+            update.insert(
+                "$currentDate",
+                doc! {
+                    User::fields().updated_at: true,
+                },
+            );
+        }
+
+        self.update_user_by_id(&user.id().unwrap(), update, None, None)
+            .await
     }
 }
 
