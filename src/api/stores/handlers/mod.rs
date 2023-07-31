@@ -5,3 +5,4 @@ pub mod products;
 pub mod registration;
 pub mod store;
 pub mod variants;
+// pub mod orders;
