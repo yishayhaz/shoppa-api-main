@@ -6,7 +6,10 @@ use crate::{
     db::{
         AxumDBExtansion, CheckoutSessionFunctions, OrderFunctions, ProductFunctions, UserFunctions,
     },
-    helpers::{cookies::CookieManager, types::AxumPaymentClientExtension},
+    helpers::{
+        cookies::CookieManager,
+        types::{AxumPaymentClientExtension, AxumStorgeClientExtension},
+    },
     prelude::*,
 };
 use axum::{
@@ -19,11 +22,13 @@ use shoppa_core::{
     db::{
         models::{
             CheckOutSession, CheckOutSessionPart, CheckOutSessionPartItem, DBModel,
-            EmbeddedDocument, Order, OrderInfo, ProductItemStatus, ProductStatus, Store,
+            EmbeddedDocument, InvoiceType, Order, OrderInfo, ProductItemStatus, ProductStatus,
+            Store,
         },
-        populate::{FieldPopulate, UsersPopulate},
+        populate::{FieldPopulate, OrderPopulate, UsersPopulate},
     },
     extractors::JsonWithValidation,
+    file_storage::StorageFolders,
     payments::types::{ChargeCreditCard, ChargeResult},
     ResponseBuilder,
 };
@@ -432,6 +437,7 @@ pub async fn start_checkout(
 pub async fn checkout_pay(
     db: AxumDBExtansion,
     payment_client: AxumPaymentClientExtension,
+    storage_client: AxumStorgeClientExtension,
     mut current_user: CurrentUser,
     current_checkout_session: CurrentCheckOutSession,
     cookies: Cookies,
@@ -500,6 +506,7 @@ pub async fn checkout_pay(
         OrderInfo {
             email: payload.email,
             phone_number: payload.phone_number,
+            customer_id: payload.customer_id,
         },
         checkout_session
             .parts
@@ -568,21 +575,52 @@ pub async fn checkout_pay(
     db.commit_transaction(&mut db_session, Some(16)).await?;
 
     tokio::spawn(async move {
+        let full_order: Order = match db
+            .get_order_by_id(
+                order.id().unwrap(),
+                None,
+                Some(OrderPopulate {
+                    stores: FieldPopulate::Field,
+                    products: FieldPopulate::Field,
+                    user: FieldPopulate::None,
+                    options: None,
+                }),
+                None,
+            )
+            .await
+        {
+            Ok(order) => order.unwrap(),
+            Err(_) => return,
+        };
+
+        tracing::info!("Full order: {:?}", &full_order);
 
         // adding payment info to order
-        let fn1 = db
-            .update_order_after_payment(&order, transaction_info, payload.card_holder_name);
+        let fn1 = db.update_order_after_payment(&order, transaction_info, payload.card_holder_name);
         // clear user cart + update his phone number if needed
         let fn2 = db.update_user_after_order(&user, &order);
         // update products storage
         let fn3 = db.update_products_storage_by_order(&order, None);
 
-        // to take advantage of async we will all of them only after calling all of them
+        let data: Vec<serde_json::Value> = Vec::new();
+
+        for part in &full_order.parts {
+            let keys = StorageFolders::generate_invoice_keys(
+                order.id().unwrap(),
+                part.store.ref_doc_id(),
+                &InvoiceType::Receipt,
+            );
+
+            // let url1 = storage_client.generate_secure_upload_url(
+            //     keys[0].as_str(),
+            //     None,
+            //     None,
+            // );
+        }
+
         let _ = fn1.await;
         let _ = fn2.await;
         let _ = fn3.await;
-
-        // TODO send email to user + stores
     });
 
     cookies.delete_checkout_session_cookie();
