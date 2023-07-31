@@ -487,6 +487,16 @@ pub async fn checkout_pay(
 
     let mut db_session = db.start_session().await?;
 
+    if db_session.start_transaction(None).await.is_err() {
+        return Ok(ResponseBuilder::<()>::error(
+            "Failed to start transaction",
+            None,
+            None,
+            None,
+        )
+        .into_response());
+    }
+
     let order = Order::new(
         Default::default(),
         checkout_session.total,
@@ -532,19 +542,19 @@ pub async fn checkout_pay(
         .await
     {
         Ok(res) => res,
-        Err(_) => {
+        Err(e) => {
             // same comment as above
             let _ = db_session.abort_transaction().await;
-            return Ok(ResponseBuilder::<()>::error(
+            return Ok(ResponseBuilder::error(
                 "Failed to charge credit card",
-                None,
+                Some(e.to_string()),
                 None,
                 Some(500),
             )
             .into_response());
         }
     };
-
+ 
     let trans_data = match charge_res {
         ChargeResult::Failure(err) => {
             // same comment as above
@@ -553,7 +563,7 @@ pub async fn checkout_pay(
                 "Failed to charge credit card",
                 Some(err),
                 None,
-                Some(500),
+                Some(400),
             )
             .into_response());
         }
@@ -564,6 +574,7 @@ pub async fn checkout_pay(
     // TODO update the order with the transaction data
     // TODO update the items quantity in storage (using one query, with update many )
     // TODO send email to user + stores
+    // TODO clear user cart + update his phone number if needed
 
     Ok(ResponseBuilder::<()>::success(None, None, Some(201)).into_response())
 }

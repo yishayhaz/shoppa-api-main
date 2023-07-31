@@ -2701,6 +2701,7 @@ dependencies = [
  "lazy_static",
  "reqwest",
  "serde",
+ "serde_json",
  "shoppa-core-private",
  "validator",
 ]
