@@ -500,6 +500,7 @@ pub async fn checkout_pay(
         OrderInfo {
             email: payload.email,
             phone_number: payload.phone_number,
+            customer_id: payload.customer_id,
         },
         checkout_session
             .parts

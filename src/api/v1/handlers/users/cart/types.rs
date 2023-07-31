@@ -27,6 +27,8 @@ pub struct PayCartPayload {
     pub address_id: ObjectId,
     #[validate(custom = "validators::phone_number_validator")]
     pub phone_number: String,
+    #[validate(length(equal = 9))]
+    pub customer_id: String,
     #[validate(email)]
     pub email: String,
     #[validate]
