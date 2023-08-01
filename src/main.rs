@@ -47,14 +47,13 @@ async fn main() {
             .expect("Failed to connect to DB"),
     );
 
-    let payment_client = Arc::new(
-        PaymentClient::new()
-    );
+    let payment_client = Arc::new(PaymentClient::new());
 
     let app = Router::new()
         .nest("/api/v1", api::v1::router())
         .nest("/api/management", api::management::router())
         .nest("/api/stores", api::stores::router())
+        .nest("/api/invoices", api::invoices::router())
         .layer(Extension(payment_client))
         .layer(Extension(email_client))
         .layer(Extension(storge_client))
