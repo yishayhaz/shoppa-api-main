@@ -27,5 +27,18 @@ pub async fn update_mail_sent(
 
     // loop through invoices and update mail_sent to true
 
+    // let pipeline = vec![
+    //     doc! {
+    //         "$match": {
+    //             "order_id": order_id,
+    //         },
+    //     },
+    //     doc! {
+    //         "$set": {
+    //             "mail_sent": true,
+    //         },
+    //     },
+    // ];
+
     Ok(ResponseBuilder::success(Some(invoice), None, Some(200)).into_response())
 }
