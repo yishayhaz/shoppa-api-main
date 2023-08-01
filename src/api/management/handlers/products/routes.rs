@@ -2,7 +2,7 @@ use super::types::{
     CreateProductPayload, EditProductPayload, GetProductsQueryParams, UploadProductImagePayload,
 };
 use crate::{
-    db::{AdminProductFunctions, AxumDBExtansion, ProductSortBy, UserFunctions},
+    db::{AdminProductFunctions, AxumDBExtansion, ProductSortBy},
     helpers::types::AxumStorgeClientExtension,
     prelude::*,
 };

@@ -14,9 +14,9 @@ use shoppa_core::{
 };
 
 pub async fn get_products_infinite(
-    db: AxumDBExtansion,
-    pagination: Pagination,
-    Query(query): Query<types::GetProductsInfiniteQueryParams>,
+    _db: AxumDBExtansion,
+    _pagination: Pagination,
+    Query(_query): Query<types::GetProductsInfiniteQueryParams>,
 ) -> HandlerResult {
     todo!()
 }

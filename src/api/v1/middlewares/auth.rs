@@ -1,228 +1,196 @@
-use crate::helpers::{
-    cookies::CookieManager,
-    security::{decode_login_token, LoginTokenData},
-    types::Cookeys,
+use crate::{
+    db::{AxumDBExtansion, UserFunctions},
+    helpers::cookies::CookieManager,
+    prelude::*,
+    tokens::USER_TOKEN_MANAGER,
 };
 use axum::{
     async_trait,
     extract::FromRequestParts,
     http::request::Parts,
+    http::Request,
+    middleware::Next,
     response::{IntoResponse, Response},
 };
-use shoppa_core::ResponseBuilder;
+use bson::oid::ObjectId;
+use shoppa_core::{
+    db::{
+        models::{DBModel, User},
+        populate::UsersPopulate,
+        DBConection,
+    },
+    ResponseBuilder,
+};
+use std::sync::Arc;
 use tower_cookies::Cookies;
 
-pub struct GuestOnly(pub ());
-// get me is a bit diffrent, we dont want to return an 400 when he is not logged in
-// to help the seo
-pub struct GetTokenForGetMe(pub LoginTokenData);
-pub struct Level1AccessOrNone(pub Option<LoginTokenData>);
-pub struct Level1Access(pub LoginTokenData);
-pub struct Level2Access(pub LoginTokenData);
-pub struct Level3Access(pub LoginTokenData);
-
-pub enum AuthErrors {
-    InvalidToken,
-    MissingToken,
-    FaildExtractingCookies,
-    InsufficientLevel,
-    GuestRequired,
-    AuthErrorWith200,
+// Use this struct to get the current user data in the request handler
+// This will work only in the context of the login_required middleware
+#[derive(Debug, Clone)]
+pub struct CurrentUser {
+    pub user_id: ObjectId,
+    pub token_secret: String,
+    pub guest: bool,
+    user: Option<User>,
+    user_exists: bool,
 }
 
-#[async_trait]
-impl<S> FromRequestParts<S> for GuestOnly
-where
-    S: Send + Sync,
-{
-    type Rejection = AuthErrors;
+pub async fn login_required<B>(
+    mut req: Request<B>,
+    next: Next<B>,
+) -> StdResult<Response, Response> {
+    let cookies = req.extensions().get::<Cookies>().ok_or(
+        ResponseBuilder::error("", Some(()), Some("FAILD TO GET COOKIES"), Some(500))
+            .into_response(),
+    )?;
 
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        match extract_access_token(parts, state).await {
-            Ok((_, _)) => Err(AuthErrors::GuestRequired),
-            Err((_, _)) => Ok(GuestOnly(())),
+    let access_cookie = &cookies
+        .get_access_cookie()
+        .ok_or(ResponseBuilder::error("", Some(()), None, Some(401)).into_response())?;
+
+    if let Ok(data) = USER_TOKEN_MANAGER.decode_token(access_cookie) {
+        req.extensions_mut()
+            .insert(CurrentUser::new(data.user_id, data.secret, data.guest));
+
+        Ok(next.run(req).await)
+    } else {
+        cookies.delete_access_cookie();
+        Err(ResponseBuilder::error("", Some(()), None, Some(403)).into_response())
+    }
+}
+
+pub async fn login_required_or_create_guest<B>(
+    mut req: Request<B>,
+    next: Next<B>,
+) -> StdResult<Response, Error> {
+    let cookies = req
+        .extensions()
+        .get::<Cookies>()
+        .ok_or(Error::Static("FAILD TO GET COOKIES"))?;
+
+    if let Some(access_cookie) = &cookies.get_access_cookie() {
+        if let Ok(data) = USER_TOKEN_MANAGER.decode_token(access_cookie) {
+            req.extensions_mut()
+                .insert(CurrentUser::new(data.user_id, data.secret, data.guest));
+
+            return Ok(next.run(req).await);
         }
+    }
+
+    let db = req
+        .extensions()
+        .get::<Arc<DBConection>>()
+        .ok_or(Error::Static(
+            "FAILD TO GET DB CONNECTION FROM REQUEST EXTENSIONS",
+        ))?;
+
+    let user = db.insert_new_user(User::new_guest(), None, None).await?;
+
+    cookies.set_access_cookie(&user)?;
+
+    // let token_data = USER_TOKEN_MANAGER.decode_token(cookies.get_access_cookie()?.unwrap().as_ref())?;
+
+    let mut current_user = CurrentUser::new(user.id().unwrap().clone(), "".to_string(), true);
+
+    current_user.set_user(user);
+
+    req.extensions_mut().insert(current_user);
+
+    Ok(next.run(req).await)
+}
+
+pub async fn guest_user_not_allowed<B>(
+    req: Request<B>,
+    next: Next<B>,
+) -> StdResult<Response, Response> {
+    let current_user = req
+        .extensions()
+        .get::<CurrentUser>()
+        .ok_or(ResponseBuilder::error("", Some(()), None, Some(500)).into_response())?;
+
+    if current_user.guest {
+        Err(
+            ResponseBuilder::error("GuestUsersAreNotAllowed", Some(()), None, Some(403))
+                .into_response(),
+        )
+    } else {
+        Ok(next.run(req).await)
     }
 }
 
 #[async_trait]
-impl<S> FromRequestParts<S> for GetTokenForGetMe
+impl<S> FromRequestParts<S> for CurrentUser
 where
-    S: Send + Sync,
+    S: Sync,
 {
-    type Rejection = AuthErrors;
+    type Rejection = Response;
 
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        match extract_access_token(parts, state).await {
-            // the min level is 1 so there is no need to check for the user level
-            Ok((data, _)) => Ok(GetTokenForGetMe(data)),
-            Err((_, _)) => Err(AuthErrors::AuthErrorWith200),
-        }
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> StdResult<Self, Self::Rejection> {
+        parts
+            .extensions
+            .remove::<CurrentUser>()
+            .ok_or(ResponseBuilder::error("", Some(()), None, Some(500)).into_response())
     }
 }
 
-#[async_trait]
-impl<S> FromRequestParts<S> for Level1AccessOrNone
-where
-    S: Send + Sync,
-{
-    type Rejection = AuthErrors;
-
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        match extract_access_token(parts, state).await {
-            Ok((data, _)) => {
-                if data.level > 1 {
-                    return Err(AuthErrors::GuestRequired);
-                }
-
-                Ok(Level1AccessOrNone(Some(data)))
-            }
-            Err((_, _)) => Ok(Level1AccessOrNone(None)),
+impl CurrentUser {
+    pub(super) fn new(user_id: ObjectId, token_secret: String, guest: bool) -> Self {
+        Self {
+            user_id,
+            token_secret,
+            guest,
+            user: None,
+            user_exists: false,
         }
     }
-}
 
-#[async_trait]
-impl<S> FromRequestParts<S> for Level1Access
-where
-    S: Send + Sync,
-{
-    type Rejection = AuthErrors;
-
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        match extract_access_token(parts, state).await {
-            // the min level is 1 so there is no need to check for the user level
-            Ok((data, _)) => Ok(Level1Access(data)),
-            Err((e, _)) => Err(e),
+    pub async fn fetch(
+        &mut self,
+        db: &AxumDBExtansion,
+        populate: Option<UsersPopulate>,
+    ) -> Result<()> {
+        if self.user.is_none() {
+            self.user = db
+                .get_user_by_id_and_not_deleted_or_banned(&self.user_id, None, populate)
+                .await?;
         }
+
+        if self.user.is_none() {
+            self.user_exists = false;
+        } else {
+            self.user_exists = true;
+        };
+
+        Ok(())
     }
-}
 
-#[async_trait]
-impl<S> FromRequestParts<S> for Level2Access
-where
-    S: Send + Sync,
-{
-    type Rejection = AuthErrors;
+    pub async fn force_fetch(
+        &mut self,
+        db: &AxumDBExtansion,
+        populate: Option<UsersPopulate>,
+    ) -> Result<()> {
+        self.user = None;
 
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        match extract_access_token(parts, state).await {
-            Ok((data, _)) => {
-                if data.level < 2 {
-                    return Err(AuthErrors::InsufficientLevel);
-                }
-
-                Ok(Level2Access(data))
-            }
-            Err((e, _)) => Err(e),
-        }
+        self.fetch(db, populate).await
     }
-}
 
-#[async_trait]
-impl<S> FromRequestParts<S> for Level3Access
-where
-    S: Send + Sync,
-{
-    type Rejection = AuthErrors;
-
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        match extract_access_token(parts, state).await {
-            // the min level is 1 so there is no need to check for the user level
-            Ok((data, _)) => {
-                if data.level < 3 {
-                    return Err(AuthErrors::InsufficientLevel);
-                }
-
-                Ok(Level3Access(data))
-            }
-            Err((e, _)) => Err(e),
-        }
+    pub fn user_exists(&self) -> bool {
+        self.user_exists
     }
-}
 
-async fn extract_access_token<S>(
-    parts: &mut Parts,
-    _state: &S,
-) -> Result<(LoginTokenData, Cookies), (AuthErrors, Option<Cookies>)>
-where
-    S: Send + Sync,
-{
-    let cookies = match parts.extensions.get::<Cookies>().cloned() {
-        Some(c) => c,
-        None => {
-            return Err((AuthErrors::FaildExtractingCookies, None));
-        }
-    };
+    pub fn get_user_unchecked(&self) -> &User {
+        self.user.as_ref().unwrap()
+    }
 
-    let login_cookie = match cookies.get(Cookeys::AccessToken.to_string().as_str()) {
-        Some(c) => c,
-        None => {
-            return Err((AuthErrors::MissingToken, Some(cookies)));
-        }
-    };
+    pub fn get_user(&self) -> Option<&User> {
+        self.user.as_ref()
+    }
 
-    let token_data = match decode_login_token(login_cookie.value()) {
-        Ok(d) => d,
-        Err(_) => {
-            cookies.delete_access_cookie();
-            return Err((AuthErrors::InvalidToken, Some(cookies)));
-        }
-    };
+    pub fn user(self) -> Option<User> {
+        self.user
+    }
 
-    Ok((token_data, cookies))
-}
-
-impl IntoResponse for AuthErrors {
-    fn into_response(self) -> Response {
-        match self {
-            Self::InvalidToken => ResponseBuilder::<u16>::error(
-                // TODO add error code here
-                "",
-                None,
-                Some("Invalid Token"),
-                Some(403),
-            )
-            .into_response(),
-            Self::MissingToken => ResponseBuilder::<u16>::error(
-                // TODO add error code here
-                "",
-                None,
-                Some("No token was provided"),
-                Some(403),
-            )
-            .into_response(),
-            Self::FaildExtractingCookies => ResponseBuilder::<u16>::error(
-                // TODO add error code here
-                "",
-                None,
-                Some("Failed parsing cookies"),
-                Some(500),
-            )
-            .into_response(),
-            Self::InsufficientLevel => ResponseBuilder::<u16>::error(
-                // TODO add error code here
-                "",
-                None,
-                Some("Your level is too low"),
-                Some(403),
-            )
-            .into_response(),
-            Self::GuestRequired => ResponseBuilder::<u16>::error(
-                // TODO add error code here
-                "",
-                None,
-                Some("Need to be guest to access this route"),
-                Some(403),
-            )
-            .into_response(),
-            Self::AuthErrorWith200 => ResponseBuilder::<u16>::success(
-                // TODO add error code here
-                None,
-                Some("Need to be logged in to access this route"),
-                Some(200),
-            )
-            .into_response(),
-        }
+    fn set_user(&mut self, user: User) {
+        self.user = Some(user);
     }
 }

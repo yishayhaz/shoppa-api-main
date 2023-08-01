@@ -10,7 +10,7 @@ use shoppa_core::{
     db::{
         aggregations::{self, ProjectIdOptions},
         models::{
-            EmbeddedDocument, FileDocument, ProducdBrandField, Product, ProductItemStatus,
+            EmbeddedDocument, FileDocument, Order, ProducdBrandField, Product, ProductItemStatus,
             ProductStatus, Variants,
         },
         populate::ProductsPopulate,
@@ -76,6 +76,11 @@ pub trait ProductFunctions {
         store_id: Option<ObjectId>,
         category_id: Option<ObjectId>,
     ) -> Result<u64>;
+    async fn update_products_storage_by_order(
+        &self,
+        order: &Order,
+        options: Option<UpdateOptions>,
+    ) -> Result<UpdateResult>;
 }
 
 #[async_trait]
@@ -699,6 +704,104 @@ impl ProductFunctions for DBConection {
         ];
 
         self.count_products_with_aggregation(pipeline, None, None)
+            .await
+    }
+
+    async fn update_products_storage_by_order(
+        &self,
+        order: &Order,
+        options: Option<UpdateOptions>,
+    ) -> Result<UpdateResult> {
+        let mut products = Vec::new();
+
+        let mut items_quantity = vec![];
+
+        order.parts.iter().for_each(|part| {
+            part.items.iter().for_each(|item| {
+                products.push(item.product_id());
+                items_quantity.push(doc! {
+                    "_id": &item.item_id,
+                    "quantity": item.quantity
+                });
+            });
+        });
+
+        let filter_update_items = aggregations::filter(
+            items_quantity,
+            "update_item",
+            doc! {
+                "$eq": [
+                    "$$update_item._id",
+                    format!("$$item.{}", Product::fields().items(false).id)
+                ]
+            },
+        );
+
+        let subtract_item_in_storage = doc! {
+            "$subtract": [
+                format!("$$item.{}", Product::fields().items(false).in_storage),
+                {
+                    "$getField": {
+                        "field": "quantity",
+                        "input": {
+                            "$arrayElemAt": [
+                                &filter_update_items,
+                                0
+                            ]
+                        }
+                    }
+                }
+            ]
+        };
+
+        let update = vec![doc! {
+            "$set": {
+                Product::fields().items: aggregations::map(
+                    format!("${}", Product::fields().items),
+                    "item",
+                    doc! {
+                        "$cond": {
+                            "if": {
+                                "$gt": [
+                                    {
+                                        "$size": &filter_update_items
+                                    },
+                                    0
+                                ]
+                            },
+                            "then": {
+                                "$mergeObjects": [
+                                    "$$item",
+                                    {
+                                        Product::fields().items(false).in_storage: {
+                                            "$cond": {
+                                                "if": {
+                                                    "$gt": [
+                                                        &subtract_item_in_storage,
+                                                        0
+                                                    ]
+                                                },
+                                                "then": subtract_item_in_storage,
+                                                "else": 0
+                                            }
+                                        }
+                                    }
+                                ]
+                            },
+                            "else": "$$item"
+                        }
+                    }
+                )
+            }
+        }];
+
+        let filters = doc! {
+            Product::fields().id: {
+                "$in": products
+            }
+        };
+
+        self.update_many_products(filters, update, options, None)
             .await
     }
 }
