@@ -9,6 +9,7 @@ use shoppa_core::{
     email_sender::{EmailAddress, EmailClient},
     file_storage::StorageClient,
     payments::PaymentClient,
+    invoice_service::InvoiceClient,
 };
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -51,10 +52,15 @@ async fn main() {
         PaymentClient::new()
     );
 
+    let invoice_client = Arc::new(
+        InvoiceClient::new()
+    );
+
     let app = Router::new()
         .nest("/api/v1", api::v1::router())
         .nest("/api/management", api::management::router())
         .nest("/api/stores", api::stores::router())
+        .layer(Extension(invoice_client))
         .layer(Extension(payment_client))
         .layer(Extension(email_client))
         .layer(Extension(storge_client))
