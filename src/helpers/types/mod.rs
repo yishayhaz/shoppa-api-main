@@ -1,5 +1,5 @@
 pub mod error_code;
-use shoppa_core::{file_storage::StorageClient, email_sender::EmailClient, payments::PaymentClient};
+use shoppa_core::{file_storage::StorageClient, email_sender::EmailClient, payments::PaymentClient, invoice_service::InvoiceClient};
 use strum_macros::{Display, EnumString};
 
 use axum::Extension;
@@ -8,6 +8,7 @@ use std::sync::Arc;
 pub type AxumStorgeClientExtension = Extension<Arc<StorageClient>>;
 pub type AxumEmailClientExtension = Extension<Arc<EmailClient>>;
 pub type AxumPaymentClientExtension = Extension<Arc<PaymentClient>>;
+pub type AxumInvoiceClientExtension = Extension<Arc<InvoiceClient>>;
 
 #[derive(EnumString, Display)]
 pub enum Cookeys {
