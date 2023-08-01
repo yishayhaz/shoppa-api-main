@@ -6,7 +6,12 @@ use crate::{
     db::{
         AxumDBExtansion, CheckoutSessionFunctions, OrderFunctions, ProductFunctions, UserFunctions,
     },
-    helpers::{cookies::CookieManager, types::AxumPaymentClientExtension},
+    helpers::{
+        cookies::CookieManager,
+        types::{
+            AxumInvoiceClientExtension, AxumPaymentClientExtension, AxumStorgeClientExtension,
+        },
+    },
     prelude::*,
 };
 use axum::{
@@ -19,11 +24,13 @@ use shoppa_core::{
     db::{
         models::{
             CheckOutSession, CheckOutSessionPart, CheckOutSessionPartItem, DBModel,
-            EmbeddedDocument, Order, OrderInfo, ProductItemStatus, ProductStatus, Store,
+            EmbeddedDocument, InvoiceType, Order, OrderInfo, ProductItemStatus, ProductStatus,
+            Store,
         },
-        populate::{FieldPopulate, UsersPopulate},
+        populate::{FieldPopulate, OrderPopulate, UsersPopulate},
     },
     extractors::JsonWithValidation,
+    file_storage::StorageFolders,
     payments::types::{ChargeCreditCard, ChargeResult},
     ResponseBuilder,
 };
@@ -432,6 +439,8 @@ pub async fn start_checkout(
 pub async fn checkout_pay(
     db: AxumDBExtansion,
     payment_client: AxumPaymentClientExtension,
+    storage_client: AxumStorgeClientExtension,
+    invoice_client: AxumInvoiceClientExtension,
     mut current_user: CurrentUser,
     current_checkout_session: CurrentCheckOutSession,
     cookies: Cookies,
@@ -569,21 +578,148 @@ pub async fn checkout_pay(
     db.commit_transaction(&mut db_session, Some(16)).await?;
 
     tokio::spawn(async move {
+        let full_order: Order = match db
+            .get_order_by_id(
+                order.id().unwrap(),
+                None,
+                Some(OrderPopulate {
+                    stores: FieldPopulate::Field,
+                    products: FieldPopulate::Field,
+                    user: FieldPopulate::None,
+                    options: None,
+                }),
+                None,
+            )
+            .await
+        {
+            Ok(order) => order.unwrap(),
+            Err(_) => return,
+        };
 
         // adding payment info to order
-        let fn1 = db
-            .update_order_after_payment(&order, transaction_info, payload.card_holder_name);
+        let fn1 = db.update_order_after_payment(&order, transaction_info, payload.card_holder_name);
         // clear user cart + update his phone number if needed
         let fn2 = db.update_user_after_order(&user, &order);
         // update products storage
         let fn3 = db.update_products_storage_by_order(&order, None);
 
-        // to take advantage of async we will all of them only after calling all of them
+        let mut data: Vec<shoppa_core::invoice_service::InvoicePart> = Vec::new();
+
+        for part in &full_order.parts {
+            let keys = StorageFolders::generate_invoice_keys(
+                order.id().unwrap(),
+                part.store.ref_doc_id(),
+                &InvoiceType::Reciept,
+            );
+
+            let url1 = storage_client
+                .generate_secure_upload_url(
+                    keys[0].as_str(),
+                    // 5 hours
+                    18000,
+                    "application/pdf",
+                    shoppa_core::file_storage::Buckets::Invoice,
+                )
+                .await
+                .unwrap();
+
+            let url2 = storage_client
+                .generate_secure_upload_url(
+                    keys[1].as_str(),
+                    18000,
+                    "application/pdf",
+                    shoppa_core::file_storage::Buckets::Invoice,
+                )
+                .await
+                .unwrap();
+
+            let counter = db
+                .get_and_increase_counter_by1("reciept", None)
+                .await
+                .unwrap();
+
+            let invoice_doc = shoppa_core::db::models::Invoice::new(
+                shoppa_core::db::models::InvoiceType::Reciept,
+                full_order.id().unwrap().clone(),
+                part.store.ref_doc_id().clone(),
+                shoppa_core::db::models::InvoiceType::Reciept.generate_number(counter.value),
+                shoppa_core::db::models::FileDocument::new(
+                    false,
+                    "original-reciept".to_string(),
+                    keys[0].clone(),
+                    0,
+                    "application/pdf".to_string(),
+                    shoppa_core::db::models::FileTypes::Document,
+                ),
+                shoppa_core::db::models::FileDocument::new(
+                    false,
+                    "copy-reciept".to_string(),
+                    keys[1].clone(),
+                    0,
+                    "application/pdf".to_string(),
+                    shoppa_core::db::models::FileTypes::Document,
+                ),
+            );
+
+            let number = invoice_doc.number.clone();
+
+            let _ = db.insert_new_invoice(invoice_doc, None, None).await;
+
+            let store = part.store.as_populated().unwrap();
+
+            data.push(shoppa_core::invoice_service::InvoicePart {
+                store: shoppa_core::invoice_service::InvoiceStore {
+                    display_name: store.name.clone(),
+                    legal_name: store.legal_information.name.clone(),
+                    legal_id: store.legal_information.legal_id.clone(),
+                    address: store.locations[0].to_invoice(),
+                },
+                order_id: full_order.id().unwrap().clone().to_string(),
+                invoice_number: number,
+                upload_urls: shoppa_core::invoice_service::InvoicePartUploadUrls {
+                    original_url: url1,
+                    copy_url: url2,
+                },
+                cc_hint: order.transaction.gen_cc_hint(),
+                sum: part.total,
+                customer: shoppa_core::invoice_service::InvoiceCustomer {
+                    name: user.name.clone().unwrap(),
+                    id: order.info.customer_id.clone(),
+                    address: order.address.clone().to_invoice(),
+                    phone_number: order.info.phone_number.clone(),
+                    email: order.info.email.clone(),
+                },
+                items: part
+                    .items
+                    .iter()
+                    .map(|item| {
+                        let product = item.product.as_populated().unwrap();
+                        let product_image = product.assets.get(0);
+                        let path;
+                        if product_image.is_none() {
+                            path = String::new();
+                        } else {
+                            path = product_image.unwrap().path.clone();
+                        }
+                        shoppa_core::invoice_service::InvoicePartItem {
+                            name: product.name.clone(),
+                            price: item.price,
+                            quantity: item.quantity,
+                            _id: product.id().unwrap().clone().to_string(),
+                            image: path,
+                        }
+                    })
+                    .collect(),
+            });
+        }
+
+        println!("data: {:#?}", &data);
+
+        invoice_client.create_invoices(data).await.unwrap();
+
         let _ = fn1.await;
         let _ = fn2.await;
         let _ = fn3.await;
-
-        // TODO send email to user + stores
     });
 
     cookies.delete_checkout_session_cookie();

@@ -2629,6 +2629,7 @@ dependencies = [
  "shoppa-db",
  "shoppa-email-sender",
  "shoppa-file-storage",
+ "shoppa-invoice-service",
  "shoppa-payments",
  "shoppa-security",
 ]
@@ -2691,6 +2692,16 @@ dependencies = [
  "shoppa-core-private",
  "strum",
  "strum_macros",
+ "validator",
+]
+
+[[package]]
+name = "shoppa-invoice-service"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "reqwest",
+ "serde",
  "validator",
 ]
 
