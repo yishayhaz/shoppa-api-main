@@ -1,19 +1,34 @@
 use crate::prelude::*;
 use axum::async_trait;
 use bson::{doc, oid::ObjectId, Document};
+use chrono::{DateTime, Utc};
 use mongodb::{
     options::{AggregateOptions, FindOneAndUpdateOptions, FindOneOptions, UpdateOptions},
     results::UpdateResult,
 };
+use serde::{Deserialize, Serialize};
 use shoppa_core::db::{
     aggregations,
     models::{
-        CartItem, FileTypes, ItemVariants, Product, ProductItemStatus, ProductStatus, Store, User,
-        UserStatus, Variants,
+        Address, CartItem, DBModel, EmbeddedDocument, FileTypes, ItemVariants, Order, Product,
+        ProductItemStatus, ProductStatus, Store, User, UserStatus, Variants,
     },
     populate::UsersPopulate,
     DBConection,
 };
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UserAsGetMe {
+    #[serde(rename = "_id")]
+    pub id: ObjectId,
+    pub email: Option<String>,
+    pub name: Option<String>,
+    pub phone_number: Option<String>,
+    pub status: UserStatus,
+    pub created_at: DateTime<Utc>,
+    pub last_login: Option<DateTime<Utc>>,
+    pub total_cart_items: u32,
+}
 
 #[async_trait]
 pub trait UserFunctions {
@@ -69,10 +84,44 @@ pub trait UserFunctions {
         user_id: &ObjectId,
         options: Option<AggregateOptions>,
     ) -> Result<Vec<Document>>;
+
+    async fn set_user_last_login(
+        &self,
+        user_id: &ObjectId,
+        options: Option<FindOneAndUpdateOptions>,
+    ) -> Result<Option<User>>;
+
+    async fn add_user_address<T>(
+        &self,
+        user_id: &ObjectId,
+        address: T,
+        options: Option<UpdateOptions>,
+    ) -> Result<UpdateResult>
+    where
+        T: Into<Address> + Send + Sync;
+
+    async fn edit_user_address<T>(
+        &self,
+        user_id: &ObjectId,
+        address_id: &ObjectId,
+        address_update: T,
+        options: Option<UpdateOptions>,
+    ) -> Result<UpdateResult>
+    where
+        T: Into<Document> + Send + Sync;
+
+    async fn delete_user_address(
+        &self,
+        user_id: &ObjectId,
+        address_id: &ObjectId,
+        options: Option<UpdateOptions>,
+    ) -> Result<UpdateResult>;
+
+    async fn update_user_after_order(&self, user: &User, order: &Order) -> Result<UpdateResult>;
 }
 
-#[async_trait]
-pub trait UserAdminFunctions {}
+// #[async_trait]
+// pub trait UserAdminFunctions {}
 
 #[async_trait]
 impl UserFunctions for DBConection {
@@ -411,7 +460,11 @@ impl UserFunctions for DBConection {
                 "store",
                 Some(vec![aggregations::project(
                     aggregations::ProjectIdOptions::Keep,
-                    [Store::fields().name, Store::fields().min_order],
+                    [
+                        Store::fields().name,
+                        Store::fields().min_order,
+                        Store::fields().delivery_strategies,
+                    ],
                     None,
                 )]),
                 None,
@@ -434,5 +487,157 @@ impl UserFunctions for DBConection {
         ];
 
         self.aggregate_users(pipeline, options, None).await
+    }
+
+    async fn set_user_last_login(
+        &self,
+        user_id: &ObjectId,
+        options: Option<FindOneAndUpdateOptions>,
+    ) -> Result<Option<User>> {
+        let update = doc! {
+            "$currentDate": {
+                User::fields().last_login: true
+            }
+        };
+
+        self.find_and_update_user_by_id(user_id, update, options, None)
+            .await
+    }
+
+    async fn add_user_address<T>(
+        &self,
+        user_id: &ObjectId,
+        address: T,
+        options: Option<UpdateOptions>,
+    ) -> Result<UpdateResult>
+    where
+        T: Into<Address> + Send + Sync,
+    {
+        let address: Address = address.into();
+
+        let filters = doc! {
+            User::fields().id: user_id,
+            User::fields().status: {
+                "$nin": [UserStatus::Deleted, UserStatus::Banned]
+            }
+        };
+
+        let update = doc! {
+            "$push": {
+                User::fields().addresses: address.into_bson()?
+            },
+            // "$currentDate": {
+            //     User::fields().updated_at: true
+            // }
+        };
+
+        self.update_user(filters, update, options, None).await
+    }
+
+    async fn edit_user_address<T>(
+        &self,
+        user_id: &ObjectId,
+        address_id: &ObjectId,
+        address_update: T,
+        options: Option<UpdateOptions>,
+    ) -> Result<UpdateResult>
+    where
+        T: Into<Document> + Send + Sync,
+    {
+        let filters = doc! {
+            User::fields().id: user_id,
+            User::fields().status: {
+                "$nin": [UserStatus::Deleted, UserStatus::Banned]
+            },
+            User::fields().addresses(true).id: address_id
+        };
+
+        let address_update: Document = address_update.into();
+        tracing::info!("address_update: {:?}", &address_update);
+        let address_update: Document = address_update
+            .into_iter()
+            .map(|(mut key, value)| {
+                key = format!("{}.$.{}", User::fields().addresses, key);
+                (key, value)
+            })
+            .collect();
+        tracing::info!("address_update: {:?}", &address_update);
+
+        let update = doc! {
+            "$set": address_update,
+            "$currentDate": {
+                format!("{}.$.{}", User::fields().addresses, User::fields().addresses(false).updated_at): true
+            }
+        };
+
+        self.update_user(filters, update, options, None).await
+    }
+
+    async fn delete_user_address(
+        &self,
+        user_id: &ObjectId,
+        address_id: &ObjectId,
+        options: Option<UpdateOptions>,
+    ) -> Result<UpdateResult> {
+        let filters = doc! {
+            User::fields().id: user_id,
+            User::fields().status: {
+                "$nin": [UserStatus::Deleted, UserStatus::Banned]
+            }
+        };
+
+        let update = doc! {
+            "$pull": {
+                User::fields().addresses: {
+                    Address::fields().id: address_id
+                }
+            },
+            // "$currentDate": {
+            //     User::fields().updated_at: true
+            // }
+        };
+
+        self.update_user(filters, update, options, None).await
+    }
+
+    async fn update_user_after_order(&self, user: &User, order: &Order) -> Result<UpdateResult> {
+        let mut set = doc! {
+            User::fields().cart(true).items: [],
+        };
+
+        if user.phone_number.is_none() {
+            set.insert(User::fields().phone_number, order.info.phone_number.clone());
+        }
+
+        let mut update = doc! {
+            "$set": set,
+        };
+
+        if user.phone_number.is_none() {
+            update.insert(
+                "$currentDate",
+                doc! {
+                    User::fields().updated_at: true,
+                },
+            );
+        }
+
+        self.update_user_by_id(&user.id().unwrap(), update, None, None)
+            .await
+    }
+}
+
+impl From<User> for UserAsGetMe {
+    fn from(user: User) -> Self {
+        Self {
+            id: user.id().unwrap().clone(),
+            created_at: user.created_at().clone(),
+            email: user.email,
+            name: user.name,
+            phone_number: user.phone_number,
+            status: user.status,
+            last_login: user.last_login,
+            total_cart_items: user.cart.items.len() as u32,
+        }
     }
 }

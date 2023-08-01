@@ -8,6 +8,7 @@ use shoppa_core::{
     db::DBConection,
     email_sender::{EmailAddress, EmailClient},
     file_storage::StorageClient,
+    payments::PaymentClient,
 };
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -46,10 +47,15 @@ async fn main() {
             .expect("Failed to connect to DB"),
     );
 
+    let payment_client = Arc::new(
+        PaymentClient::new()
+    );
+
     let app = Router::new()
         .nest("/api/v1", api::v1::router())
         .nest("/api/management", api::management::router())
         .nest("/api/stores", api::stores::router())
+        .layer(Extension(payment_client))
         .layer(Extension(email_client))
         .layer(Extension(storge_client))
         .layer(Extension(db))

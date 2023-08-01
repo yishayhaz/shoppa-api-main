@@ -2,7 +2,7 @@ use crate::helpers::env::ENV_VARS;
 use bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 use shoppa_core::{
-    db::models::{DBModel, RefrenceField, StoreUser, User, UserStatus},
+    db::models::{DBModel, RefrenceField, StoreUser, User, UserStatus, CheckOutSession},
     random::random_string,
     security::TokenManager,
 };
@@ -29,6 +29,11 @@ pub struct UserTokenData {
     pub guest: bool,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CheckOutSessionTokenData {
+    pub secret: String,
+}
+
 lazy_static! {
     pub static ref STORE_USER_TOKEN_MANAGER: TokenManager<StoreUserTokenData> = TokenManager::new(
         "store-api",
@@ -43,6 +48,12 @@ lazy_static! {
         );
     pub static ref USER_TOKEN_MANAGER: TokenManager<UserTokenData> =
         TokenManager::new("store-api", ENV_VARS.LOGIN_TOKEN_SECRET.as_str(), 90);
+    pub static ref CHECKOUT_SESSION_TOKEN_MANAGER: TokenManager<CheckOutSessionTokenData> =
+        TokenManager::new(
+            "store-api",
+            ENV_VARS.CHECKOUT_SESSION_TOKEN_SECRET.as_str(),
+            1
+        );
 }
 
 impl StoreUserTokenData {
@@ -70,7 +81,7 @@ impl UserTokenData {
         Self {
             user_id,
             secret: random_string(32),
-            guest
+            guest,
         }
     }
 }
@@ -94,5 +105,13 @@ impl Into<StoreUserRegistrationTokenData> for &StoreUser {
 impl Into<UserTokenData> for &User {
     fn into(self) -> UserTokenData {
         UserTokenData::new(self.id().unwrap().clone(), self.status == UserStatus::Guest)
+    }
+}
+
+impl Into<CheckOutSessionTokenData> for &CheckOutSession {
+    fn into(self) -> CheckOutSessionTokenData {
+        CheckOutSessionTokenData {
+            secret: self.secret.clone(),
+        }
     }
 }

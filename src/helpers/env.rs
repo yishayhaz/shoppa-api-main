@@ -1,5 +1,6 @@
 use std::env;
 use validator::Validate;
+use shoppa_core::random::random_string;
 
 #[allow(non_snake_case)]
 #[derive(Debug, Validate)]
@@ -33,6 +34,8 @@ pub struct EnvVariables {
     pub STORE_USER_LOGIN_TOKEN_SECRET: String,
     #[validate(length(equal = 32))]
     pub STORE_USER_REGISTRATION_TOKEN_SECRET: String,
+    #[validate(length(equal = 32))]
+    pub CHECKOUT_SESSION_TOKEN_SECRET: String,
     #[validate(length(min = 1))]
     pub STORE_PANEL_URL: String,
     #[validate(length(min = 1))]
@@ -99,6 +102,13 @@ impl EnvVariables {
                 println!("ASSETS_URL not set, using default: {d}", d = default_url);
                 default_url
             }),
+            CHECKOUT_SESSION_TOKEN_SECRET: env::var("CHECKOUT_SESSION_TOKEN_SECRET")
+                .unwrap_or_else(|_| {
+                    println!(
+                        "CHECKOUT_SESSION_TOKEN_SECRET not set, using random value",
+                    );
+                    random_string(32)
+                })
         }
     }
     pub fn is_production(&self) -> bool {

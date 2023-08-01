@@ -210,6 +210,26 @@ impl StoreFunctions for DBConection {
                 ProjectIdOptions::Keep,
                 [
                     Store::fields().name,
+                    Store::fields().description,
+                    Store::fields().slogan,
+                    Store::fields().min_order,
+                    Store::fields()
+                        .delivery_strategies(true)
+                        .default(true)
+                        .price,
+                    Store::fields()
+                        .delivery_strategies(true)
+                        .default(true)
+                        .free_above,
+                    Store::fields()
+                        .delivery_strategies(true)
+                        .default(true)
+                        .from_days,
+                    Store::fields()
+                        .delivery_strategies(true)
+                        .default(true)
+                        .to_days,
+                    Store::fields().created_at,
                     Store::fields().logo(true).path,
                     Store::fields().logo(true).file_name,
                     Store::fields().logo(true).mime_type,
@@ -218,9 +238,6 @@ impl StoreFunctions for DBConection {
                     Store::fields().banner(true).file_name,
                     Store::fields().banner(true).mime_type,
                     Store::fields().banner(true).file_type,
-                    Store::fields().description,
-                    Store::fields().slogan,
-                    Store::fields().created_at,
                 ],
                 None,
             ),
@@ -256,6 +273,23 @@ impl StoreFunctions for DBConection {
                     Store::fields().name,
                     Store::fields().slogan,
                     Store::fields().description,
+                    Store::fields().min_order,
+                    Store::fields()
+                        .delivery_strategies(true)
+                        .default(true)
+                        .price,
+                    Store::fields()
+                        .delivery_strategies(true)
+                        .default(true)
+                        .free_above,
+                    Store::fields()
+                        .delivery_strategies(true)
+                        .default(true)
+                        .from_days,
+                    Store::fields()
+                        .delivery_strategies(true)
+                        .default(true)
+                        .to_days,
                     Store::fields().banner(true).path,
                     Store::fields().banner(true).file_name,
                     Store::fields().banner(true).mime_type,
