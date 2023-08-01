@@ -593,8 +593,6 @@ pub async fn checkout_pay(
             Err(_) => return,
         };
 
-        tracing::info!("Full order: {:?}", &full_order);
-
         // adding payment info to order
         let fn1 = db.update_order_after_payment(&order, transaction_info, payload.card_holder_name);
         // clear user cart + update his phone number if needed
