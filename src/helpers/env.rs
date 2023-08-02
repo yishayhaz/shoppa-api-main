@@ -1,6 +1,6 @@
+use shoppa_core::random::random_string;
 use std::env;
 use validator::Validate;
-use shoppa_core::random::random_string;
 
 #[allow(non_snake_case)]
 #[derive(Debug, Validate)]
@@ -20,7 +20,7 @@ pub struct EnvVariables {
     #[validate(length(min = 1))]
     pub COOKIE_DOMAIN: String,
     #[validate(length(min = 1))]
-    pub CORS_DOMAIN: String,
+    pub CORS_DOMAIN: Vec<String>,
     #[validate(length(min = 1))]
     pub DIGITAL_OCEAN_SPACE_KEY: String,
     #[validate(length(min = 1))]
@@ -62,7 +62,11 @@ impl EnvVariables {
                 .parse()
                 .expect("HOST must be a valid IP address"),
             COOKIE_DOMAIN: env::var("COOKIE_DOMAIN").expect("COOKIE_DOMAIN must be set"),
-            CORS_DOMAIN: env::var("CORS_DOMAIN").expect("CORS_DOMAIN must be set"),
+            CORS_DOMAIN: env::var("CORS_DOMAIN")
+                .expect("CORS_DOMAIN must be set")
+                .split(",")
+                .map(|s| s.to_string())
+                .collect(),
             DIGITAL_OCEAN_SPACE_KEY: env::var("DIGITAL_OCEAN_SPACE_KEY")
                 .expect("DIGITAL_OCEAN_SPACE_KEY must be set"),
             DIGITAL_OCEAN_SPACE_SECRET: env::var("DIGITAL_OCEAN_SPACE_SECRET")
@@ -104,11 +108,9 @@ impl EnvVariables {
             }),
             CHECKOUT_SESSION_TOKEN_SECRET: env::var("CHECKOUT_SESSION_TOKEN_SECRET")
                 .unwrap_or_else(|_| {
-                    println!(
-                        "CHECKOUT_SESSION_TOKEN_SECRET not set, using random value",
-                    );
+                    println!("CHECKOUT_SESSION_TOKEN_SECRET not set, using random value",);
                     random_string(32)
-                })
+                }),
         }
     }
     pub fn is_production(&self) -> bool {
