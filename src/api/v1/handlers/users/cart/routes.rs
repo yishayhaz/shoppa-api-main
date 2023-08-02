@@ -672,7 +672,7 @@ pub async fn checkout_pay(
                     display_name: store.name.clone(),
                     legal_name: store.legal_information.name.clone(),
                     legal_id: store.legal_information.legal_id.clone(),
-                    address: store.locations[0].to_invoice(),
+                    address: store.legal_information.address.clone(),
                 },
                 order_id: full_order.id().unwrap().clone().to_string(),
                 invoice_number: number,
@@ -712,8 +712,6 @@ pub async fn checkout_pay(
                     .collect(),
             });
         }
-
-        println!("data: {:#?}", &data);
 
         invoice_client.create_invoices(data).await.unwrap();
 
