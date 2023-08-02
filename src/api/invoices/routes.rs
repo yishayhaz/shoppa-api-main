@@ -17,7 +17,7 @@ pub async fn update_mail_sent(
         );
     }
 
-    let filter = doc! {"order_id": order_id };
+    let filter = doc! {"order": order_id };
     let update = doc! {"$set": { "mail_sent": true }};
 
     let _ = db.update_many_invoices(filter, update, None, None).await?;
