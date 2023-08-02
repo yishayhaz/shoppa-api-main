@@ -1,0 +1,8 @@
+# Redirect a sub domain
+TXT _.www.shoppa.co.il http-status=302;forward-domain=https://welcome.shoppa.co.il/*
+CNAME www.shoppa.co.il r.forwarddomain.net.
+
+# Redirect root domain
+A @ 167.172.5.31
+AAAA @ 2400:6180:0:d0::e08:a001
+TXT _.shoppa.co.il http-status=302;forward-domain=https://welcome.shoppa.co.il/*
