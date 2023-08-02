@@ -42,4 +42,4 @@ shoppa-core = { git = "https://github.com/yishayhaz/shoppa-core", features = [
     "email-sender",
     "payments",
     "invoice-service",
-] }
+]}
