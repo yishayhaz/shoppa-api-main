@@ -5,11 +5,9 @@ use mongodb::{options::AggregateOptions, results::UpdateResult};
 use shoppa_core::{
     db::{
         aggregations,
-        models::{DBModel, Order, OrderPartStatus, OrderTransaction, Product, ProductItem},
+        models::{DBModel, Order, OrderPartStatus, OrderTransaction},
         populate::{FieldPopulate, OrderPopulate, PopulateOptions, ProductsPopulate},
-        // populate::OrderPopulate,
-        DBConection,
-        Pagination,
+        DBConection, Pagination,
     },
     payments::types::TransactionInfo,
 };

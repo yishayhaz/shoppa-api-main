@@ -1,24 +1,12 @@
 use crate::prelude::*;
 use axum::async_trait;
-use bson::{doc, oid::ObjectId, Bson, Document};
-use mongodb::{
-    options::{AggregateOptions, FindOneAndUpdateOptions, FindOneOptions, UpdateOptions},
-    results::UpdateResult,
+use bson::{doc, oid::ObjectId, Document};
+use mongodb::options::AggregateOptions;
+use shoppa_core::db::{
+    aggregations,
+    models::{Invoice, InvoiceType},
+    DBConection, Pagination,
 };
-use serde::Deserialize;
-use shoppa_core::{
-    db::{
-        aggregations::{self, ProjectIdOptions},
-        models::{
-            EmbeddedDocument, FileDocument, Invoice, InvoiceType, Order, ProducdBrandField,
-            Product, ProductItemStatus, ProductStatus, Variants,
-        },
-        populate::ProductsPopulate,
-        DBConection, Pagination, Sorter,
-    },
-    parser::FieldPatch,
-};
-use strum_macros::EnumString;
 
 #[async_trait]
 pub trait InvoicesFunctions {

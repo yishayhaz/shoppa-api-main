@@ -1,21 +1,17 @@
 use super::super::super::middlewares::CurrentUser;
 use super::types;
 use crate::{
-    db::{AxumDBExtansion, OrderFunctions, ProductSortBy, StoreProductFunctions},
-    helpers::types::AxumStorgeClientExtension,
+    db::{AxumDBExtansion, OrderFunctions},
     prelude::*,
 };
-use axum::{
-    extract::{Path, Query},
-    response::IntoResponse,
-};
+use axum::{extract::Path, response::IntoResponse};
 use bson::{doc, oid::ObjectId};
 use shoppa_core::{
     db::{
-        models::{EmbeddedDocument, FileDocument, FileTypes, Order, Product, ProductStatus},
-        OptionalSorter, Pagination,
+        models::{EmbeddedDocument, Order},
+        Pagination,
     },
-    extractors::{JsonWithValidation, MultipartFormWithValidation},
+    extractors::JsonWithValidation,
     ResponseBuilder,
 };
 
