@@ -10,6 +10,7 @@ pub type AxumEmailClientExtension = Extension<Arc<EmailClient>>;
 pub type AxumPaymentClientExtension = Extension<Arc<PaymentClient>>;
 pub type AxumInvoiceClientExtension = Extension<Arc<InvoiceClient>>;
 
+
 #[derive(EnumString, Display)]
 pub enum Cookeys {
     #[strum(to_string = "bribed_pigeon_here")]
