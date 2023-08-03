@@ -673,6 +673,7 @@ pub async fn checkout_pay(
                     legal_name: store.legal_information.name.clone(),
                     legal_id: store.legal_information.legal_id.clone(),
                     address: store.legal_information.address.clone(),
+                    store_user_email: store.contact.email.clone(),
                 },
                 order_id: full_order.id().unwrap().clone().to_string(),
                 invoice_number: number,

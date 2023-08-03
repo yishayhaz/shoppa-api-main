@@ -1,20 +1,22 @@
 mod categories;
+mod checkout_session;
+mod invoices;
+mod orders;
 mod products;
+mod store_users;
 mod stores;
 mod users;
 mod variants;
-mod store_users;
-mod checkout_session;
-mod orders;
 
 pub use categories::*;
+pub use checkout_session::*;
+pub use invoices::*;
+pub use orders::*;
 pub use products::*;
+pub use store_users::*;
 pub use stores::*;
 pub use users::*;
 pub use variants::*;
-pub use store_users::*;
-pub use checkout_session::*;
-pub use orders::*;
 
 use axum::extract::Extension;
 use shoppa_core::db::DBConection;

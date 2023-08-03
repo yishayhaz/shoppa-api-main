@@ -471,7 +471,6 @@ impl ProductFunctions for DBConection {
                         "path": Product::fields().status,
                         "query": ProductStatus::Active
                     }
-
                 },
                 doc! {
                     "text": {
