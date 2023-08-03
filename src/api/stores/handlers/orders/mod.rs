@@ -1,5 +1,4 @@
-use super::super::middlewares;
-use axum::{middleware, routing, Router};
+use axum::{routing, Router};
 mod routes;
 mod types;
 
