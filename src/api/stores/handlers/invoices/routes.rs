@@ -39,3 +39,14 @@ pub async fn get_invoices(
 
     Ok(ResponseBuilder::paginated_response(&invoices).into_response())
 }
+
+pub async fn install_invoice(
+    db: AxumDBExtansion,
+    Path(invoice_oid): Path<ObjectId>,
+) -> HandlerResult {
+    let invoice = db.get_invoice_by_id(&invoice_oid, None, None, None).await?;
+
+    // get download URL
+
+    Ok(ResponseBuilder::success(Some("URL"), None, None).into_response())
+}

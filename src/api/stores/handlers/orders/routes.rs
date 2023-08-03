@@ -1,4 +1,5 @@
 use super::super::super::middlewares::CurrentUser;
+use super::types;
 use crate::{
     db::{AxumDBExtansion, OrderFunctions, ProductSortBy, StoreProductFunctions},
     helpers::types::AxumStorgeClientExtension,
@@ -8,7 +9,7 @@ use axum::{
     extract::{Path, Query},
     response::IntoResponse,
 };
-use bson::oid::ObjectId;
+use bson::{doc, oid::ObjectId};
 use shoppa_core::{
     db::{
         models::{EmbeddedDocument, FileDocument, FileTypes, Order, Product, ProductStatus},
@@ -45,6 +46,28 @@ pub async fn get_order(
     let order = db
         .get_order_by_id_for_store(current_user.store_id, order_oid, None)
         .await?;
+
+    Ok(ResponseBuilder::success(Some(order), None, None).into_response())
+}
+
+pub async fn update_order(
+    db: AxumDBExtansion,
+    current_user: CurrentUser,
+    Path(order_oid): Path<ObjectId>,
+    JsonWithValidation(payload): JsonWithValidation<types::UpdateOrderStatusPayload>,
+) -> HandlerResult {
+    let filters = doc! {
+        Order::fields().id: order_oid,
+        Order::fields().parts(true).store: current_user.store_id,
+    };
+
+    let update = doc! {
+        "$set": {
+            "parts.$.status": payload.status.to_string(),
+        }
+    };
+
+    let order = db.update_order(filters, update, None, None).await?;
 
     Ok(ResponseBuilder::success(Some(order), None, None).into_response())
 }

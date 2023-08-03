@@ -5,7 +5,7 @@ use mongodb::{options::AggregateOptions, results::UpdateResult};
 use shoppa_core::{
     db::{
         aggregations,
-        models::{DBModel, Order, OrderPartStatus, OrderTransaction},
+        models::{DBModel, Order, OrderPartStatus, OrderTransaction, Product, ProductItem},
         populate::{FieldPopulate, OrderPopulate, PopulateOptions, ProductsPopulate},
         // populate::OrderPopulate,
         DBConection,
@@ -99,7 +99,6 @@ impl OrderFunctions for DBConection {
                     Order::fields().info,
                 ],
                 Some(doc! {
-                    Order::fields().parts: "$parts",
                     Order::fields().parts(false).status: "$parts.status",
                     Order::fields().parts(false).total: "$parts.total",
                     Order::fields().parts(false).total_after_refunds: "$parts.total_after_refunds",
@@ -168,7 +167,6 @@ impl OrderFunctions for DBConection {
                     Order::fields().info,
                 ],
                 Some(doc! {
-                    Order::fields().parts: "$parts",
                     Order::fields().parts(false).status: "$parts.status",
                     Order::fields().parts(false).total: "$parts.total",
                     Order::fields().parts(false).total_after_refunds: "$parts.total_after_refunds",

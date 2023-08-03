@@ -4,5 +4,10 @@ mod routes;
 mod types;
 
 pub fn router() -> Router {
-    Router::new().route("/", routing::get(routes::get_invoices))
+    Router::new()
+        .route(
+            "/:invoice_oid/download",
+            routing::get(routes::install_invoice),
+        )
+        .route("/", routing::get(routes::get_invoices))
 }
