@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y git
 ARG GIT_TOKEN
 RUN git config --global credential.helper '!f() { echo "username=$GIT_TOKEN"; echo "password=x-oauth-basic"; }; f'
 
+RUN cargo update
 RUN cargo build --release
 
 
