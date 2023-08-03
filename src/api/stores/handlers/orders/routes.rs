@@ -1,11 +1,6 @@
-use super::{
-    super::super::middlewares::CurrentUser,
-    types::{
-        CreateProductPayload, EditProductPayload, GetProductsQueryParams, UploadProductAssetPayload,
-    },
-};
+use super::super::super::middlewares::CurrentUser;
 use crate::{
-    db::{AxumDBExtansion, ProductSortBy, StoreProductFunctions},
+    db::{AxumDBExtansion, OrderFunctions, ProductSortBy, StoreProductFunctions},
     helpers::types::AxumStorgeClientExtension,
     prelude::*,
 };
@@ -16,28 +11,40 @@ use axum::{
 use bson::oid::ObjectId;
 use shoppa_core::{
     db::{
-        models::{EmbeddedDocument, FileDocument, FileTypes, Product, ProductStatus, Order},
+        models::{EmbeddedDocument, FileDocument, FileTypes, Order, Product, ProductStatus},
         OptionalSorter, Pagination,
     },
     extractors::{JsonWithValidation, MultipartFormWithValidation},
     ResponseBuilder,
 };
 
-pub async fn get_orders(db: AxumDBExtansion,
-    current_user: CurrentUser, pagination: Pagination) {
-
-    let orders = db.aggregate_orders(vec![], None, None).await;
+pub async fn get_orders(
+    db: AxumDBExtansion,
+    current_user: CurrentUser,
+    pagination: Pagination,
+) -> HandlerResult {
+    let orders = db
+        .get_orders_for_store(
+            Some(pagination),
+            current_user.store_id,
+            None,
+            None,
+            None,
+            None,
+        )
+        .await?;
 
     Ok(ResponseBuilder::paginated_response(&orders).into_response())
-
 }
 
-pub async fn get_order(db: AxumDBExtansion, current_user: CurrentUser, Path(order_oid): Path<ObjectId>) {  
-    let order = db.get_order_by_id(&order_oid, None, None, None).await?;
+pub async fn get_order(
+    db: AxumDBExtansion,
+    current_user: CurrentUser,
+    Path(order_oid): Path<ObjectId>,
+) -> HandlerResult {
+    let order = db
+        .get_order_by_id_for_store(current_user.store_id, order_oid, None)
+        .await?;
 
     Ok(ResponseBuilder::success(Some(order), None, None).into_response())
-}
-
-pub async fn update_order_status() {
-    todo!()
 }
