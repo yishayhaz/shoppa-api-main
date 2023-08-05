@@ -20,7 +20,7 @@ pub async fn get_invoices(
     let invoices = db
         .get_invoices_for_external(
             Some(pagination),
-            Some(current_user.store_id),
+            current_user.store_id,
             query.from,
             query.to,
             query.invoice_type,

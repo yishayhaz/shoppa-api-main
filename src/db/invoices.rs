@@ -13,9 +13,9 @@ pub trait InvoicesFunctions {
     async fn get_invoices_for_external(
         &self,
         pagination: Option<Pagination>,
-        store_id: Option<ObjectId>,
-        from: Option<chrono::DateTime<chrono::Utc>>,
-        to: Option<chrono::DateTime<chrono::Utc>>,
+        store_id: ObjectId,
+        from: Option<chrono::NaiveDate>,
+        to: Option<chrono::NaiveDate>,
         invoice_type: Option<InvoiceType>,
         options: Option<AggregateOptions>,
     ) -> Result<(Vec<Document>, u64)>;
@@ -26,41 +26,53 @@ impl InvoicesFunctions for DBConection {
     async fn get_invoices_for_external(
         &self,
         pagination: Option<Pagination>,
-        store_id: Option<ObjectId>,
-        from: Option<chrono::DateTime<chrono::Utc>>,
-        to: Option<chrono::DateTime<chrono::Utc>>,
+        store_id: ObjectId,
+        from: Option<chrono::NaiveDate>,
+        to: Option<chrono::NaiveDate>,
         invoice_type: Option<InvoiceType>,
         options: Option<AggregateOptions>,
     ) -> Result<(Vec<Document>, u64)> {
-        // omer todo:
-        // 1. make use of `from`, `to` and `invoice_type` params
-        // 2. exclude `original` field
-
         let pagination = pagination.unwrap_or_default();
 
-        let filter = match store_id {
-            Some(store_id) => aggregations::match_query(&doc! {
-                Invoice::fields().store: store_id
-            }),
-            None => aggregations::match_all(),
+        let mut filters = doc! {
+            Invoice::fields().store: store_id,
         };
 
-        // let project_stage = aggregations::project(
-        //     aggregations::ProjectIdOptions::Keep,
-        //     vec![Variants::fields().name],
-        //     None,
-        // );
+        if from.is_some() || to.is_some() {
+            let mut d = doc! {};
+
+            if let Some(from) = from {
+                let from =
+                    chrono::DateTime::parse_from_rfc3339(&format!("{}T00:00:00Z", from)).unwrap();
+                d.insert("$gte", from);
+            }
+
+            if let Some(to) = to {
+                let to =
+                    chrono::DateTime::parse_from_rfc3339(&format!("{}T23:59:59Z", to)).unwrap();
+                d.insert("$lte", to);
+            }
+
+            filters.insert(Invoice::fields().created_at, d);
+        }
+
+        if let Some(invoice_type) = invoice_type {
+            filters.insert(Invoice::fields().type_, invoice_type.to_string());
+        }
 
         let pipeline = [
-            filter.clone(),
+            aggregations::match_query(&filters),
             aggregations::skip(pagination.offset),
             aggregations::limit(pagination.amount),
-            // project_stage,
+            aggregations::unset(vec![Invoice::fields().original]),
         ];
 
         let count = self
             .count_invoices_with_aggregation(
-                [filter.clone(), aggregations::count("count")],
+                [
+                    aggregations::match_query(&filters),
+                    aggregations::count("count"),
+                ],
                 options,
                 None,
             )
