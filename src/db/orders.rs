@@ -80,6 +80,9 @@ impl OrderFunctions for DBConection {
 
         let pipeline = [
             filter.clone(),
+            aggregations::sort(doc! {
+                Order::fields().created_at: -1
+            }),
             aggregations::skip(pagination.offset),
             aggregations::limit(pagination.amount),
             aggregations::unwind(Order::fields().parts, false),
@@ -97,6 +100,7 @@ impl OrderFunctions for DBConection {
                     Order::fields().info,
                 ],
                 Some(doc! {
+                    Order::fields().parts(false).utm: "$parts.utm",
                     Order::fields().parts(false).status: "$parts.status",
                     Order::fields().parts(false).total: "$parts.total",
                     Order::fields().parts(false).total_after_refunds: "$parts.total_after_refunds",
@@ -165,6 +169,7 @@ impl OrderFunctions for DBConection {
                     Order::fields().info,
                 ],
                 Some(doc! {
+                    Order::fields().parts(false).utm: "$parts.utm",
                     Order::fields().parts(false).status: "$parts.status",
                     Order::fields().parts(false).total: "$parts.total",
                     Order::fields().parts(false).total_after_refunds: "$parts.total_after_refunds",

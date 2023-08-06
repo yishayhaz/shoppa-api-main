@@ -62,6 +62,9 @@ impl InvoicesFunctions for DBConection {
 
         let pipeline = [
             aggregations::match_query(&filters),
+            aggregations::sort(doc! {
+                Invoice::fields().created_at: -1
+            }),
             aggregations::skip(pagination.offset),
             aggregations::limit(pagination.amount),
             aggregations::unset(vec![Invoice::fields().original]),
