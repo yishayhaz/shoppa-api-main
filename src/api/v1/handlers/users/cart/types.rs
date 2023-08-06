@@ -1,5 +1,5 @@
 use crate::prelude::types::*;
-use shoppa_core::{db::models::CartItem, payments::types::CreditCard, validators};
+use shoppa_core::{db::models::CartItem, payments::types::CreditCard, validators, parser::hashmap_with_k_as_key};
 use std::collections::HashMap;
 #[derive(Deserialize, Serialize, Validate)]
 pub struct AddProductToCartPayload {
@@ -34,7 +34,7 @@ pub struct PayCartPayload {
     #[validate]
     pub credit_card: CreditCard,
     pub card_holder_name: String,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "hashmap_with_k_as_key")]
     pub utms: HashMap<ObjectId, String>,
 }
 

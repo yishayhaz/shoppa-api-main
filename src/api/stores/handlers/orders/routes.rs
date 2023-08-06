@@ -7,10 +7,7 @@ use crate::{
 use axum::{extract::Path, response::IntoResponse};
 use bson::{doc, oid::ObjectId};
 use shoppa_core::{
-    db::{
-        models::{EmbeddedDocument, Order},
-        Pagination,
-    },
+    db::{models::Order, Pagination},
     extractors::JsonWithValidation,
     ResponseBuilder,
 };
