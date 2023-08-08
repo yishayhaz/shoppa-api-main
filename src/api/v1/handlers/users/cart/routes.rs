@@ -548,6 +548,7 @@ pub async fn checkout_pay(
     {
         Ok(res) => res,
         Err(e) => {
+            tracing::error!("Failed to charge credit card1: {}", e);
             // same comment as above
             let _ = db_session.abort_transaction().await;
             return Ok(ResponseBuilder::error(
@@ -563,6 +564,7 @@ pub async fn checkout_pay(
     let transaction_info = match charge_res {
         ChargeResult::Failure(err) => {
             // same comment as above
+            tracing::error!("Failed to charge credit card2: {}", err);
             let _ = db_session.abort_transaction().await;
             return Ok(ResponseBuilder::<()>::error(
                 "Failed to charge credit card",
