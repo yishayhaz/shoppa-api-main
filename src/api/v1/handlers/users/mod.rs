@@ -11,8 +11,9 @@ pub fn router() -> Router {
             "/update-password",
             routing::patch(password::change_password),
         )
-        .nest("/addresses", address::router())
         .route_layer(middleware::from_fn(middlewares::guest_user_not_allowed))
+        .route_layer(middleware::from_fn(middlewares::login_required))
+        .nest("/addresses", address::router())
         .route_layer(middleware::from_fn(middlewares::login_required))
         .nest("/cart", cart::router())
 }
