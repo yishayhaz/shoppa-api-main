@@ -603,6 +603,8 @@ impl UserFunctions for DBConection {
     async fn update_user_after_order(&self, user: &User, order: &Order) -> Result<UpdateResult> {
         let mut set = doc! {
             User::fields().cart(true).items: [],
+            User::fields().is_verified: true,
+            User::fields().had_first_order: true,
         };
 
         if user.phone_number.is_none() {

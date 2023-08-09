@@ -35,6 +35,11 @@ pub trait OrderFunctions {
         order_id: ObjectId,
         options: Option<AggregateOptions>,
     ) -> Result<Option<Document>>;
+    async fn change_orders_owner(
+        &self,
+        old_user_owner_id: ObjectId,
+        new_user_owner_id: ObjectId,
+    ) -> Result<UpdateResult>;
 }
 
 #[async_trait]
@@ -180,5 +185,24 @@ impl OrderFunctions for DBConection {
         ]);
 
         Ok(self.aggregate_orders(pipeline, options, None).await?.pop())
+    }
+
+    async fn change_orders_owner(
+        &self,
+        old_user_owner_id: ObjectId,
+        new_user_owner_id: ObjectId,
+    ) -> Result<UpdateResult> {
+        let filter = doc! {
+            Order::fields().user: old_user_owner_id,
+        };
+
+        let update = doc! {
+            "$set": {
+                Order::fields().user: new_user_owner_id,
+            }
+        };
+
+        self.update_many_order(filter, update, None, None)
+            .await
     }
 }

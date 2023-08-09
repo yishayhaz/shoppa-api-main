@@ -59,6 +59,30 @@ pub async fn login_required<B>(
     }
 }
 
+pub async fn login_required_200<B>(
+    mut req: Request<B>,
+    next: Next<B>,
+) -> StdResult<Response, Response> {
+    let cookies = req
+        .extensions()
+        .get::<Cookies>()
+        .ok_or(ResponseBuilder::success(Some(""), None, Some(204)).into_response())?;
+
+    let access_cookie = &cookies
+        .get_access_cookie()
+        .ok_or(ResponseBuilder::success(Some(""), None, Some(204)).into_response())?;
+
+    if let Ok(data) = USER_TOKEN_MANAGER.decode_token(access_cookie) {
+        req.extensions_mut()
+            .insert(CurrentUser::new(data.user_id, data.secret, data.guest));
+
+        Ok(next.run(req).await)
+    } else {
+        cookies.delete_access_cookie();
+        Ok(ResponseBuilder::success(Some(""), None, Some(204)).into_response())
+    }
+}
+
 pub async fn login_required_or_create_guest<B>(
     mut req: Request<B>,
     next: Next<B>,
