@@ -20,3 +20,4 @@ def generate_string(length):
 
 
 print(generate_string(32))
+
