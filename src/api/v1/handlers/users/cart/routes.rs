@@ -36,7 +36,6 @@ use shoppa_core::{
 };
 use std::collections::HashMap;
 use tower_cookies::Cookies;
-// use futures::
 
 pub async fn add_product_to_cart(
     db: AxumDBExtansion,
