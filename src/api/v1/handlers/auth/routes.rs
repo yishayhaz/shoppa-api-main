@@ -1,12 +1,13 @@
 use super::types::{LoginPayload, SignupPayload};
 use crate::api::v1::middlewares::CurrentUser;
 use crate::{
-    db::{AxumDBExtansion, UserAsGetMe, UserFunctions},
+    db::{AxumDBExtansion, OrderFunctions, UserAsGetMe, UserFunctions},
     helpers::cookies::CookieManager,
     prelude::*,
 };
 use axum::{extract::Extension, response::IntoResponse};
 use bson::doc;
+use bson::oid::ObjectId;
 use shoppa_core::{
     constans,
     db::models::{DBModel, User},
@@ -43,11 +44,16 @@ pub async fn login(
         return Ok(not_found_response);
     }
 
+    let mut had_first_order = false;
+
+    let current_user_id = current_user.as_ref().and_then(|c| Some(c.user_id.clone()));
+
     if let Some(mut current_user) = current_user {
         current_user.fetch(&db, None).await?;
         if current_user.user_exists() {
-            user.cart = current_user.user().unwrap().cart + user.cart;
-
+            let current_user = current_user.user().unwrap();
+            user.cart = current_user.cart + user.cart;
+            had_first_order = current_user.had_first_order;
             // If there was error updating the user cart we just ignore it
             let _ = db
                 .update_user_by_id(
@@ -69,6 +75,11 @@ pub async fn login(
     let user_id = user.id()?.clone();
 
     tokio::spawn(async move {
+        if had_first_order && current_user_id.is_some() {
+            let _ = db
+                .change_orders_owner(current_user_id.unwrap(), user_id)
+                .await;
+        }
         let _ = db.set_user_last_login(&user_id, None).await;
     });
 
@@ -94,11 +105,19 @@ pub async fn signup(
 ) -> HandlerResult {
     let mut user: User = payload.try_into()?;
 
+    let mut had_first_order = false;
+
+    let current_user_id = current_user
+        .as_ref()
+        .and_then(|c_user| Some(c_user.user_id.clone()));
+
     // If there is a current guest user we set the cart to the new user
     if let Some(mut current_user) = current_user {
         current_user.fetch(&db, None).await?;
         if let Some(c_user) = current_user.user() {
+            had_first_order = c_user.had_first_order;
             user.cart = c_user.cart;
+            user.addresses = c_user.addresses;
         }
     };
 
@@ -109,6 +128,16 @@ pub async fn signup(
     cookies.set_access_cookie(&user)?;
 
     let get_me: UserAsGetMe = user.into();
+
+    let user_id = get_me.id.clone();
+
+    if had_first_order && current_user_id.is_some() {
+        tokio::spawn(async move {
+            let _ = db
+                .change_orders_owner(current_user_id.unwrap(), user_id)
+                .await;
+        });
+    }
 
     Ok(ResponseBuilder::success(Some(get_me), None, None).into_response())
 }

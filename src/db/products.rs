@@ -17,6 +17,7 @@ use shoppa_core::{
         DBConection, Pagination, Sorter,
     },
     parser::FieldPatch,
+    random
 };
 use strum_macros::EnumString;
 
@@ -1788,4 +1789,39 @@ fn product_status_update() -> Document {
             "else": format!("${}", Product::fields().status)
         }
     }
+}
+
+pub fn generate_products_random_sort() -> Document {
+    
+    let mut fields = vec![
+        Product::fields().analytics(true).views,
+        Product::fields().assets(true).size,
+        Product::fields().items(true).price,
+        Product::fields().items(true).in_storage,
+        Product::fields().created_at,
+        Product::fields().updated_at,
+        Product::fields().name,
+        Product::fields().brand(true).name,
+        Product::fields().store(true).id,
+        Product::fields().warranty,
+    ];
+
+    let total_sorts = random::random_number_from_range(2, fields.len() as u32);
+
+    
+    let mut sorts = doc! {};
+
+    for _ in 0..total_sorts {
+        let field = fields.remove(random::random_number_from_range(0, fields.len() as u32) as usize);
+        let order = random::random_number_from_range(0, 2) as i32;
+
+        if order == 0 {
+            sorts.insert(field, -1);
+            continue;
+        }
+
+        sorts.insert(field, order);
+    }
+
+    sorts
 }

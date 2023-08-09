@@ -36,7 +36,6 @@ use shoppa_core::{
 };
 use std::collections::HashMap;
 use tower_cookies::Cookies;
-// use futures::
 
 pub async fn add_product_to_cart(
     db: AxumDBExtansion,
@@ -501,7 +500,18 @@ pub async fn checkout_pay(
         );
     }
 
+    let order_number = cookies.get_order_number_cookie().unwrap_or({
+        let order_number = db
+            .get_and_increase_counter_by1("orders", None)
+            .await?
+            .value
+            .to_string();
+        cookies.set_order_number_cookie(&order_number);
+        order_number
+    });
+
     let order = Order::new(
+        order_number,
         Default::default(),
         checkout_session.total,
         user.id().unwrap().clone(),
@@ -537,10 +547,9 @@ pub async fn checkout_pay(
 
     let charge_res = match payment_client
         .charge_credit_card(ChargeCreditCard {
-            customer_id: user.id().unwrap().clone(),
+            order_number: order.order_number.clone(),
             amount: checkout_session.total,
             // user is not guest so he must have a name
-            customer_name: user.name.as_ref().unwrap_or(&String::new()).clone(),
             credit_card: payload.credit_card,
             currency_code: None,
         })
@@ -548,6 +557,7 @@ pub async fn checkout_pay(
     {
         Ok(res) => res,
         Err(e) => {
+            tracing::error!("Failed to charge credit card1: {}", e);
             // same comment as above
             let _ = db_session.abort_transaction().await;
             return Ok(ResponseBuilder::error(
@@ -563,6 +573,7 @@ pub async fn checkout_pay(
     let transaction_info = match charge_res {
         ChargeResult::Failure(err) => {
             // same comment as above
+            tracing::error!("Failed to charge credit card2: {}", err);
             let _ = db_session.abort_transaction().await;
             return Ok(ResponseBuilder::<()>::error(
                 "Failed to charge credit card",
@@ -684,7 +695,7 @@ pub async fn checkout_pay(
                 cc_hint: order.transaction.gen_cc_hint(),
                 sum: part.total,
                 customer: shoppa_core::invoice_service::InvoiceCustomer {
-                    name: user.name.clone().unwrap(),
+                    name: user.name.clone().unwrap_or("לקוח כללי".to_string()),
                     id: order.info.customer_id.clone(),
                     address: order.address.clone().to_invoice(),
                     phone_number: order.info.phone_number.clone(),
@@ -714,7 +725,7 @@ pub async fn checkout_pay(
             });
         }
 
-        invoice_client.create_invoices(data).await.unwrap();
+        let _ = invoice_client.create_invoices(data).await;
 
         let _ = fn1.await;
         let _ = fn2.await;
@@ -722,6 +733,7 @@ pub async fn checkout_pay(
     });
 
     cookies.delete_checkout_session_cookie();
+    cookies.delete_order_number_cookie();
 
     Ok(ResponseBuilder::<()>::success(None, None, Some(201)).into_response())
 }
