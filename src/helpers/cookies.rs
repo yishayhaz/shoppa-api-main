@@ -69,6 +69,34 @@ pub trait CookieManager {
     fn delete_checkout_session_cookie(&self) {
         self.delete_cookie(&Cookeys::CheckoutSession);
     }
+
+    fn get_order_number_cookie(&self) -> Option<String> {
+        let cookie = self.get_cookie(&Cookeys::OrderNumber);
+
+        if let Some(cookie) = cookie {
+            if cookie.value().is_empty() {
+                return None;
+            }
+            return Some(cookie.value().to_string());
+        }
+
+        None
+    }
+
+    /// Will be set when starting the checkout process
+    /// will only be deleted when the checkout process is completed
+    fn set_order_number_cookie(&self, order_number: &str) {
+        self.set_cookie(
+            &Cookeys::OrderNumber,
+            order_number.to_string(),
+            MAX_COOKIE_EXP,
+            true,
+        );
+    }
+
+    fn delete_order_number_cookie(&self) {
+        self.delete_cookie(&Cookeys::OrderNumber);
+    }
 }
 
 impl CookieManager for Cookies {
