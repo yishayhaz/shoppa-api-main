@@ -24,7 +24,9 @@ pub enum Cookeys {
     #[strum(to_string = "government_pigeon")]
     StoreUserAccessToken,
     #[strum(to_string = "pigeon_who_loves_to_eat_cookies")]
-    CheckoutSession
+    CheckoutSession,
+    #[strum(to_string = "number_of_pigeons")]
+    OrderNumber,
 }
 
 #[derive(EnumString, Display)]

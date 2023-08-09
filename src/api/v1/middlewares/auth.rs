@@ -79,7 +79,7 @@ pub async fn login_required_200<B>(
         Ok(next.run(req).await)
     } else {
         cookies.delete_access_cookie();
-        Ok((ResponseBuilder::success(Some(""), None, Some(204)).into_response()))
+        Ok(ResponseBuilder::success(Some(""), None, Some(204)).into_response())
     }
 }
 
