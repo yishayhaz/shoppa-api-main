@@ -607,7 +607,7 @@ impl UserFunctions for DBConection {
             User::fields().had_first_order: true,
         };
 
-        if user.phone_number.is_none() {
+        if user.phone_number.is_none() && user.status != UserStatus::Guest {
             set.insert(User::fields().phone_number, order.info.phone_number.clone());
         }
 

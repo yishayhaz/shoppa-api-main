@@ -117,6 +117,7 @@ pub async fn signup(
         if let Some(c_user) = current_user.user() {
             had_first_order = c_user.had_first_order;
             user.cart = c_user.cart;
+            user.addresses = c_user.addresses;
         }
     };
 
