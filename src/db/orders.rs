@@ -24,9 +24,10 @@ pub trait OrderFunctions {
         &self,
         pagination: Option<Pagination>,
         store_id: ObjectId,
-        from: Option<chrono::DateTime<chrono::Utc>>,
-        to: Option<chrono::DateTime<chrono::Utc>>,
+        from: Option<chrono::NaiveDate>,
+        to: Option<chrono::NaiveDate>,
         status: Option<OrderPartStatus>,
+        utm: Option<String>,
         options: Option<AggregateOptions>,
     ) -> Result<(Vec<Document>, u64)>;
     async fn get_order_by_id_for_store(
@@ -72,19 +73,46 @@ impl OrderFunctions for DBConection {
         &self,
         pagination: Option<Pagination>,
         store_id: ObjectId,
-        from: Option<chrono::DateTime<chrono::Utc>>,
-        to: Option<chrono::DateTime<chrono::Utc>>,
+        from: Option<chrono::NaiveDate>,
+        to: Option<chrono::NaiveDate>,
         status: Option<OrderPartStatus>,
+        utm: Option<String>,
         options: Option<AggregateOptions>,
     ) -> Result<(Vec<Document>, u64)> {
         let pagination = pagination.unwrap_or_default();
 
-        let filter = aggregations::match_query(&doc! {
+        let mut filters = aggregations::match_query(&doc! {
             Order::fields().parts(true).store: store_id,
         });
 
+        if from.is_some() || to.is_some() {
+            let mut d = doc! {};
+
+            if let Some(from) = from {
+                let from =
+                    chrono::DateTime::parse_from_rfc3339(&format!("{}T00:00:00Z", from)).unwrap();
+                d.insert("$gte", from);
+            }
+
+            if let Some(to) = to {
+                let to =
+                    chrono::DateTime::parse_from_rfc3339(&format!("{}T23:59:59Z", to)).unwrap();
+                d.insert("$lte", to);
+            }
+
+            filters.insert(Order::fields().created_at, d);
+        }
+
+        if let Some(status) = status {
+            filters.insert(Order::fields().parts(true).status, status.to_string());
+        }
+
+        if let Some(utm) = utm {
+            filters.insert(Order::fields().parts(true).utm, utm);
+        }
+
         let pipeline = [
-            filter.clone(),
+            filters.clone(),
             aggregations::sort(doc! {
                 Order::fields().created_at: -1
             }),
@@ -117,7 +145,7 @@ impl OrderFunctions for DBConection {
 
         let count = self
             .count_orders_with_aggregation(
-                [filter.clone(), aggregations::count("count")],
+                [filters.clone(), aggregations::count("count")],
                 options,
                 None,
             )
@@ -202,7 +230,6 @@ impl OrderFunctions for DBConection {
             }
         };
 
-        self.update_many_order(filter, update, None, None)
-            .await
+        self.update_many_order(filter, update, None, None).await
     }
 }

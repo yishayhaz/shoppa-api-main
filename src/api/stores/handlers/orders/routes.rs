@@ -4,7 +4,10 @@ use crate::{
     db::{AxumDBExtansion, OrderFunctions},
     prelude::*,
 };
-use axum::{extract::Path, response::IntoResponse};
+use axum::{
+    extract::{Path, Query},
+    response::IntoResponse,
+};
 use bson::{doc, oid::ObjectId};
 use shoppa_core::{
     db::{models::Order, Pagination},
@@ -16,14 +19,16 @@ pub async fn get_orders(
     db: AxumDBExtansion,
     current_user: CurrentUser,
     pagination: Pagination,
+    Query(query): Query<types::OrdersQuery>,
 ) -> HandlerResult {
     let orders = db
         .get_orders_for_store(
             Some(pagination),
             current_user.store_id,
-            None,
-            None,
-            None,
+            query.from,
+            query.to,
+            query.status,
+            query.utm,
             None,
         )
         .await?;
