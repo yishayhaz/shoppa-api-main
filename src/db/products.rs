@@ -462,9 +462,7 @@ impl ProductFunctions for DBConection {
                         "score": &sorting.direction
                     })
                 } else {
-                    aggregations::sort(doc! {
-                        Product::fields().created_at: -1
-                    })
+                    aggregations::sort(generate_products_random_sort())
                 }
             }
         };
