@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use crate::prelude::*;
 use axum::async_trait;
 use bson::{doc, oid::ObjectId, Bson, Document};
@@ -5,7 +7,7 @@ use mongodb::{
     options::{AggregateOptions, FindOneAndUpdateOptions, FindOneOptions, UpdateOptions},
     results::UpdateResult,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 use shoppa_core::{
     db::{
         aggregations::{self, ProjectIdOptions},
@@ -17,23 +19,45 @@ use shoppa_core::{
         DBConection, Pagination, Sorter,
     },
     parser::FieldPatch,
-    random,
 };
-use strum_macros::EnumString;
 
-#[derive(Deserialize, Debug, Clone, PartialEq, EnumString)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ProductSortBy {
-    #[serde(alias = "popularity", alias = "pop", alias = "p", alias = "Popularity")]
     Popularity,
-    #[serde(alias = "date", alias = "da", alias = "d", alias = "Date")]
     Date,
-    #[serde(alias = "relevance", alias = "rel", alias = "r", alias = "Relevance")]
     Relevance,
+    Random(Vec<u8>),
 }
 
 impl Default for ProductSortBy {
     fn default() -> Self {
         Self::Relevance
+    }
+}
+
+impl FromStr for ProductSortBy {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        match s {
+            "popularity" | "pop" | "p" | "Popularity" => Ok(Self::Popularity),
+            "date" | "da" | "d" | "Date" => Ok(Self::Date),
+            "relevance" | "rel" | "r" | "Relevance" => Ok(Self::Relevance),
+            _ => serde_json::from_str::<Vec<u8>>(s)
+                .map_err(|_| Error::Desrilaztion)
+                .map(Self::Random),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for ProductSortBy {
+    fn deserialize<D>(deserializer: D) -> StdResult<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+
+        Ok(Self::from_str(&s).unwrap_or_default())
     }
 }
 
@@ -462,8 +486,13 @@ impl ProductFunctions for DBConection {
                         "score": &sorting.direction
                     })
                 } else {
-                    aggregations::sort(generate_products_random_sort())
+                    aggregations::sort(doc! {
+                        Product::fields().created_at: &sorting.direction
+                    })
                 }
+            }
+            ProductSortBy::Random(randomizar) => {
+                aggregations::sort(generate_products_random_sort(randomizar))
             }
         };
 
@@ -1054,7 +1083,7 @@ impl AdminProductFunctions for DBConection {
         let sorting = sorting.unwrap_or_default();
 
         let sort_stage = match sorting.sort_by {
-            ProductSortBy::Date => aggregations::sort(doc! {
+            ProductSortBy::Date | ProductSortBy::Random(_) => aggregations::sort(doc! {
                 Product::fields().created_at: &sorting.direction
             }),
             ProductSortBy::Popularity => aggregations::sort(doc! {
@@ -1531,7 +1560,7 @@ impl StoreProductFunctions for DBConection {
         let sorting = sorting.unwrap_or_default();
 
         let sort_stage = match sorting.sort_by {
-            ProductSortBy::Date => aggregations::sort(doc! {
+            ProductSortBy::Date | ProductSortBy::Random(_) => aggregations::sort(doc! {
                 Product::fields().created_at: &sorting.direction
             }),
             ProductSortBy::Popularity => aggregations::sort(doc! {
@@ -1793,10 +1822,11 @@ fn product_status_update() -> Document {
     }
 }
 
-pub fn generate_products_random_sort() -> Document {
-    let mut fields = vec![
+pub fn generate_products_random_sort(indexes: Vec<u8>) -> Document {
+    let set_indexes = std::collections::BTreeSet::from_iter(indexes);
+
+    let fields = vec![
         Product::fields().analytics(true).views,
-        Product::fields().assets(true).size,
         Product::fields().items(true).price,
         Product::fields().items(true).in_storage,
         Product::fields().created_at,
@@ -1807,22 +1837,14 @@ pub fn generate_products_random_sort() -> Document {
         Product::fields().warranty,
     ];
 
-    let total_sorts = random::random_number_from_range(2, fields.len() as u32);
-
     let mut sorts = doc! {};
 
-    for _ in 0..total_sorts {
-        let field =
-            fields.remove(random::random_number_from_range(0, fields.len() as u32) as usize);
-        let order = random::random_number_from_range(0, 2) as i32;
-
-        if order == 0 {
-            sorts.insert(field, -1);
-            continue;
+    set_indexes.into_iter().for_each(|index| {
+        if index < fields.len() as u8 {
+            sorts.insert(fields[index as usize].to_string(), -1);
         }
+    });
 
-        sorts.insert(field, order);
-    }
-
+    tracing::info!("sorts: {:?}", sorts);
     sorts
 }
