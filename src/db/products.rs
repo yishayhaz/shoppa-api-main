@@ -11,13 +11,13 @@ use shoppa_core::{
         aggregations::{self, ProjectIdOptions},
         models::{
             EmbeddedDocument, FileDocument, Order, ProducdBrandField, Product, ProductItemStatus,
-            ProductStatus, Variants,
+            ProductStatus, Store, Variants,
         },
         populate::ProductsPopulate,
         DBConection, Pagination, Sorter,
     },
     parser::FieldPatch,
-    random
+    random,
 };
 use strum_macros::EnumString;
 
@@ -392,6 +392,8 @@ impl ProductFunctions for DBConection {
                     }
                 },
             }),
+            aggregations::lookup::<Store>("store._id", "_id", "store", None, None),
+            aggregations::unwind("store", false),
             aggregations::project(
                 ProjectIdOptions::Keep,
                 [
@@ -400,7 +402,6 @@ impl ProductFunctions for DBConection {
                     Product::fields().name,
                     Product::fields().description,
                     Product::fields().keywords,
-                    Product::fields().store,
                     Product::fields().categories,
                     Product::fields().variants,
                     Product::fields().analytics,
@@ -423,6 +424,9 @@ impl ProductFunctions for DBConection {
                     Product::fields().assets(true).size,
                     Product::fields().assets(true).mime_type,
                     Product::fields().assets(true).file_type,
+                    Product::fields().store(true).name,
+                    Product::fields().store(true).id,
+                    "store.delivery_strategies",
                 ],
                 None,
             ),
@@ -1792,7 +1796,6 @@ fn product_status_update() -> Document {
 }
 
 pub fn generate_products_random_sort() -> Document {
-    
     let mut fields = vec![
         Product::fields().analytics(true).views,
         Product::fields().assets(true).size,
@@ -1808,11 +1811,11 @@ pub fn generate_products_random_sort() -> Document {
 
     let total_sorts = random::random_number_from_range(2, fields.len() as u32);
 
-    
     let mut sorts = doc! {};
 
     for _ in 0..total_sorts {
-        let field = fields.remove(random::random_number_from_range(0, fields.len() as u32) as usize);
+        let field =
+            fields.remove(random::random_number_from_range(0, fields.len() as u32) as usize);
         let order = random::random_number_from_range(0, 2) as i32;
 
         if order == 0 {
