@@ -1,5 +1,5 @@
 use crate::prelude::types::*;
-use shoppa_core::db::models::{InvoiceType, OrderPartStatus};
+use shoppa_core::db::models::OrderPartStatus;
 use validator::Validate;
 
 #[derive(Deserialize, Serialize, Debug, Clone, Validate)]

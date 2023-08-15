@@ -7,7 +7,6 @@ use crate::{
 };
 use axum::{extract::Extension, response::IntoResponse};
 use bson::doc;
-use bson::oid::ObjectId;
 use shoppa_core::{
     constans,
     db::models::{DBModel, User},
